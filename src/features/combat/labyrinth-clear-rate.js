@@ -4,12 +4,14 @@
  */
 
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import domObserver from '../../core/dom-observer.js';
 import dataManager from '../../core/data-manager.js';
 import webSocketHook from '../../core/websocket.js';
 import { buildPlayerDTO, buildGameDataPayload, applyLoadoutSnapshotToDTO } from '../combat-sim/combat-sim-adapter.js';
 import { runLabyrinthSimulation } from '../combat-sim/combat-sim-runner.js';
 import loadoutSnapshot from './loadout-snapshot.js';
+import { getLocalizedMonsterName } from '../../utils/localized-game-names.js';
 
 const ROOM_DURATION = 120;
 const BASE_SKILLING_TIME = 10;
@@ -816,10 +818,14 @@ class LabyrinthClearRate {
 
             const gameDataLocal = dataManager.getInitClientData();
             const monsterDetail = gameDataLocal?.combatMonsterDetailMap?.[monsterHrid];
-            const monsterName = monsterDetail?.name || monsterHrid.replace('/monsters/', '').replace(/_/g, ' ');
+            const monsterName = getLocalizedMonsterName(
+                monsterHrid,
+                monsterDetail?.name || monsterHrid.replace('/monsters/', '').replace(/_/g, ' ')
+            );
 
             const snapshot = loadoutSnapshot.snapshots[loadoutId];
-            const loadoutName = snapshot?.name || `Loadout #${loadoutId}`;
+            const loadoutName =
+                snapshot?.name || i18n.tDefault('combat.labyrinth.loadoutFallback', 'Loadout #{id}', { id: loadoutId });
 
             const result = {
                 clearChance: winRate,
@@ -953,14 +959,19 @@ class LabyrinthClearRate {
                 const threshold = this.findRecommendedThreshold(roomHrid, targetRate);
                 this.recommendations.set(roomHrid, { threshold });
             } else {
-                if (button) button.textContent = `Recommending... (${completed + 1}/${totalRooms})`;
+                if (button)
+                    button.textContent = i18n.tDefault(
+                        'combat.labyrinth.recommending',
+                        'Recommending... ({done}/{total})',
+                        { done: completed + 1, total: totalRooms }
+                    );
                 const threshold = await this.findRecommendedThresholdCombat(roomHrid, targetRate);
                 this.recommendations.set(roomHrid, { threshold });
             }
             completed++;
         }
 
-        if (button) button.textContent = 'Recommend';
+        if (button) button.textContent = i18n.tDefault('combat.labyrinth.recommend', 'Recommend');
         this.recommendRunning = false;
         this.injectRecommendationBadges();
     }
@@ -986,9 +997,15 @@ class LabyrinthClearRate {
             const badge = document.createElement('span');
             badge.className = RECOMMEND_CLASS;
             badge.style.cssText = 'font-size:0.7rem; margin-left:6px; white-space:nowrap; font-weight:bold;';
-            badge.textContent = `Rec: ${rec.threshold >= 0 ? '+' : ''}${rec.threshold}`;
+            badge.textContent = i18n.tDefault('combat.labyrinth.rec', 'Rec: {threshold}', {
+                threshold: `${rec.threshold >= 0 ? '+' : ''}${rec.threshold}`,
+            });
 
-            badge.title = `Recommended skip threshold for ≥${this._recommendTargetPct}% clear rate`;
+            badge.title = i18n.tDefault(
+                'combat.labyrinth.recTitle',
+                'Recommended skip threshold for ≥{pct}% clear rate',
+                { pct: this._recommendTargetPct }
+            );
 
             if (currentThreshold <= rec.threshold) {
                 badge.style.color = '#00c896';
@@ -1031,7 +1048,7 @@ class LabyrinthClearRate {
 
         const rateLabel = document.createElement('span');
         rateLabel.style.cssText = labelStyle;
-        rateLabel.textContent = 'Target Win %';
+        i18n.bindDefault(rateLabel, 'combat.labyrinth.targetWin', 'Target Win %');
 
         const rateInput = document.createElement('input');
         rateInput.type = 'number';
@@ -1047,7 +1064,7 @@ class LabyrinthClearRate {
 
         const hoursLabel = document.createElement('span');
         hoursLabel.style.cssText = labelStyle;
-        hoursLabel.textContent = 'Sim Hours';
+        i18n.bindDefault(hoursLabel, 'combat.labyrinth.simHours', 'Sim Hours');
 
         const hoursInput = document.createElement('input');
         hoursInput.type = 'number';
@@ -1062,7 +1079,7 @@ class LabyrinthClearRate {
         });
 
         const button = document.createElement('button');
-        button.textContent = 'Recommend';
+        i18n.bindDefault(button, 'combat.labyrinth.recommend', 'Recommend');
         button.style.cssText =
             'padding:2px 10px; cursor:pointer; font-size:0.75rem; border-radius:4px; border:1px solid #555; background:#333; color:#ccc;';
         button.addEventListener('click', () => this.runRecommendations());
@@ -1179,19 +1196,47 @@ class LabyrinthClearRate {
 
         const chancePct = (estimate.clearChance * 100).toFixed(1);
         if (estimate.isEnhancing) {
-            node.textContent = ` [Clear ${chancePct}% | +${estimate.currentLevel}/+${estimate.targetLevel} | ${estimate.attemptsLeft} left]`;
+            node.textContent = i18n.tDefault(
+                'combat.labyrinth.live.enhancing',
+                ' [Clear {pct}% | +{current}/+{target} | {left} left]',
+                {
+                    pct: chancePct,
+                    current: estimate.currentLevel,
+                    target: estimate.targetLevel,
+                    left: estimate.attemptsLeft,
+                }
+            );
         } else {
-            node.textContent = ` [Clear ${chancePct}% | ${estimate.attemptsLeft} left]`;
+            node.textContent = i18n.tDefault('combat.labyrinth.live.skilling', ' [Clear {pct}% | {left} left]', {
+                pct: chancePct,
+                left: estimate.attemptsLeft,
+            });
         }
 
         const tooltipLines = [
-            `Success: ${(estimate.successChance * 100).toFixed(1)}% | Double: ${(estimate.doubleChance * 100).toFixed(1)}%`,
-            `Actions: ${estimate.actionCounter}/${estimate.totalAttempts}`,
+            i18n.tDefault('combat.labyrinth.live.successDouble', 'Success: {success}% | Double: {double}%', {
+                success: (estimate.successChance * 100).toFixed(1),
+                double: (estimate.doubleChance * 100).toFixed(1),
+            }),
+            i18n.tDefault('combat.labyrinth.live.actions', 'Actions: {counter}/{total}', {
+                counter: estimate.actionCounter,
+                total: estimate.totalAttempts,
+            }),
         ];
         if (estimate.isEnhancing) {
-            tooltipLines.push(`Enhance: +${estimate.currentLevel}/+${estimate.targetLevel}`);
+            tooltipLines.push(
+                i18n.tDefault('combat.labyrinth.live.enhance', 'Enhance: +{current}/+{target}', {
+                    current: estimate.currentLevel,
+                    target: estimate.targetLevel,
+                })
+            );
         } else {
-            tooltipLines.push(`Progress: ${estimate.currentWorkValue}/${estimate.targetWorkValue}`);
+            tooltipLines.push(
+                i18n.tDefault('combat.labyrinth.live.progress', 'Progress: {current}/{target}', {
+                    current: estimate.currentWorkValue,
+                    target: estimate.targetWorkValue,
+                })
+            );
         }
         node.title = tooltipLines.join('\n');
     }
@@ -1298,7 +1343,7 @@ class LabyrinthClearRate {
         badge.className = BADGE_CLASS;
         badge.style.cssText = 'font-size:0.7rem; margin-left:6px; white-space:nowrap; color:#999;';
         badge.textContent = '...';
-        badge.title = 'Simulating combat...';
+        badge.title = i18n.tDefault('combat.labyrinth.simulating', 'Simulating combat...');
         cell.appendChild(badge);
         return badge;
     }
@@ -1355,36 +1400,85 @@ class LabyrinthClearRate {
     formatTooltip(result, roomLevel) {
         const pct = (v) => `${(v * 100).toFixed(1)}%`;
 
+        const successDouble = i18n.tDefault(
+            'combat.labyrinth.tip.successDouble',
+            'Success: {success} | Double: {double}',
+            {
+                success: pct(result.successChance),
+                double: pct(result.doubleChance),
+            }
+        );
+        const actionsLine = i18n.tDefault('combat.labyrinth.tip.actions', 'Actions: {attempts} @ {seconds}s each', {
+            attempts: result.attempts,
+            seconds: result.actionSeconds?.toFixed(2),
+        });
+
         if (result.type === 'skilling') {
             return [
-                `Success: ${pct(result.successChance)} | Double: ${pct(result.doubleChance)}`,
-                `Actions: ${result.attempts} @ ${result.actionSeconds.toFixed(2)}s each`,
-                `Work Power: ${Math.floor(result.workPower)} → Progress: ${result.progressPerSuccess}/${result.targetProgress} per success`,
-                `Effective Level: ${Math.floor(result.effectiveLevel)} (base ${result.baseLevel} + ${Math.floor(result.effectiveLevel - result.baseLevel)})`,
-                `Room Level: ${result.roomLevel} | XP/room: ${result.xpPerRoom}`,
+                successDouble,
+                actionsLine,
+                i18n.tDefault(
+                    'combat.labyrinth.tip.workPower',
+                    'Work Power: {power} → Progress: {per}/{target} per success',
+                    {
+                        power: Math.floor(result.workPower),
+                        per: result.progressPerSuccess,
+                        target: result.targetProgress,
+                    }
+                ),
+                i18n.tDefault(
+                    'combat.labyrinth.tip.effectiveLevel',
+                    'Effective Level: {level} (base {base} + {bonus})',
+                    {
+                        level: Math.floor(result.effectiveLevel),
+                        base: result.baseLevel,
+                        bonus: Math.floor(result.effectiveLevel - result.baseLevel),
+                    }
+                ),
+                i18n.tDefault('combat.labyrinth.tip.roomXp', 'Room Level: {level} | XP/room: {xp}', {
+                    level: result.roomLevel,
+                    xp: result.xpPerRoom,
+                }),
             ].join('\n');
         }
 
         if (result.type === 'enhancing') {
             return [
-                `Success: ${pct(result.successChance)} | Double: ${pct(result.doubleChance)}`,
-                `Actions: ${result.attempts} @ ${result.actionSeconds.toFixed(2)}s each`,
-                `Target: +${result.targetLevel} | Effective Level: ${Math.floor(result.effectiveLevel)}`,
-                `Room Level: ${result.roomLevel}`,
+                successDouble,
+                actionsLine,
+                i18n.tDefault('combat.labyrinth.tip.targetEffective', 'Target: +{target} | Effective Level: {level}', {
+                    target: result.targetLevel,
+                    level: Math.floor(result.effectiveLevel),
+                }),
+                i18n.tDefault('combat.labyrinth.tip.roomLevel', 'Room Level: {level}', { level: result.roomLevel }),
             ].join('\n');
         }
 
         if (result.type === 'combat') {
             return [
-                `Win Rate: ${pct(result.winRate)} | Avg Fight: ${Math.round(result.avgFightSeconds)}s`,
-                `Monster: ${result.monsterName} | Room Level: ${result.roomLevel}`,
-                `Loadout: "${result.loadoutName}"`,
+                i18n.tDefault('combat.labyrinth.tip.winRate', 'Win Rate: {rate} | Avg Fight: {seconds}s', {
+                    rate: pct(result.winRate),
+                    seconds: Math.round(result.avgFightSeconds),
+                }),
+                i18n.tDefault('combat.labyrinth.tip.monster', 'Monster: {name} | Room Level: {level}', {
+                    name: result.monsterName,
+                    level: result.roomLevel,
+                }),
+                i18n.tDefault('combat.labyrinth.tip.loadout', 'Loadout: "{name}"', { name: result.loadoutName }),
             ].join('\n');
         }
 
         const clearPct = Math.round(result.clearChance * 100);
         const timeText = this.formatTime(result.expectedSeconds);
-        return `Clear: ${clearPct}% | Expected: ${timeText} | Room level: ${roomLevel}`;
+        return i18n.tDefault(
+            'combat.labyrinth.tip.clearExpected',
+            'Clear: {pct}% | Expected: {time} | Room level: {level}',
+            {
+                pct: clearPct,
+                time: timeText,
+                level: roomLevel,
+            }
+        );
     }
 
     getBadgeColor(clearChance) {

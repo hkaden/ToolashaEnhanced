@@ -6,10 +6,12 @@
 
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import i18n from '../../core/i18n/index.js';
 import { decomposeHistoryTracker } from './decompose-history-tracker.js';
 import { formatKMB, formatDateTime } from '../../utils/formatters.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 
 const CATALYST_OF_DECOMPOSITION_HRID = '/items/catalyst_of_decomposition';
 const PRIME_CATALYST_HRID = '/items/prime_catalyst';
@@ -125,10 +127,12 @@ class DecomposeHistoryViewer {
                 // Replace first text node (the label) while keeping badge span
                 const badgeSpan = badge.querySelector('.MuiBadge-badge');
                 badge.textContent = '';
-                badge.appendChild(document.createTextNode('Decompose History'));
+                badge.appendChild(
+                    document.createTextNode(i18n.tDefault('alcHist.tab.decomposeHistory', 'Decompose History'))
+                );
                 if (badgeSpan) badge.appendChild(badgeSpan);
             } else {
-                tab.textContent = 'Decompose History';
+                i18n.bindDefault(tab, 'alcHist.tab.decomposeHistory', 'Decompose History');
             }
 
             tab.addEventListener('click', (e) => {
@@ -230,8 +234,8 @@ class DecomposeHistoryViewer {
         `;
 
         const title = document.createElement('h2');
-        title.textContent = 'Decompose History';
         title.style.cssText = 'margin: 0; color: #fff;';
+        i18n.bindDefault(title, 'alcHist.tab.decomposeHistory', 'Decompose History');
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '\u2715';
@@ -414,15 +418,20 @@ class DecomposeHistoryViewer {
         headerRow.style.background = '#1a1a1a';
 
         const columns = [
-            { key: 'startTime', label: 'Session Start', filterable: true },
-            { key: 'inputItemHrid', label: 'Input Item', filterable: true },
-            { key: 'enhancementLevel', label: 'Enh. Level', filterable: false },
-            { key: 'totalAttempts', label: 'Attempts', filterable: false },
-            { key: 'totalSuccesses', label: 'Successes', filterable: false },
-            { key: '_successRate', label: 'Success Rate', filterable: false },
-            { key: 'results', label: 'Results', filterable: true },
-            { key: '_catalystOfDecomposition', label: 'Catalyst of Decomposition', filterable: false },
-            { key: '_primeCatalyst', label: 'Prime Catalyst', filterable: false },
+            { key: 'startTime', label: 'Session Start', filterable: true, i18nKey: 'alcHist.col.sessionStart' },
+            { key: 'inputItemHrid', label: 'Input Item', filterable: true, i18nKey: 'alcHist.col.inputItem' },
+            { key: 'enhancementLevel', label: 'Enh. Level', filterable: false, i18nKey: 'alcHist.col.enhLevel' },
+            { key: 'totalAttempts', label: 'Attempts', filterable: false, i18nKey: 'alcHist.col.attempts' },
+            { key: 'totalSuccesses', label: 'Successes', filterable: false, i18nKey: 'alcHist.col.successes' },
+            { key: '_successRate', label: 'Success Rate', filterable: false, i18nKey: 'alcHist.col.successRate' },
+            { key: 'results', label: 'Results', filterable: true, i18nKey: 'alcHist.col.results' },
+            {
+                key: '_catalystOfDecomposition',
+                label: 'Catalyst of Decomposition',
+                filterable: false,
+                i18nKey: 'alcHist.col.catalystOfDecomposition',
+            },
+            { key: '_primeCatalyst', label: 'Prime Catalyst', filterable: false, i18nKey: 'alcHist.col.primeCatalyst' },
             { key: '_delete', label: '', filterable: false },
         ];
 
@@ -445,12 +454,13 @@ class DecomposeHistoryViewer {
             // Columns starting with _ are computed, not directly sortable by field
             const isSortable = !col.key.startsWith('_');
             const isCatalystCol = col.key === '_catalystOfDecomposition' || col.key === '_primeCatalyst';
+            const colLabel = i18n.tDefault(col.i18nKey, col.label);
 
             if (isSortable) {
                 if (this.sortColumn === col.key) {
-                    labelSpan.textContent = col.label + (this.sortDirection === 'asc' ? ' \u25B2' : ' \u25BC');
+                    labelSpan.textContent = colLabel + (this.sortDirection === 'asc' ? ' \u25B2' : ' \u25BC');
                 } else {
-                    labelSpan.textContent = col.label;
+                    labelSpan.textContent = colLabel;
                 }
                 labelSpan.addEventListener('click', () => {
                     if (this.sortColumn === col.key) {
@@ -466,11 +476,11 @@ class DecomposeHistoryViewer {
                 // Render icon as header with item name as tooltip
                 const hrid =
                     col.key === '_catalystOfDecomposition' ? CATALYST_OF_DECOMPOSITION_HRID : PRIME_CATALYST_HRID;
-                labelSpan.title = col.label;
+                labelSpan.title = colLabel;
                 labelSpan.style.cursor = 'default';
                 this.appendItemIcon(labelSpan, hrid, 20);
             } else {
-                labelSpan.textContent = col.label;
+                labelSpan.textContent = colLabel;
                 labelSpan.style.cursor = 'default';
             }
 
@@ -509,8 +519,8 @@ class DecomposeHistoryViewer {
             cell.colSpan = columns.length;
             cell.textContent =
                 this.sessions.length === 0
-                    ? 'No decompose history recorded yet.'
-                    : 'No sessions match the current filters.';
+                    ? i18n.tDefault('alcHist.decompose.emptyNoHistory', 'No decompose history recorded yet.')
+                    : i18n.tDefault('alcHist.empty.noMatch', 'No sessions match the current filters.');
             cell.style.cssText = 'padding: 20px; text-align: center; color: #888;';
             row.appendChild(cell);
             tbody.appendChild(row);
@@ -533,7 +543,10 @@ class DecomposeHistoryViewer {
                 inputCell.style.cssText = 'padding: 6px 10px; display: flex; align-items: center; gap: 8px;';
                 this.appendItemIcon(inputCell, session.inputItemHrid, 20);
                 const inputName = document.createElement('span');
-                inputName.textContent = this.getItemName(session.inputItemHrid);
+                inputName.textContent = getLocalizedItemName(
+                    session.inputItemHrid,
+                    this.getItemName(session.inputItemHrid)
+                );
                 inputCell.appendChild(inputName);
                 row.appendChild(inputCell);
 
@@ -552,7 +565,11 @@ class DecomposeHistoryViewer {
                 // Successes
                 const successCell = document.createElement('td');
                 const failures = session.totalAttempts - session.totalSuccesses;
-                successCell.textContent = `${session.totalSuccesses} (${failures} failed)`;
+                successCell.textContent = i18n.tDefault(
+                    'alcHist.cell.successFailed',
+                    `${session.totalSuccesses} (${failures} failed)`,
+                    { successes: session.totalSuccesses, failures }
+                );
                 successCell.style.cssText = `
                     padding: 6px 10px;
                     color: ${failures > 0 ? '#fbbf24' : '#4ade80'};
@@ -596,7 +613,7 @@ class DecomposeHistoryViewer {
                 deleteCell.style.cssText = 'padding: 6px 4px; text-align: center;';
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '\u2715';
-                deleteBtn.title = 'Delete this session';
+                deleteBtn.title = i18n.tDefault('alcHist.btn.deleteSession', 'Delete this session');
                 deleteBtn.style.cssText = `
                     background: none; border: none; color: #dc2626;
                     cursor: pointer; font-size: 14px; padding: 2px 6px;
@@ -649,10 +666,19 @@ class DecomposeHistoryViewer {
             this.appendItemIcon(line, itemHrid, 16);
 
             const text = document.createElement('span');
-            const name = this.getItemName(itemHrid);
+            const name = getLocalizedItemName(itemHrid, this.getItemName(itemHrid));
             const total = formatKMB(result.totalValue || 0, 1);
             const each = formatKMB(result.priceEach || 0, 1);
-            text.textContent = `${name} x${result.count} = ${total} (${each} each)`;
+            text.textContent = i18n.tDefault(
+                'alcHist.results.line',
+                `${name} x${result.count} = ${total} (${each} each)`,
+                {
+                    name,
+                    count: result.count,
+                    total,
+                    each,
+                }
+            );
 
             line.appendChild(text);
             cell.appendChild(line);
@@ -695,7 +721,12 @@ class DecomposeHistoryViewer {
         // Stats
         const stats = document.createElement('span');
         stats.style.cssText = 'color: #aaa; font-size: 14px;';
-        stats.textContent = `${this.filteredSessions.length} session${this.filteredSessions.length !== 1 ? 's' : ''}`;
+        const sessionCount = this.filteredSessions.length;
+        stats.textContent = i18n.tDefault(
+            'alcHist.stats.sessions',
+            `${sessionCount} session${sessionCount !== 1 ? 's' : ''}`,
+            { count: sessionCount }
+        );
         controls.appendChild(stats);
 
         const rightGroup = document.createElement('div');
@@ -704,7 +735,7 @@ class DecomposeHistoryViewer {
         // Clear All Filters button (only when filters active)
         if (this.hasAnyFilter()) {
             const clearFiltersBtn = document.createElement('button');
-            clearFiltersBtn.textContent = 'Clear All Filters';
+            i18n.bindDefault(clearFiltersBtn, 'alcHist.btn.clearAllFilters', 'Clear All Filters');
             clearFiltersBtn.style.cssText = `
                 padding: 6px 12px; background: #e67e22; color: white;
                 border: none; border-radius: 4px; cursor: pointer;
@@ -715,7 +746,7 @@ class DecomposeHistoryViewer {
 
         // Export button
         const exportBtn = document.createElement('button');
-        exportBtn.textContent = 'Export';
+        i18n.bindDefault(exportBtn, 'alcHist.btn.export', 'Export');
         exportBtn.style.cssText = `
             padding: 6px 12px; background: #2563eb; color: white;
             border: none; border-radius: 4px; cursor: pointer;
@@ -725,7 +756,7 @@ class DecomposeHistoryViewer {
 
         // Clear History button
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = 'Clear History';
+        i18n.bindDefault(clearBtn, 'alcHist.btn.clearHistory', 'Clear History');
         clearBtn.style.cssText = `
             padding: 6px 12px; background: #dc2626; color: white;
             border: none; border-radius: 4px; cursor: pointer;
@@ -750,7 +781,7 @@ class DecomposeHistoryViewer {
             if (this.filters.dateFrom) parts.push(formatDateTime(this.filters.dateFrom, { includeTime: false }));
             if (this.filters.dateTo) parts.push(formatDateTime(this.filters.dateTo, { includeTime: false }));
             badges.push({
-                label: `Date: ${parts.join(' - ')}`,
+                label: i18n.tDefault('alcHist.badge.date', `Date: ${parts.join(' - ')}`, { range: parts.join(' - ') }),
                 onRemove: () => {
                     this.filters.dateFrom = null;
                     this.filters.dateTo = null;
@@ -763,10 +794,17 @@ class DecomposeHistoryViewer {
         if (this.filters.selectedInputItems.length > 0) {
             const label =
                 this.filters.selectedInputItems.length === 1
-                    ? this.getItemName(this.filters.selectedInputItems[0])
-                    : `${this.filters.selectedInputItems.length} input items`;
+                    ? getLocalizedItemName(
+                          this.filters.selectedInputItems[0],
+                          this.getItemName(this.filters.selectedInputItems[0])
+                      )
+                    : i18n.tDefault(
+                          'alcHist.badge.inputItemsCount',
+                          `${this.filters.selectedInputItems.length} input items`,
+                          { count: this.filters.selectedInputItems.length }
+                      );
             badges.push({
-                label: `Input: ${label}`,
+                label: i18n.tDefault('alcHist.badge.input', `Input: ${label}`, { label }),
                 icon: this.filters.selectedInputItems[0],
                 onRemove: () => {
                     this.filters.selectedInputItems = [];
@@ -778,7 +816,9 @@ class DecomposeHistoryViewer {
 
         if (this.filters.resultsSearch.trim()) {
             badges.push({
-                label: `Results: "${this.filters.resultsSearch.trim()}"`,
+                label: i18n.tDefault('alcHist.badge.results', `Results: "${this.filters.resultsSearch.trim()}"`, {
+                    query: this.filters.resultsSearch.trim(),
+                }),
                 onRemove: () => {
                     this.filters.resultsSearch = '';
                     this.applyFilters();
@@ -828,7 +868,7 @@ class DecomposeHistoryViewer {
         leftSide.style.cssText = 'display: flex; gap: 8px; align-items: center; color: #aaa;';
 
         const label = document.createElement('span');
-        label.textContent = 'Rows per page:';
+        i18n.bindDefault(label, 'alcHist.page.rowsPerPage', 'Rows per page:');
 
         const rowsInput = document.createElement('input');
         rowsInput.type = 'number';
@@ -864,7 +904,7 @@ class DecomposeHistoryViewer {
         });
 
         showAllLabel.appendChild(showAllCheckbox);
-        showAllLabel.appendChild(document.createTextNode('Show All'));
+        showAllLabel.appendChild(document.createTextNode(i18n.tDefault('alcHist.page.showAll', 'Show All')));
 
         leftSide.appendChild(label);
         leftSide.appendChild(rowsInput);
@@ -894,7 +934,14 @@ class DecomposeHistoryViewer {
             });
 
             const pageInfo = document.createElement('span');
-            pageInfo.textContent = `Page ${this.currentPage} of ${totalPages || 1}`;
+            pageInfo.textContent = i18n.tDefault(
+                'alcHist.page.pageOf',
+                `Page ${this.currentPage} of ${totalPages || 1}`,
+                {
+                    current: this.currentPage,
+                    total: totalPages || 1,
+                }
+            );
 
             const nextBtn = document.createElement('button');
             nextBtn.textContent = '\u25B6';
@@ -918,7 +965,11 @@ class DecomposeHistoryViewer {
             rightSide.appendChild(nextBtn);
         } else {
             const info = document.createElement('span');
-            info.textContent = `Showing all ${this.filteredSessions.length} sessions`;
+            info.textContent = i18n.tDefault(
+                'alcHist.page.showingAll',
+                `Showing all ${this.filteredSessions.length} sessions`,
+                { count: this.filteredSessions.length }
+            );
             rightSide.appendChild(info);
         }
 
@@ -997,7 +1048,7 @@ class DecomposeHistoryViewer {
      * @returns {HTMLElement}
      */
     createDateFilterPopup() {
-        const popup = this.createPopupBase('Filter by Date');
+        const popup = this.createPopupBase(i18n.tDefault('alcHist.filter.byDate', 'Filter by Date'));
 
         // Compute available range
         if (!this.cachedDateRange) {
@@ -1020,18 +1071,23 @@ class DecomposeHistoryViewer {
                 color: #aaa; font-size: 11px; margin-bottom: 10px;
                 padding: 6px; background: #1a1a1a; border-radius: 3px;
             `;
-            rangeInfo.textContent = `Available: ${formatDateTime(minDate, { includeTime: false })} - ${formatDateTime(maxDate, { includeTime: false })}`;
+            const availFrom = formatDateTime(minDate, { includeTime: false });
+            const availTo = formatDateTime(maxDate, { includeTime: false });
+            rangeInfo.textContent = i18n.tDefault('alcHist.filter.available', `Available: ${availFrom} - ${availTo}`, {
+                from: availFrom,
+                to: availTo,
+            });
             popup.appendChild(rangeInfo);
         }
 
         const fromInput = this.createDateInput(
-            'From:',
+            i18n.tDefault('alcHist.filter.from', 'From:'),
             this.filters.dateFrom ? this.filters.dateFrom.toISOString().split('T')[0] : '',
             minDate,
             maxDate
         );
         const toInput = this.createDateInput(
-            'To:',
+            i18n.tDefault('alcHist.filter.to', 'To:'),
             this.filters.dateTo ? this.filters.dateTo.toISOString().split('T')[0] : '',
             minDate,
             maxDate
@@ -1068,7 +1124,7 @@ class DecomposeHistoryViewer {
      * @returns {HTMLElement}
      */
     createInputItemFilterPopup() {
-        const popup = this.createPopupBase('Filter by Input Item');
+        const popup = this.createPopupBase(i18n.tDefault('alcHist.filter.byInputItem', 'Filter by Input Item'));
         popup.style.minWidth = '220px';
 
         // Gather unique input items from all sessions
@@ -1086,7 +1142,7 @@ class DecomposeHistoryViewer {
         // Search box
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = 'Search items...';
+        i18n.bindDefault(searchInput, 'alcHist.filter.searchItems', 'Search items...', undefined, 'placeholder');
         searchInput.style.cssText = `
             width: 100%; padding: 6px; margin-bottom: 8px;
             background: #1a1a1a; border: 1px solid #555;
@@ -1120,7 +1176,7 @@ class DecomposeHistoryViewer {
                 this.appendItemIcon(row, hrid, 16);
 
                 const nameSpan = document.createElement('span');
-                nameSpan.textContent = name;
+                nameSpan.textContent = getLocalizedItemName(hrid, name);
 
                 row.appendChild(cb);
                 row.appendChild(nameSpan);
@@ -1158,12 +1214,12 @@ class DecomposeHistoryViewer {
      * @returns {HTMLElement}
      */
     createResultsFilterPopup() {
-        const popup = this.createPopupBase('Filter by Result Item');
+        const popup = this.createPopupBase(i18n.tDefault('alcHist.filter.byResultItem', 'Filter by Result Item'));
         popup.style.minWidth = '220px';
 
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = 'Item name...';
+        i18n.bindDefault(searchInput, 'alcHist.filter.itemName', 'Item name...', undefined, 'placeholder');
         searchInput.value = this.filters.resultsSearch;
         searchInput.style.cssText = `
             width: 100%; padding: 6px; margin-bottom: 10px;
@@ -1252,7 +1308,7 @@ class DecomposeHistoryViewer {
         row.style.cssText = 'display: flex; gap: 8px; margin-top: 10px;';
 
         const applyBtn = document.createElement('button');
-        applyBtn.textContent = 'Apply';
+        i18n.bindDefault(applyBtn, 'alcHist.btn.apply', 'Apply');
         applyBtn.style.cssText = `
             flex: 1; padding: 6px; background: #4a90e2; color: white;
             border: none; border-radius: 3px; cursor: pointer;
@@ -1260,7 +1316,7 @@ class DecomposeHistoryViewer {
         applyBtn.addEventListener('click', onApply);
 
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = 'Clear';
+        i18n.bindDefault(clearBtn, 'alcHist.btn.clear', 'Clear');
         clearBtn.style.cssText = `
             flex: 1; padding: 6px; background: #666; color: white;
             border: none; border-radius: 3px; cursor: pointer;
@@ -1368,16 +1424,16 @@ class DecomposeHistoryViewer {
         const escape = (val) => `"${String(val === null || val === undefined ? '' : val).replace(/"/g, '""')}"`;
 
         const headers = [
-            'Session Start',
-            'Input Item',
-            'Enh. Level',
-            'Attempts',
-            'Successes',
-            'Failures',
-            'Success Rate',
-            'Results',
-            'Catalyst of Decomposition',
-            'Prime Catalyst',
+            i18n.tDefault('alcHist.col.sessionStart', 'Session Start'),
+            i18n.tDefault('alcHist.col.inputItem', 'Input Item'),
+            i18n.tDefault('alcHist.col.enhLevel', 'Enh. Level'),
+            i18n.tDefault('alcHist.col.attempts', 'Attempts'),
+            i18n.tDefault('alcHist.col.successes', 'Successes'),
+            i18n.tDefault('alcHist.csv.failures', 'Failures'),
+            i18n.tDefault('alcHist.col.successRate', 'Success Rate'),
+            i18n.tDefault('alcHist.col.results', 'Results'),
+            i18n.tDefault('alcHist.col.catalystOfDecomposition', 'Catalyst of Decomposition'),
+            i18n.tDefault('alcHist.col.primeCatalyst', 'Prime Catalyst'),
         ];
 
         const rows = this.sessions.map((session) => {
@@ -1432,7 +1488,11 @@ class DecomposeHistoryViewer {
      */
     async clearHistory() {
         const confirmed = confirm(
-            `\u26A0\uFE0F This will permanently delete ALL decompose history (${this.sessions.length} sessions).\nThis cannot be undone.\n\nAre you sure?`
+            i18n.tDefault(
+                'alcHist.confirm.clearHistoryDecompose',
+                `\u26A0\uFE0F This will permanently delete ALL decompose history (${this.sessions.length} sessions).\nThis cannot be undone.\n\nAre you sure?`,
+                { count: this.sessions.length }
+            )
         );
         if (!confirmed) return;
 
@@ -1440,12 +1500,16 @@ class DecomposeHistoryViewer {
             await decomposeHistoryTracker.clearHistory();
             this.sessions = [];
             this.filteredSessions = [];
-            alert('Decompose history cleared.');
+            alert(i18n.tDefault('alcHist.alert.historyClearedDecompose', 'Decompose history cleared.'));
             this.applyFilters();
             this.renderTable();
         } catch (error) {
             console.error('[DecomposeHistoryViewer] Failed to clear history:', error);
-            alert(`Failed to clear history: ${error.message}`);
+            alert(
+                i18n.tDefault('alcHist.alert.clearFailed', `Failed to clear history: ${error.message}`, {
+                    error: error.message,
+                })
+            );
         }
     }
 }

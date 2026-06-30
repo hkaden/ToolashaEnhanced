@@ -5,6 +5,7 @@
 
 import dungeonTrackerStorage from './dungeon-tracker-storage.js';
 import storage from '../../core/storage.js';
+import i18n from '../../core/i18n/index.js';
 import { formatDateTime } from '../../utils/formatters.js';
 
 class DungeonTrackerUIHistory {
@@ -26,7 +27,7 @@ class DungeonTrackerUIHistory {
             if (!groups[key]) {
                 groups[key] = {
                     key: key,
-                    label: key === 'Solo' ? 'Solo Runs' : key,
+                    label: key === 'Solo' ? i18n.tDefault('combat.dungeon.soloRuns', 'Solo Runs') : key,
                     runs: [],
                 };
             }
@@ -53,7 +54,7 @@ class DungeonTrackerUIHistory {
             if (!groups[key]) {
                 groups[key] = {
                     key: key,
-                    label: key,
+                    label: run.dungeonName || i18n.tDefault('combat.dungeon.unknownDungeon', 'Unknown'),
                     runs: [],
                 };
             }
@@ -106,8 +107,10 @@ class DungeonTrackerUIHistory {
             const allRuns = await dungeonTrackerStorage.getAllRuns();
 
             if (allRuns.length === 0) {
-                runList.innerHTML =
-                    '<div style="color: #888; font-style: italic; text-align: center; padding: 8px;">No runs yet</div>';
+                runList.innerHTML = `<div style="color: #888; font-style: italic; text-align: center; padding: 8px;">${i18n.tDefault(
+                    'combat.dungeon.noRuns',
+                    'No runs yet'
+                )}</div>`;
                 // Update filter dropdowns with empty options
                 this.updateFilterDropdowns(container, [], []);
                 return;
@@ -123,8 +126,10 @@ class DungeonTrackerUIHistory {
             }
 
             if (filteredRuns.length === 0) {
-                runList.innerHTML =
-                    '<div style="color: #888; font-style: italic; text-align: center; padding: 8px;">No runs match filters</div>';
+                runList.innerHTML = `<div style="color: #888; font-style: italic; text-align: center; padding: 8px;">${i18n.tDefault(
+                    'combat.dungeon.noRunsMatchFilters',
+                    'No runs match filters'
+                )}</div>`;
                 return;
             }
 
@@ -141,8 +146,10 @@ class DungeonTrackerUIHistory {
             this.updateFilterDropdowns(container, dungeons, teams);
         } catch (error) {
             console.error('[Dungeon Tracker UI History] Update error:', error);
-            runList.innerHTML =
-                '<div style="color: #ff6b6b; text-align: center; padding: 8px;">Error loading run history</div>';
+            runList.innerHTML = `<div style="color: #ff6b6b; text-align: center; padding: 8px;">${i18n.tDefault(
+                'combat.dungeon.errorLoadingHistory',
+                'Error loading run history'
+            )}</div>`;
         }
     }
 
@@ -158,7 +165,7 @@ class DungeonTrackerUIHistory {
         if (dungeonFilter) {
             const currentValue = dungeonFilter.value;
             dungeonFilter.innerHTML =
-                '<option value="all">All Dungeons</option>' +
+                `<option value="all">${i18n.tDefault('combat.dungeon.allDungeons', 'All Dungeons')}</option>` +
                 dungeons.map((dungeon) => `<option value="${dungeon}">${dungeon}</option>`).join('');
             // Restore selection if still valid
             if (dungeons.includes(currentValue)) {
@@ -173,7 +180,7 @@ class DungeonTrackerUIHistory {
         if (teamFilter) {
             const currentValue = teamFilter.value;
             teamFilter.innerHTML =
-                '<option value="all">All Teams</option>' +
+                `<option value="all">${i18n.tDefault('combat.dungeon.allTeams', 'All Teams')}</option>` +
                 teams.map((team) => `<option value="${team}">${team}</option>`).join('');
             // Restore selection if still valid
             if (teams.includes(currentValue)) {
@@ -221,7 +228,11 @@ class DungeonTrackerUIHistory {
                                 ${group.label}
                             </div>
                             <div style="font-size: 10px; color: #aaa;">
-                                Runs: ${group.stats.totalRuns} | Avg: ${avgTime} | Best: ${bestTime} | Worst: ${worstTime}
+                                ${i18n.tDefault(
+                                    'combat.dungeon.groupStats',
+                                    'Runs: {runs} | Avg: {avg} | Best: {best} | Worst: {worst}',
+                                    { runs: group.stats.totalRuns, avg: avgTime, best: bestTime, worst: worstTime }
+                                )}
                             </div>
                         </div>
                         <span class="mwi-dt-group-toggle" style="color: #aaa; font-size: 10px;">${toggleIcon}</span>
@@ -289,7 +300,7 @@ class DungeonTrackerUIHistory {
             const timeStr = this.formatTime(run.duration);
             const dateObj = new Date(run.timestamp);
             const dateTime = formatDateTime(dateObj);
-            const dungeonLabel = run.dungeonName || 'Unknown';
+            const dungeonLabel = run.dungeonName || i18n.tDefault('combat.dungeon.unknownDungeon', 'Unknown');
 
             html += `
                 <div style="
@@ -314,7 +325,7 @@ class DungeonTrackerUIHistory {
                         padding: 1px 4px;
                         border-radius: 2px;
                         font-weight: bold;
-                    " title="Delete this run">✕</button>
+                    " title="${i18n.tDefault('combat.dungeon.deleteRunTitle', 'Delete this run')}">✕</button>
                 </div>
             `;
         });

@@ -5,6 +5,7 @@
 
 import config from '../../core/config.js';
 import domObserver from '../../core/dom-observer.js';
+import i18n from '../../core/i18n/index.js';
 
 class NetworkAlert {
     constructor() {
@@ -74,10 +75,12 @@ class NetworkAlert {
      * Show the network alert
      * @param {string} message - Alert message to display
      */
-    show(message = '⚠️ Market data unavailable') {
+    show(message) {
         if (!config.getSetting('networkAlert')) {
             return;
         }
+
+        const text = message ?? i18n.tDefault('market.networkAlert.unavailable', '⚠️ Market data unavailable');
 
         if (!this.container || !document.body.contains(this.container)) {
             // Try to prepare container if not ready
@@ -86,13 +89,13 @@ class NetworkAlert {
                 this.prepareContainer(totalLevelElem);
             } else {
                 // Header not found, fallback to console
-                console.warn('[Network Alert]', message);
+                console.warn('[Network Alert]', text);
                 return;
             }
         }
 
         if (this.container) {
-            this.container.textContent = message;
+            this.container.textContent = text;
             this.container.style.display = 'block';
             this.isVisible = true;
         }

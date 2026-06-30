@@ -14,6 +14,7 @@ import dataManager from '../../core/data-manager.js';
 import { formatWithSeparator, formatPercentage } from '../../utils/formatters.js';
 import { calculateBonusRevenue } from '../../utils/bonus-revenue-calculator.js';
 import { getItemPrice } from '../../utils/market-data.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import { GATHERING_TYPES, MARKET_TAX } from '../../utils/profit-constants.js';
 import { getActionEfficiencyContext } from '../../utils/efficiency.js';
 import {
@@ -133,7 +134,7 @@ export async function calculateGatheringProfit(actionHrid) {
     });
     const drinkCostPerHour = teaCostData.totalCostPerHour;
     const drinkCosts = teaCostData.costs.map((tea) => ({
-        name: tea.itemName,
+        name: getLocalizedItemName(tea.itemHrid, tea.itemName),
         priceEach: tea.pricePerDrink,
         drinksPerHour: tea.drinksPerHour,
         costPerHour: tea.totalCost,
@@ -173,7 +174,10 @@ export async function calculateGatheringProfit(actionHrid) {
         let rawPerAction = 0;
         let processedPerAction = 0;
 
-        const rawItemName = gameData.itemDetailMap[drop.itemHrid]?.name || 'Unknown';
+        const rawItemName = getLocalizedItemName(
+            drop.itemHrid,
+            gameData.itemDetailMap[drop.itemHrid]?.name || 'Unknown'
+        );
         const baseItemsPerHour = actionsPerHour * drop.dropRate * avgAmountPerAction * efficiencyMultiplier;
         const baseItemsPerAction = drop.dropRate * avgAmountPerAction;
         const baseRevenuePerAction = baseItemsPerAction * resolvedRawPrice;
@@ -216,7 +220,10 @@ export async function calculateGatheringProfit(actionHrid) {
             const processedItemsPerAction = drop.dropRate * processedPerAction;
 
             // Track processing details
-            const processedItemName = gameData.itemDetailMap[processedItemHrid]?.name || 'Unknown';
+            const processedItemName = getLocalizedItemName(
+                processedItemHrid,
+                gameData.itemDetailMap[processedItemHrid]?.name || 'Unknown'
+            );
 
             // Value gain per conversion = cheese value - cost of milk used
             const costOfMilkUsed = conversionRatio * resolvedRawPrice;

@@ -6,6 +6,7 @@
 import marketAPI from '../../api/marketplace.js';
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import { calculateDungeonTokenValue } from '../../utils/token-valuation.js';
 import { getItemPrice } from '../../utils/market-data.js';
 import { calculatePriceAfterTax } from '../../utils/profit-helpers.js';
@@ -311,7 +312,7 @@ class ExpectedValueCalculator {
         const expectedReturn = drops.reduce((sum, drop) => sum + drop.expectedValue, 0);
 
         return {
-            itemName: itemDetails.name,
+            itemName: getLocalizedItemName(itemHrid, itemDetails.name),
             itemHrid,
             expectedValue: expectedReturn,
             drops,
@@ -384,7 +385,7 @@ class ExpectedValueCalculator {
 
             drops.push({
                 itemHrid,
-                itemName: itemDetails.name,
+                itemName: getLocalizedItemName(itemHrid, itemDetails.name),
                 dropRate,
                 avgCount,
                 priceEach: price || 0,

@@ -8,6 +8,7 @@
 
 import { constructExportObject } from './combat-sim-export.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import { setReactInputValue } from '../../utils/react-input.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import dataManager from '../../core/data-manager.js';
@@ -96,7 +97,7 @@ function injectImportButton(exportButton) {
     const button = document.createElement('button');
     button.id = 'toolasha-import-button';
     // Include hidden text for JIGS compatibility (JIGS searches for "Import solo/group")
-    button.innerHTML = 'Import from Toolasha<span style="display:none;">Import solo/group</span>';
+    button.innerHTML = `${i18n.tDefault('combat.simIntegration.importBtn', 'Import from Toolasha')}<span style="display:none;">Import solo/group</span>`;
     button.style.backgroundColor = config.COLOR_ACCENT;
     button.style.color = 'white';
     button.style.padding = '10px 20px';
@@ -135,16 +136,19 @@ async function importDataToSimulator(button) {
         const exportData = await constructExportObject();
 
         if (!exportData) {
-            button.textContent = 'Error: No character data';
+            button.textContent = i18n.tDefault('combat.simIntegration.errorNoData', 'Error: No character data');
             button.style.backgroundColor = '#dc3545'; // Red
             const resetTimeout = setTimeout(() => {
-                button.innerHTML = 'Import from Toolasha<span style="display:none;">Import solo/group</span>';
+                button.innerHTML = `${i18n.tDefault('combat.simIntegration.importBtn', 'Import from Toolasha')}<span style="display:none;">Import solo/group</span>`;
                 button.style.backgroundColor = config.COLOR_ACCENT;
             }, 3000);
             timerRegistry.registerTimeout(resetTimeout);
             console.error('[Toolasha Combat Sim] No export data available');
             alert(
-                'No character data found. Please:\n1. Refresh the game page\n2. Wait for it to fully load\n3. Try again'
+                i18n.tDefault(
+                    'combat.simIntegration.alertNoData',
+                    'No character data found. Please:\n1. Refresh the game page\n2. Wait for it to fully load\n3. Try again'
+                )
             );
             return;
         }
@@ -267,10 +271,10 @@ async function importDataToSimulator(button) {
             }
 
             // Update button status
-            button.textContent = '✓ Imported';
+            button.textContent = i18n.tDefault('combat.simIntegration.imported', '✓ Imported');
             button.style.backgroundColor = '#28a745'; // Green
             const successResetTimeout = setTimeout(() => {
-                button.innerHTML = 'Import from Toolasha<span style="display:none;">Import solo/group</span>';
+                button.innerHTML = `${i18n.tDefault('combat.simIntegration.importBtn', 'Import from Toolasha')}<span style="display:none;">Import solo/group</span>`;
                 button.style.backgroundColor = config.COLOR_ACCENT;
             }, 3000);
             timerRegistry.registerTimeout(successResetTimeout);
@@ -278,10 +282,10 @@ async function importDataToSimulator(button) {
         timerRegistry.registerTimeout(importTimeout);
     } catch (error) {
         console.error('[Toolasha Combat Sim] Import failed:', error);
-        button.textContent = 'Import Failed';
+        button.textContent = i18n.tDefault('combat.simIntegration.importFailed', 'Import Failed');
         button.style.backgroundColor = '#dc3545'; // Red
         const failResetTimeout = setTimeout(() => {
-            button.innerHTML = 'Import from Toolasha<span style="display:none;">Import solo/group</span>';
+            button.innerHTML = `${i18n.tDefault('combat.simIntegration.importBtn', 'Import from Toolasha')}<span style="display:none;">Import solo/group</span>`;
             button.style.backgroundColor = config.COLOR_ACCENT;
         }, 3000);
         timerRegistry.registerTimeout(failResetTimeout);

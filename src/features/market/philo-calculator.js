@@ -9,6 +9,8 @@ import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import marketAPI from '../../api/marketplace.js';
 import storage from '../../core/storage.js';
+import i18n from '../../core/i18n/index.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import { formatLargeNumber, formatPercentage, timeReadable } from '../../utils/formatters.js';
 import { getEnhancementMultiplier } from '../../utils/enhancement-multipliers.js';
 
@@ -80,7 +82,7 @@ class PhiloCalculator {
 
             const button = document.createElement('button');
             button.className = 'mwi-philo-calc-button';
-            button.textContent = 'Philo Gamba';
+            i18n.bindDefault(button, 'market.philo.gambaButton', 'Philo Gamba');
             button.style.cssText = `
                 margin: 10px;
                 padding: 8px 16px;
@@ -369,7 +371,7 @@ class PhiloCalculator {
 
         return {
             itemHrid,
-            name: this.getItemName(itemHrid),
+            name: getLocalizedItemName(itemHrid, this.getItemName(itemHrid)),
             cost: itemCost,
             philoChance,
             returnChance,
@@ -509,7 +511,10 @@ class PhiloCalculator {
             border-bottom: 1px solid #444;
         `;
         header.innerHTML = `
-            <span style="font-size: 18px; font-weight: bold;">Philosopher's Stone Calculator</span>
+            <span style="font-size: 18px; font-weight: bold;">${i18n.tDefault(
+                'market.philo.calculatorTitle',
+                "Philosopher's Stone Calculator"
+            )}</span>
         `;
 
         const closeBtn = document.createElement('button');
@@ -585,7 +590,7 @@ class PhiloCalculator {
         // Philo price input
         const philoLabel = document.createElement('label');
         philoLabel.style.cssText = 'display: flex; align-items: center; gap: 6px; font-size: 13px;';
-        philoLabel.textContent = 'Philo Price: ';
+        philoLabel.textContent = i18n.tDefault('market.philo.philoPriceLabel', 'Philo Price: ');
         const philoInput = document.createElement('input');
         philoInput.type = 'text';
         philoInput.value = this.philoPrice.toLocaleString();
@@ -610,7 +615,7 @@ class PhiloCalculator {
         // Catalyst price input
         const catLabel = document.createElement('label');
         catLabel.style.cssText = 'display: flex; align-items: center; gap: 6px; font-size: 13px;';
-        catLabel.textContent = 'Catalyst Price: ';
+        catLabel.textContent = i18n.tDefault('market.philo.catalystPriceLabel', 'Catalyst Price: ');
         const catInput = document.createElement('input');
         catInput.type = 'text';
         catInput.value = this.catalystPrice.toLocaleString();
@@ -645,7 +650,9 @@ class PhiloCalculator {
             this.saveSettings();
         });
         checkLabel.appendChild(checkbox);
-        checkLabel.appendChild(document.createTextNode('Use Prime Catalyst'));
+        checkLabel.appendChild(
+            document.createTextNode(i18n.tDefault('market.philo.usePrimeCatalyst', 'Use Prime Catalyst'))
+        );
 
         container.appendChild(philoLabel);
         container.appendChild(catLabel);
@@ -669,14 +676,16 @@ class PhiloCalculator {
         const boostText =
             this.catalyticTeaRatioBoost > 0
                 ? ` (${formatPercentage(this.catalyticTeaRatioBoost, 1)})`
-                : ' (unavailable)';
-        teaCheckLabel.appendChild(document.createTextNode(`Catalytic Tea${boostText}`));
+                : ` (${i18n.tDefault('market.philo.unavailable', 'unavailable')})`;
+        teaCheckLabel.appendChild(
+            document.createTextNode(`${i18n.tDefault('market.philo.catalyticTea', 'Catalytic Tea')}${boostText}`)
+        );
         container.appendChild(teaCheckLabel);
 
         // Drink Concentration Dropdown
         const drinkLabel = document.createElement('label');
         drinkLabel.style.cssText = 'display: flex; align-items: center; gap: 6px; font-size: 13px;';
-        drinkLabel.textContent = 'Drink Concentration: ';
+        drinkLabel.textContent = i18n.tDefault('market.philo.drinkConcentration', 'Drink Concentration: ');
         const drinkSelect = document.createElement('select');
         drinkSelect.style.cssText = `
             padding: 4px 8px;
@@ -721,16 +730,18 @@ class PhiloCalculator {
             this.saveSettings();
         });
         hideNegCheckLabel.appendChild(hideNegCheckbox);
-        hideNegCheckLabel.appendChild(document.createTextNode('Hide Negative Profit'));
+        hideNegCheckLabel.appendChild(
+            document.createTextNode(i18n.tDefault('market.philo.hideNegativeProfit', 'Hide Negative Profit'))
+        );
         container.appendChild(hideNegCheckLabel);
 
         // Filter label
         const filterLabel = document.createElement('label');
         filterLabel.style.cssText = 'display: flex; align-items: center; gap: 6px; font-size: 13px;';
-        filterLabel.textContent = 'Filter: ';
+        filterLabel.textContent = i18n.tDefault('market.philo.filterLabel', 'Filter: ');
         const filterInput = document.createElement('input');
         filterInput.type = 'text';
-        filterInput.placeholder = 'Item name...';
+        i18n.bindDefault(filterInput, 'market.philo.itemNamePlaceholder', 'Item name...', undefined, 'placeholder');
         filterInput.value = this.filterText;
         filterInput.style.cssText = `
             width: 140px;
@@ -751,7 +762,7 @@ class PhiloCalculator {
 
         // Refresh prices button
         const refreshBtn = document.createElement('button');
-        refreshBtn.textContent = 'Refresh Prices';
+        i18n.bindDefault(refreshBtn, 'market.philo.refreshPrices', 'Refresh Prices');
         refreshBtn.style.cssText = `
             padding: 4px 12px;
             background: #4a90e2;
@@ -769,7 +780,7 @@ class PhiloCalculator {
         });
         refreshBtn.addEventListener('click', async () => {
             refreshBtn.disabled = true;
-            refreshBtn.textContent = 'Refreshing...';
+            refreshBtn.textContent = i18n.tDefault('market.philo.refreshing', 'Refreshing...');
             refreshBtn.style.opacity = '0.6';
             try {
                 await marketAPI.fetch(true);
@@ -783,7 +794,7 @@ class PhiloCalculator {
                 console.error('[PhiloCalculator] Failed to refresh prices:', error);
             }
             refreshBtn.disabled = false;
-            refreshBtn.textContent = 'Refresh Prices';
+            refreshBtn.textContent = i18n.tDefault('market.philo.refreshPrices', 'Refresh Prices');
             refreshBtn.style.opacity = '1';
         });
         container.appendChild(refreshBtn);
@@ -807,23 +818,23 @@ class PhiloCalculator {
         if (!container) return;
 
         const columns = [
-            { key: 'name', label: 'Item', align: 'left' },
-            { key: 'cost', label: 'Cost' },
-            { key: 'philoChance', label: 'Philo %' },
-            { key: 'returnChance', label: 'Return %' },
-            { key: 'transmuteChance', label: 'Base Xmute %' },
-            { key: 'effectiveTransmuteChance', label: 'Eff. Xmute %' },
-            { key: 'transmuteCost', label: 'Xmute Cost' },
-            { key: 'ev', label: 'EV' },
-            { key: 'itemsPerAction', label: 'Items/Act' },
-            { key: 'actionsPerPhilo', label: 'Acts/Philo' },
-            { key: 'itemsPerPhilo', label: 'Items/Philo' },
-            { key: 'profitPerPhilo', label: 'Profit/Philo' },
-            { key: 'profitMargin', label: 'Margin' },
-            { key: 'timePerPhiloSeconds', label: 'Time/Philo' },
-            { key: 'profitPerHour', label: 'Profit/Hr' },
-            { key: 'revenuePerHour', label: 'Revenue/Hr' },
-            { key: 'costPerHour', label: 'Cost/Hr' },
+            { key: 'name', label: i18n.tDefault('market.philo.colItem', 'Item'), align: 'left' },
+            { key: 'cost', label: i18n.tDefault('market.philo.colCost', 'Cost') },
+            { key: 'philoChance', label: i18n.tDefault('market.philo.colPhiloPct', 'Philo %') },
+            { key: 'returnChance', label: i18n.tDefault('market.philo.colReturnPct', 'Return %') },
+            { key: 'transmuteChance', label: i18n.tDefault('market.philo.colBaseXmute', 'Base Xmute %') },
+            { key: 'effectiveTransmuteChance', label: i18n.tDefault('market.philo.colEffXmute', 'Eff. Xmute %') },
+            { key: 'transmuteCost', label: i18n.tDefault('market.philo.colXmuteCost', 'Xmute Cost') },
+            { key: 'ev', label: i18n.tDefault('market.philo.colEv', 'EV') },
+            { key: 'itemsPerAction', label: i18n.tDefault('market.philo.colItemsPerAct', 'Items/Act') },
+            { key: 'actionsPerPhilo', label: i18n.tDefault('market.philo.colActsPerPhilo', 'Acts/Philo') },
+            { key: 'itemsPerPhilo', label: i18n.tDefault('market.philo.colItemsPerPhilo', 'Items/Philo') },
+            { key: 'profitPerPhilo', label: i18n.tDefault('market.philo.colProfitPerPhilo', 'Profit/Philo') },
+            { key: 'profitMargin', label: i18n.tDefault('market.philo.colMargin', 'Margin') },
+            { key: 'timePerPhiloSeconds', label: i18n.tDefault('market.philo.colTimePerPhilo', 'Time/Philo') },
+            { key: 'profitPerHour', label: i18n.tDefault('market.philo.colProfitPerHr', 'Profit/Hr') },
+            { key: 'revenuePerHour', label: i18n.tDefault('market.philo.colRevenuePerHr', 'Revenue/Hr') },
+            { key: 'costPerHour', label: i18n.tDefault('market.philo.colCostPerHr', 'Cost/Hr') },
         ];
 
         const table = document.createElement('table');

@@ -13,6 +13,7 @@ import {
     calculateEnhancementMaterialRequirements,
 } from '../../utils/material-calculator.js';
 import { formatWithSeparator } from '../../utils/formatters.js';
+import { getLocalizedItemName, getLocalizedActionName } from '../../utils/localized-game-names.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { createAutofillManager } from '../../utils/marketplace-autofill.js';
 import {
@@ -27,6 +28,7 @@ import { getEnhancingParams } from '../../utils/enhancement-config.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
 import { getActionHridFromName } from '../../utils/game-lookups.js';
 import { setReactInputValue } from '../../utils/react-input.js';
+import i18n from '../../core/i18n/index.js';
 
 /**
  * Module-level state
@@ -483,7 +485,7 @@ function createEnhancementMissingMaterialsButton(
 ) {
     const button = document.createElement('button');
     button.id = 'mwi-missing-mats-button';
-    button.textContent = 'Missing Mats Marketplace';
+    button.textContent = i18n.tDefault('actMisc.missingMats.button', 'Missing Mats Marketplace');
     button.disabled = disabled;
     button.style.cssText = `
         width: 100%;
@@ -605,9 +607,12 @@ async function handleEnhancementMissingMaterialsClick(
 function createMissingMaterialsButton(missingMaterials, actionHrid, numActions, disabled = false) {
     const button = document.createElement('button');
     button.id = 'mwi-missing-mats-button';
-    button.textContent = 'Missing Mats Marketplace';
+    button.textContent = i18n.tDefault('actMisc.missingMats.button', 'Missing Mats Marketplace');
     button.disabled = disabled;
-    button.title = disabled && numActions <= 0 ? 'Enter a quantity to check missing materials' : '';
+    button.title =
+        disabled && numActions <= 0
+            ? i18n.tDefault('actMisc.missingMats.enterQuantity', 'Enter a quantity to check missing materials')
+            : '';
     button.style.cssText = `
         width: 100%;
         padding: 10px 16px;
@@ -778,7 +783,7 @@ function createStrategyIndicator(strategyInfo) {
     `;
 
     if (strategyInfo.protectFrom === 0) {
-        indicator.textContent = 'No protection needed';
+        indicator.textContent = i18n.tDefault('actMisc.missingMats.noProtection', 'No protection needed');
     } else {
         // Get item sprite URL from existing DOM
         const spriteUse = document.querySelector('use[href*="items_sprite"]');
@@ -796,7 +801,9 @@ function createStrategyIndicator(strategyInfo) {
         }
 
         const label = document.createElement('span');
-        label.textContent = `From: +${strategyInfo.protectFrom}`;
+        label.textContent = i18n.tDefault('actMisc.missingMats.protectFrom', 'From: +{level}', {
+            level: strategyInfo.protectFrom,
+        });
         indicator.appendChild(label);
     }
 
@@ -831,11 +838,11 @@ function createReturnTab(referenceTab) {
 
     if (storedActionHrid) {
         const details = dataManager.getActionDetails(storedActionHrid);
-        displayName = details?.name || storedActionHrid.split('/').pop();
+        displayName = getLocalizedActionName(storedActionHrid, details?.name || storedActionHrid.split('/').pop());
         if (storedNumActions > 0) displayName += ` (\u00d7${formatWithSeparator(storedNumActions)})`;
     } else if (storedEnhancementContext) {
         const ctx = storedEnhancementContext;
-        const itemName = dataManager.getItemDetails(ctx.itemHrid)?.name || '...';
+        const itemName = getLocalizedItemName(ctx.itemHrid, dataManager.getItemDetails(ctx.itemHrid)?.name || '...');
         displayName = `${itemName} +${ctx.startLevel}\u2192+${ctx.targetLevel}`;
     } else {
         return null;
@@ -851,7 +858,7 @@ function createReturnTab(referenceTab) {
     if (badgeSpan) {
         badgeSpan.innerHTML = `
             <div style="text-align: center;">
-                <div>\u21a9 Return</div>
+                <div>${i18n.tDefault('actMisc.missingMats.return', '\u21a9 Return')}</div>
                 <div style="font-size: 0.75em; color: #60a5fa;">${displayName}</div>
             </div>
         `;
@@ -1065,19 +1072,28 @@ function updateTabBadge(tab, material) {
 
     if (!material.isTradeable) {
         statusColor = '#888888'; // Gray - not tradeable
-        statusText = 'Not Tradeable';
+        statusText = i18n.tDefault('actMisc.missingMats.notTradeable', 'Not Tradeable');
     } else if (material.missing > 0) {
         statusColor = '#ef4444'; // Red - missing materials
         // Show queued amount if any materials are reserved by queue
-        const queuedText = material.queued > 0 ? ` (${formatWithSeparator(material.queued)} Q'd)` : '';
-        statusText = `Missing: ${formatWithSeparator(material.missing)}${queuedText}`;
+        const queuedText =
+            material.queued > 0
+                ? i18n.tDefault('actMisc.missingMats.queuedSuffix', " ({count} Q'd)", {
+                      count: formatWithSeparator(material.queued),
+                  })
+                : '';
+        statusText = i18n.tDefault('actMisc.missingMats.missing', 'Missing: {value}', {
+            value: `${formatWithSeparator(material.missing)}${queuedText}`,
+        });
     } else {
         statusColor = '#4ade80'; // Green - sufficient materials
-        statusText = `Sufficient (${formatWithSeparator(material.required)})`;
+        statusText = i18n.tDefault('actMisc.missingMats.sufficient', 'Sufficient ({count})', {
+            count: formatWithSeparator(material.required),
+        });
     }
 
-    // Title case: capitalize first letter of each word
-    const titleCaseName = material.itemName
+    // Title case: capitalize first letter of each word (localized name; English fallback)
+    const titleCaseName = getLocalizedItemName(material.itemHrid, material.itemName)
         .split(' ')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');

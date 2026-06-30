@@ -4,10 +4,12 @@
  */
 
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import marketAPI from '../../api/marketplace.js';
 import webSocketHook from '../../core/websocket.js';
 import { formatLargeNumber } from '../../utils/formatters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
+import { getLocalizedSkillName } from '../../utils/localized-game-names.js';
 
 /**
  * CombatSummary class manages combat completion statistics display
@@ -156,7 +158,11 @@ class CombatSummary {
 
                     elem.insertAdjacentHTML(
                         'beforeend',
-                        `<div id="mwi-combat-encounters" style="color: ${textColor};">Encounters/hour: ${encountersPerHour}</div>`
+                        `<div id="mwi-combat-encounters" style="color: ${textColor};">${i18n.tDefault(
+                            'combat.summary.encountersPerHour',
+                            'Encounters/hour: {value}',
+                            { value: encountersPerHour }
+                        )}</div>`
                     );
                 }
             }
@@ -166,7 +172,14 @@ class CombatSummary {
                 .querySelector('div#mwi-combat-encounters')
                 ?.insertAdjacentHTML(
                     'afterend',
-                    `<div id="mwi-combat-revenue" style="color: ${textColor};">Total revenue: ${formatLargeNumber(Math.round(totalPriceAsk))} / ${formatLargeNumber(Math.round(totalPriceBid))}</div>`
+                    `<div id="mwi-combat-revenue" style="color: ${textColor};">${i18n.tDefault(
+                        'combat.summary.totalRevenue',
+                        'Total revenue: {ask} / {bid}',
+                        {
+                            ask: formatLargeNumber(Math.round(totalPriceAsk)),
+                            bid: formatLargeNumber(Math.round(totalPriceBid)),
+                        }
+                    )}</div>`
                 );
 
             // Per-hour revenue
@@ -174,20 +187,30 @@ class CombatSummary {
                 const revenuePerHourAsk = totalPriceAsk / (battleDurationSec / 3600);
                 const revenuePerHourBid = totalPriceBid / (battleDurationSec / 3600);
 
-                document
-                    .querySelector('div#mwi-combat-revenue')
-                    ?.insertAdjacentHTML(
-                        'afterend',
-                        `<div id="mwi-combat-revenue-hour" style="color: ${textColor};">Revenue/hour: ${formatLargeNumber(Math.round(revenuePerHourAsk))} / ${formatLargeNumber(Math.round(revenuePerHourBid))}</div>`
-                    );
+                document.querySelector('div#mwi-combat-revenue')?.insertAdjacentHTML(
+                    'afterend',
+                    `<div id="mwi-combat-revenue-hour" style="color: ${textColor};">${i18n.tDefault(
+                        'combat.summary.revenuePerHour',
+                        'Revenue/hour: {ask} / {bid}',
+                        {
+                            ask: formatLargeNumber(Math.round(revenuePerHourAsk)),
+                            bid: formatLargeNumber(Math.round(revenuePerHourBid)),
+                        }
+                    )}</div>`
+                );
 
                 // Per-day revenue
-                document
-                    .querySelector('div#mwi-combat-revenue-hour')
-                    ?.insertAdjacentHTML(
-                        'afterend',
-                        `<div id="mwi-combat-revenue-day" style="color: ${textColor};">Revenue/day: ${formatLargeNumber(Math.round(revenuePerHourAsk * 24))} / ${formatLargeNumber(Math.round(revenuePerHourBid * 24))}</div>`
-                    );
+                document.querySelector('div#mwi-combat-revenue-hour')?.insertAdjacentHTML(
+                    'afterend',
+                    `<div id="mwi-combat-revenue-day" style="color: ${textColor};">${i18n.tDefault(
+                        'combat.summary.revenuePerDay',
+                        'Revenue/day: {ask} / {bid}',
+                        {
+                            ask: formatLargeNumber(Math.round(revenuePerHourAsk * 24)),
+                            bid: formatLargeNumber(Math.round(revenuePerHourBid * 24)),
+                        }
+                    )}</div>`
+                );
             }
 
             // Total experience
@@ -195,7 +218,11 @@ class CombatSummary {
                 .querySelector('div#mwi-combat-revenue-day')
                 ?.insertAdjacentHTML(
                     'afterend',
-                    `<div id="mwi-combat-total-exp" style="color: ${textColor};">Total exp: ${formatLargeNumber(Math.round(totalSkillsExp))}</div>`
+                    `<div id="mwi-combat-total-exp" style="color: ${textColor};">${i18n.tDefault(
+                        'combat.summary.totalExp',
+                        'Total exp: {value}',
+                        { value: formatLargeNumber(Math.round(totalSkillsExp)) }
+                    )}</div>`
                 );
 
             // Per-hour experience breakdowns
@@ -207,7 +234,11 @@ class CombatSummary {
                     .querySelector('div#mwi-combat-total-exp')
                     ?.insertAdjacentHTML(
                         'afterend',
-                        `<div id="mwi-combat-total-exp-hour" style="color: ${textColor};">Total exp/hour: ${formatLargeNumber(Math.round(totalExpPerHour))}</div>`
+                        `<div id="mwi-combat-total-exp-hour" style="color: ${textColor};">${i18n.tDefault(
+                            'combat.summary.totalExpPerHour',
+                            'Total exp/hour: {value}',
+                            { value: formatLargeNumber(Math.round(totalExpPerHour)) }
+                        )}</div>`
                     );
 
                 // Individual skill exp/hour
@@ -231,7 +262,14 @@ class CombatSummary {
                             const expPerHour = expGained / (battleDurationSec / 3600);
                             lastElement.insertAdjacentHTML(
                                 'afterend',
-                                `<div style="color: ${textColor};">${skill.name} exp/hour: ${formatLargeNumber(Math.round(expPerHour))}</div>`
+                                `<div style="color: ${textColor};">${i18n.tDefault(
+                                    'combat.summary.skillExpPerHour',
+                                    '{skill} exp/hour: {value}',
+                                    {
+                                        skill: getLocalizedSkillName(skill.skillHrid, skill.name),
+                                        value: formatLargeNumber(Math.round(expPerHour)),
+                                    }
+                                )}</div>`
                             );
                             // Update lastElement to the newly inserted div
                             lastElement = lastElement.nextElementSibling;

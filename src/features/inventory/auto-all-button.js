@@ -5,6 +5,7 @@
 
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import { resolveItemHridFromLocalizedName } from '../../utils/localized-game-names.js';
 import tooltipObserver from '../../core/tooltip-observer.js';
 
 class AutoAllButton {
@@ -140,7 +141,7 @@ class AutoAllButton {
             }
         }
 
-        return this.itemNameToHridCache.get(itemName) || null;
+        return this.itemNameToHridCache.get(itemName) || resolveItemHridFromLocalizedName(itemName);
     }
 
     /**

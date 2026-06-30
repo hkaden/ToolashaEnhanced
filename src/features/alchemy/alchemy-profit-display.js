@@ -4,6 +4,7 @@
  */
 
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import domObserver from '../../core/dom-observer.js';
 import dataManager from '../../core/data-manager.js';
 import alchemyProfit from './alchemy-profit.js';
@@ -14,6 +15,7 @@ import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { calculateExperienceMultiplier } from '../../utils/experience-parser.js';
 import { calculateActionsPerHour } from '../../utils/profit-helpers.js';
 import { calculateMultiLevelProgress } from '../../utils/experience-calculator.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 
 class AlchemyProfitDisplay {
     constructor() {
@@ -437,7 +439,11 @@ class AlchemyProfitDisplay {
 
         // Revenue Section
         const revenueDiv = document.createElement('div');
-        revenueDiv.innerHTML = `<div style="font-weight: 500; color: var(--text-color-primary, #fff); margin-bottom: 4px;">Revenue: ${formatLargeNumber(revenue)}/hr</div>`;
+        revenueDiv.innerHTML = `<div style="font-weight: 500; color: var(--text-color-primary, #fff); margin-bottom: 4px;">${i18n.tDefault(
+            'alcProfit.revenue',
+            'Revenue: {value}/hr',
+            { value: formatLargeNumber(revenue) }
+        )}</div>`;
 
         // Split drops into normal, essence, and rare
         const normalDrops = profitData.dropRevenues.filter((drop) => !drop.isEssence && !drop.isRare);
@@ -451,7 +457,7 @@ class AlchemyProfitDisplay {
 
             for (const drop of normalDrops) {
                 const itemDetails = dataManager.getItemDetails(drop.itemHrid);
-                const itemName = itemDetails?.name || drop.itemHrid;
+                const itemName = getLocalizedItemName(drop.itemHrid, itemDetails?.name || drop.itemHrid);
                 const decimals = 2; // Always use 2 decimals
                 const dropRatePct = formatPercentage(drop.dropRate, drop.dropRate < 0.01 ? 3 : 2);
 
@@ -466,7 +472,18 @@ class AlchemyProfitDisplay {
                     line.style.textDecoration = 'line-through';
                     line.style.opacity = '0.6';
                 }
-                line.textContent = `• ${itemName}: ${dropsDisplay}/hr (${dropRatePct} × ${formatPercentage(profitData.successRate, 1)} success) @ ${formatWithSeparator(Math.round(drop.price))} → ${formatLargeNumber(Math.round(drop.revenuePerHour))}/hr`;
+                line.textContent = i18n.tDefault(
+                    'alcProfit.dropNormal',
+                    '• {name}: {drops}/hr ({rate} × {success} success) @ {price} → {revenue}/hr',
+                    {
+                        name: itemName,
+                        drops: dropsDisplay,
+                        rate: dropRatePct,
+                        success: formatPercentage(profitData.successRate, 1),
+                        price: formatWithSeparator(Math.round(drop.price)),
+                        revenue: formatLargeNumber(Math.round(drop.revenuePerHour)),
+                    }
+                );
                 normalDropsContent.appendChild(line);
 
                 normalDropsRevenue += drop.revenuePerHour;
@@ -474,7 +491,11 @@ class AlchemyProfitDisplay {
 
             const normalDropsSection = this.createTrackedCollapsible(
                 '',
-                `Normal Drops: ${formatLargeNumber(Math.round(normalDropsRevenue))}/hr (${normalDrops.length} item${normalDrops.length !== 1 ? 's' : ''})`,
+                i18n.tDefault(
+                    'alcProfit.normalDrops',
+                    `Normal Drops: {value}/hr ({count} item${normalDrops.length !== 1 ? 's' : ''})`,
+                    { value: formatLargeNumber(Math.round(normalDropsRevenue)), count: normalDrops.length }
+                ),
                 null,
                 normalDropsContent,
                 false,
@@ -490,13 +511,23 @@ class AlchemyProfitDisplay {
 
             for (const drop of essenceDrops) {
                 const itemDetails = dataManager.getItemDetails(drop.itemHrid);
-                const itemName = itemDetails?.name || drop.itemHrid;
+                const itemName = getLocalizedItemName(drop.itemHrid, itemDetails?.name || drop.itemHrid);
                 const decimals = 2; // Always use 2 decimals
                 const dropRatePct = formatPercentage(drop.dropRate, drop.dropRate < 0.01 ? 3 : 2);
 
                 const line = document.createElement('div');
                 line.style.marginLeft = '8px';
-                line.textContent = `• ${itemName}: ${drop.dropsPerHour.toFixed(decimals)}/hr (${dropRatePct}, not affected by success rate) @ ${formatWithSeparator(Math.round(drop.price))} → ${formatLargeNumber(Math.round(drop.revenuePerHour))}/hr`;
+                line.textContent = i18n.tDefault(
+                    'alcProfit.dropNotAffected',
+                    '• {name}: {drops}/hr ({rate}, not affected by success rate) @ {price} → {revenue}/hr',
+                    {
+                        name: itemName,
+                        drops: drop.dropsPerHour.toFixed(decimals),
+                        rate: dropRatePct,
+                        price: formatWithSeparator(Math.round(drop.price)),
+                        revenue: formatLargeNumber(Math.round(drop.revenuePerHour)),
+                    }
+                );
                 essenceContent.appendChild(line);
 
                 essenceRevenue += drop.revenuePerHour;
@@ -504,7 +535,11 @@ class AlchemyProfitDisplay {
 
             const essenceSection = this.createTrackedCollapsible(
                 '',
-                `Essence Drops: ${formatLargeNumber(Math.round(essenceRevenue))}/hr (${essenceDrops.length} item${essenceDrops.length !== 1 ? 's' : ''})`,
+                i18n.tDefault(
+                    'alcProfit.essenceDrops',
+                    `Essence Drops: {value}/hr ({count} item${essenceDrops.length !== 1 ? 's' : ''})`,
+                    { value: formatLargeNumber(Math.round(essenceRevenue)), count: essenceDrops.length }
+                ),
                 null,
                 essenceContent,
                 false,
@@ -520,7 +555,7 @@ class AlchemyProfitDisplay {
 
             for (const drop of rareDrops) {
                 const itemDetails = dataManager.getItemDetails(drop.itemHrid);
-                const itemName = itemDetails?.name || drop.itemHrid;
+                const itemName = getLocalizedItemName(drop.itemHrid, itemDetails?.name || drop.itemHrid);
                 const decimals = drop.dropsPerHour < 1 ? 2 : 1;
                 const baseDropRatePct = formatPercentage(drop.dropRate, drop.dropRate < 0.01 ? 3 : 2);
                 const effectiveDropRatePct = formatPercentage(
@@ -534,9 +569,31 @@ class AlchemyProfitDisplay {
                 // Show both base and effective drop rate (not affected by success rate)
                 if (profitData.rareFindBreakdown && profitData.rareFindBreakdown.total > 0) {
                     const rareFindBonus = `${profitData.rareFindBreakdown.total.toFixed(2)}%`;
-                    line.textContent = `• ${itemName}: ${drop.dropsPerHour.toFixed(decimals)}/hr (${baseDropRatePct} base × ${rareFindBonus} rare find = ${effectiveDropRatePct}, not affected by success rate) @ ${formatWithSeparator(Math.round(drop.price))} → ${formatLargeNumber(Math.round(drop.revenuePerHour))}/hr`;
+                    line.textContent = i18n.tDefault(
+                        'alcProfit.dropRareWithFind',
+                        '• {name}: {drops}/hr ({base} base × {bonus} rare find = {effective}, not affected by success rate) @ {price} → {revenue}/hr',
+                        {
+                            name: itemName,
+                            drops: drop.dropsPerHour.toFixed(decimals),
+                            base: baseDropRatePct,
+                            bonus: rareFindBonus,
+                            effective: effectiveDropRatePct,
+                            price: formatWithSeparator(Math.round(drop.price)),
+                            revenue: formatLargeNumber(Math.round(drop.revenuePerHour)),
+                        }
+                    );
                 } else {
-                    line.textContent = `• ${itemName}: ${drop.dropsPerHour.toFixed(decimals)}/hr (${baseDropRatePct}, not affected by success rate) @ ${formatWithSeparator(Math.round(drop.price))} → ${formatLargeNumber(Math.round(drop.revenuePerHour))}/hr`;
+                    line.textContent = i18n.tDefault(
+                        'alcProfit.dropNotAffected',
+                        '• {name}: {drops}/hr ({rate}, not affected by success rate) @ {price} → {revenue}/hr',
+                        {
+                            name: itemName,
+                            drops: drop.dropsPerHour.toFixed(decimals),
+                            rate: baseDropRatePct,
+                            price: formatWithSeparator(Math.round(drop.price)),
+                            revenue: formatLargeNumber(Math.round(drop.revenuePerHour)),
+                        }
+                    );
                 }
 
                 rareContent.appendChild(line);
@@ -546,7 +603,11 @@ class AlchemyProfitDisplay {
 
             const rareSection = this.createTrackedCollapsible(
                 '',
-                `Rare Drops: ${formatLargeNumber(Math.round(rareRevenue))}/hr (${rareDrops.length} item${rareDrops.length !== 1 ? 's' : ''})`,
+                i18n.tDefault(
+                    'alcProfit.rareDrops',
+                    `Rare Drops: {value}/hr ({count} item${rareDrops.length !== 1 ? 's' : ''})`,
+                    { value: formatLargeNumber(Math.round(rareRevenue)), count: rareDrops.length }
+                ),
                 null,
                 rareContent,
                 false,
@@ -557,14 +618,18 @@ class AlchemyProfitDisplay {
 
         // Costs Section
         const costsDiv = document.createElement('div');
-        costsDiv.innerHTML = `<div style="font-weight: 500; color: var(--text-color-primary, #fff); margin-top: 12px; margin-bottom: 4px;">Costs: ${formatLargeNumber(costs)}/hr</div>`;
+        costsDiv.innerHTML = `<div style="font-weight: 500; color: var(--text-color-primary, #fff); margin-top: 12px; margin-bottom: 4px;">${i18n.tDefault(
+            'alcProfit.costs',
+            'Costs: {value}/hr',
+            { value: formatLargeNumber(costs) }
+        )}</div>`;
 
         // Material Costs subsection (consumed on ALL attempts)
         if (profitData.requirementCosts && profitData.requirementCosts.length > 0) {
             const materialCostsContent = document.createElement('div');
             for (const material of profitData.requirementCosts) {
                 const itemDetails = dataManager.getItemDetails(material.itemHrid);
-                const itemName = itemDetails?.name || material.itemHrid;
+                const itemName = getLocalizedItemName(material.itemHrid, itemDetails?.name || material.itemHrid);
                 const amountPerHour = material.count * profitData.actionsPerHour;
 
                 const line = document.createElement('div');
@@ -582,9 +647,31 @@ class AlchemyProfitDisplay {
                 // Show decomposition value if enhanced
                 if (material.enhancementLevel > 0 && material.decompositionValuePerHour > 0) {
                     const netCostPerHour = material.costPerHour - material.decompositionValuePerHour;
-                    line.textContent = `• ${itemName}${enhText}: ${formattedAmount}/hr @ ${formatWithSeparator(Math.round(material.price))} → ${formatLargeNumber(Math.round(material.costPerHour))}/hr (recovers ${formatLargeNumber(Math.round(material.decompositionValuePerHour))}/hr, net ${formatLargeNumber(Math.round(netCostPerHour))}/hr)`;
+                    line.textContent = i18n.tDefault(
+                        'alcProfit.materialRecovers',
+                        '• {name}{enh}: {amount}/hr @ {price} → {cost}/hr (recovers {recovered}/hr, net {net}/hr)',
+                        {
+                            name: itemName,
+                            enh: enhText,
+                            amount: formattedAmount,
+                            price: formatWithSeparator(Math.round(material.price)),
+                            cost: formatLargeNumber(Math.round(material.costPerHour)),
+                            recovered: formatLargeNumber(Math.round(material.decompositionValuePerHour)),
+                            net: formatLargeNumber(Math.round(netCostPerHour)),
+                        }
+                    );
                 } else {
-                    line.textContent = `• ${itemName}${enhText}: ${formattedAmount}/hr (consumed on all attempts) @ ${formatWithSeparator(Math.round(material.price))} → ${formatLargeNumber(Math.round(material.costPerHour))}/hr`;
+                    line.textContent = i18n.tDefault(
+                        'alcProfit.materialConsumed',
+                        '• {name}{enh}: {amount}/hr (consumed on all attempts) @ {price} → {cost}/hr',
+                        {
+                            name: itemName,
+                            enh: enhText,
+                            amount: formattedAmount,
+                            price: formatWithSeparator(Math.round(material.price)),
+                            cost: formatLargeNumber(Math.round(material.costPerHour)),
+                        }
+                    );
                 }
 
                 materialCostsContent.appendChild(line);
@@ -592,7 +679,14 @@ class AlchemyProfitDisplay {
 
             const materialCostsSection = this.createTrackedCollapsible(
                 '',
-                `Material Costs: ${formatLargeNumber(Math.round(profitData.materialCostPerHour))}/hr (${profitData.requirementCosts.length} material${profitData.requirementCosts.length !== 1 ? 's' : ''})`,
+                i18n.tDefault(
+                    'alcProfit.materialCosts',
+                    `Material Costs: {value}/hr ({count} material${profitData.requirementCosts.length !== 1 ? 's' : ''})`,
+                    {
+                        value: formatLargeNumber(Math.round(profitData.materialCostPerHour)),
+                        count: profitData.requirementCosts.length,
+                    }
+                ),
                 null,
                 materialCostsContent,
                 false,
@@ -605,7 +699,10 @@ class AlchemyProfitDisplay {
         if (profitData.catalystCost && profitData.catalystCost.itemHrid) {
             const catalystContent = document.createElement('div');
             const itemDetails = dataManager.getItemDetails(profitData.catalystCost.itemHrid);
-            const itemName = itemDetails?.name || profitData.catalystCost.itemHrid;
+            const itemName = getLocalizedItemName(
+                profitData.catalystCost.itemHrid,
+                itemDetails?.name || profitData.catalystCost.itemHrid
+            );
 
             // Calculate catalysts per hour (only consumed on success)
             const catalystsPerHour = profitData.actionsPerHour * profitData.successRate;
@@ -618,12 +715,24 @@ class AlchemyProfitDisplay {
 
             const line = document.createElement('div');
             line.style.marginLeft = '8px';
-            line.textContent = `• ${itemName}: ${formattedCatalystAmount}/hr (consumed only on success, ${formatPercentage(profitData.successRate, 2)}) @ ${formatWithSeparator(Math.round(profitData.catalystCost.price))} → ${formatLargeNumber(Math.round(profitData.catalystCost.costPerHour))}/hr`;
+            line.textContent = i18n.tDefault(
+                'alcProfit.catalystLine',
+                '• {name}: {amount}/hr (consumed only on success, {rate}) @ {price} → {cost}/hr',
+                {
+                    name: itemName,
+                    amount: formattedCatalystAmount,
+                    rate: formatPercentage(profitData.successRate, 2),
+                    price: formatWithSeparator(Math.round(profitData.catalystCost.price)),
+                    cost: formatLargeNumber(Math.round(profitData.catalystCost.costPerHour)),
+                }
+            );
             catalystContent.appendChild(line);
 
             const catalystSection = this.createTrackedCollapsible(
                 '',
-                `Catalyst Cost: ${formatLargeNumber(Math.round(profitData.catalystCost.costPerHour))}/hr`,
+                i18n.tDefault('alcProfit.catalystCost', 'Catalyst Cost: {value}/hr', {
+                    value: formatLargeNumber(Math.round(profitData.catalystCost.costPerHour)),
+                }),
                 null,
                 catalystContent,
                 false,
@@ -637,7 +746,7 @@ class AlchemyProfitDisplay {
             const drinkCostsContent = document.createElement('div');
             for (const drink of profitData.consumableCosts) {
                 const itemDetails = dataManager.getItemDetails(drink.itemHrid);
-                const itemName = itemDetails?.name || drink.itemHrid;
+                const itemName = getLocalizedItemName(drink.itemHrid, itemDetails?.name || drink.itemHrid);
 
                 // Format drinks per hour
                 const formattedDrinkAmount =
@@ -654,7 +763,11 @@ class AlchemyProfitDisplay {
             const drinkCount = profitData.consumableCosts.length;
             const drinkCostsSection = this.createTrackedCollapsible(
                 '',
-                `Drink Costs: ${formatLargeNumber(Math.round(profitData.totalTeaCostPerHour))}/hr (${drinkCount} drink${drinkCount !== 1 ? 's' : ''})`,
+                i18n.tDefault(
+                    'alcProfit.drinkCosts',
+                    `Drink Costs: {value}/hr ({count} drink${drinkCount !== 1 ? 's' : ''})`,
+                    { value: formatLargeNumber(Math.round(profitData.totalTeaCostPerHour)), count: drinkCount }
+                ),
                 null,
                 drinkCostsContent,
                 false,
@@ -672,7 +785,7 @@ class AlchemyProfitDisplay {
         // Main modifiers header
         const modifiersHeader = document.createElement('div');
         modifiersHeader.style.cssText = 'font-weight: 500; color: var(--text-color-primary, #fff); margin-bottom: 4px;';
-        modifiersHeader.textContent = 'Modifiers:';
+        i18n.bindDefault(modifiersHeader, 'alcProfit.modifiers', 'Modifiers:');
         modifiersDiv.appendChild(modifiersHeader);
 
         // Success Rate breakdown
@@ -683,20 +796,28 @@ class AlchemyProfitDisplay {
             // Base success rate (from player level vs recipe requirement)
             const line = document.createElement('div');
             line.style.marginLeft = '8px';
-            line.textContent = `• Base Success Rate: ${formatPercentage(successBreakdown.base, 1)}`;
+            line.textContent = i18n.tDefault('alcProfit.baseSuccessRate', '• Base Success Rate: {value}', {
+                value: formatPercentage(successBreakdown.base, 1),
+            });
             successContent.appendChild(line);
 
             // Tea bonus (from Catalytic Tea)
             if (successBreakdown.tea > 0) {
                 const teaLine = document.createElement('div');
                 teaLine.style.marginLeft = '8px';
-                teaLine.textContent = `• Tea Bonus: +${formatPercentage(successBreakdown.tea, 1)} (multiplicative)`;
+                teaLine.textContent = i18n.tDefault(
+                    'alcProfit.teaBonusMultiplicative',
+                    '• Tea Bonus: +{value} (multiplicative)',
+                    { value: formatPercentage(successBreakdown.tea, 1) }
+                );
                 successContent.appendChild(teaLine);
             }
 
             const successSection = this.createTrackedCollapsible(
                 '',
-                `Success Rate: ${formatPercentage(profitData.successRate, 1)}`,
+                i18n.tDefault('alcProfit.successRate', 'Success Rate: {value}', {
+                    value: formatPercentage(profitData.successRate, 1),
+                }),
                 null,
                 successContent,
                 false,
@@ -707,7 +828,9 @@ class AlchemyProfitDisplay {
             // Fallback if breakdown not available
             const successRateLine = document.createElement('div');
             successRateLine.style.marginLeft = '8px';
-            successRateLine.textContent = `• Success Rate: ${formatPercentage(profitData.successRate, 1)}`;
+            successRateLine.textContent = i18n.tDefault('alcProfit.successRateLine', '• Success Rate: {value}', {
+                value: formatPercentage(profitData.successRate, 1),
+            });
             modifiersDiv.appendChild(successRateLine);
         }
 
@@ -719,48 +842,62 @@ class AlchemyProfitDisplay {
             if (effBreakdown.levelEfficiency > 0) {
                 const line = document.createElement('div');
                 line.style.marginLeft = '8px';
-                line.textContent = `• Level Bonus: +${effBreakdown.levelEfficiency.toFixed(2)}%`;
+                line.textContent = i18n.tDefault('alcProfit.effLevelBonus', '• Level Bonus: +{value}%', {
+                    value: effBreakdown.levelEfficiency.toFixed(2),
+                });
                 effContent.appendChild(line);
             }
 
             if (effBreakdown.houseEfficiency > 0) {
                 const line = document.createElement('div');
                 line.style.marginLeft = '8px';
-                line.textContent = `• House Bonus: +${effBreakdown.houseEfficiency.toFixed(2)}%`;
+                line.textContent = i18n.tDefault('alcProfit.effHouseBonus', '• House Bonus: +{value}%', {
+                    value: effBreakdown.houseEfficiency.toFixed(2),
+                });
                 effContent.appendChild(line);
             }
 
             if (effBreakdown.teaEfficiency > 0) {
                 const line = document.createElement('div');
                 line.style.marginLeft = '8px';
-                line.textContent = `• Tea Bonus: +${effBreakdown.teaEfficiency.toFixed(2)}%`;
+                line.textContent = i18n.tDefault('alcProfit.effTeaBonus', '• Tea Bonus: +{value}%', {
+                    value: effBreakdown.teaEfficiency.toFixed(2),
+                });
                 effContent.appendChild(line);
             }
 
             if (effBreakdown.equipmentEfficiency > 0) {
                 const line = document.createElement('div');
                 line.style.marginLeft = '8px';
-                line.textContent = `• Equipment Bonus: +${effBreakdown.equipmentEfficiency.toFixed(2)}%`;
+                line.textContent = i18n.tDefault('alcProfit.effEquipmentBonus', '• Equipment Bonus: +{value}%', {
+                    value: effBreakdown.equipmentEfficiency.toFixed(2),
+                });
                 effContent.appendChild(line);
             }
 
             if (effBreakdown.communityEfficiency > 0) {
                 const line = document.createElement('div');
                 line.style.marginLeft = '8px';
-                line.textContent = `• Community Buff: +${effBreakdown.communityEfficiency.toFixed(2)}%`;
+                line.textContent = i18n.tDefault('alcProfit.effCommunityBuff', '• Community Buff: +{value}%', {
+                    value: effBreakdown.communityEfficiency.toFixed(2),
+                });
                 effContent.appendChild(line);
             }
 
             if (effBreakdown.achievementEfficiency > 0) {
                 const line = document.createElement('div');
                 line.style.marginLeft = '8px';
-                line.textContent = `• Achievement Bonus: +${effBreakdown.achievementEfficiency.toFixed(2)}%`;
+                line.textContent = i18n.tDefault('alcProfit.effAchievementBonus', '• Achievement Bonus: +{value}%', {
+                    value: effBreakdown.achievementEfficiency.toFixed(2),
+                });
                 effContent.appendChild(line);
             }
 
             const effSection = this.createTrackedCollapsible(
                 '',
-                `Efficiency: +${formatPercentage(profitData.efficiency, 1)}`,
+                i18n.tDefault('alcProfit.efficiency', 'Efficiency: +{value}', {
+                    value: formatPercentage(profitData.efficiency, 1),
+                }),
                 null,
                 effContent,
                 false,
@@ -781,20 +918,26 @@ class AlchemyProfitDisplay {
                 if (speedBreakdown.equipment > 0) {
                     const line = document.createElement('div');
                     line.style.marginLeft = '8px';
-                    line.textContent = `• Equipment Bonus: +${formatPercentage(speedBreakdown.equipment, 1)}`;
+                    line.textContent = i18n.tDefault('alcProfit.speedEquipmentBonus', '• Equipment Bonus: +{value}', {
+                        value: formatPercentage(speedBreakdown.equipment, 1),
+                    });
                     speedContent.appendChild(line);
                 }
 
                 if (speedBreakdown.tea > 0) {
                     const line = document.createElement('div');
                     line.style.marginLeft = '8px';
-                    line.textContent = `• Tea Bonus: +${formatPercentage(speedBreakdown.tea, 1)}`;
+                    line.textContent = i18n.tDefault('alcProfit.speedTeaBonus', '• Tea Bonus: +{value}', {
+                        value: formatPercentage(speedBreakdown.tea, 1),
+                    });
                     speedContent.appendChild(line);
                 }
 
                 const speedSection = this.createTrackedCollapsible(
                     '',
-                    `Action Speed: +${formatPercentage(actionSpeed, 1)}`,
+                    i18n.tDefault('alcProfit.actionSpeed', 'Action Speed: +{value}', {
+                        value: formatPercentage(actionSpeed, 1),
+                    }),
                     null,
                     speedContent,
                     false,
@@ -814,27 +957,39 @@ class AlchemyProfitDisplay {
                 if (rareBreakdown.equipment > 0) {
                     const line = document.createElement('div');
                     line.style.marginLeft = '8px';
-                    line.textContent = `• Equipment Bonus: +${rareBreakdown.equipment.toFixed(2)}%`;
+                    line.textContent = i18n.tDefault('alcProfit.effEquipmentBonus', '• Equipment Bonus: +{value}%', {
+                        value: rareBreakdown.equipment.toFixed(2),
+                    });
                     rareContent.appendChild(line);
                 }
 
                 if (rareBreakdown.house > 0) {
                     const line = document.createElement('div');
                     line.style.marginLeft = '8px';
-                    line.textContent = `• House Bonus: +${rareBreakdown.house.toFixed(2)}%`;
+                    line.textContent = i18n.tDefault('alcProfit.effHouseBonus', '• House Bonus: +{value}%', {
+                        value: rareBreakdown.house.toFixed(2),
+                    });
                     rareContent.appendChild(line);
                 }
 
                 if (rareBreakdown.achievement > 0) {
                     const line = document.createElement('div');
                     line.style.marginLeft = '8px';
-                    line.textContent = `• Achievement Bonus: +${rareBreakdown.achievement.toFixed(2)}%`;
+                    line.textContent = i18n.tDefault(
+                        'alcProfit.effAchievementBonus',
+                        '• Achievement Bonus: +{value}%',
+                        {
+                            value: rareBreakdown.achievement.toFixed(2),
+                        }
+                    );
                     rareContent.appendChild(line);
                 }
 
                 const rareSection = this.createTrackedCollapsible(
                     '',
-                    `Rare Find: +${rareBreakdown.total.toFixed(2)}%`,
+                    i18n.tDefault('alcProfit.rareFind', 'Rare Find: +{value}%', {
+                        value: rareBreakdown.total.toFixed(2),
+                    }),
                     null,
                     rareContent,
                     false,
@@ -854,13 +1009,17 @@ class AlchemyProfitDisplay {
                 if (essenceBreakdown.equipment > 0) {
                     const line = document.createElement('div');
                     line.style.marginLeft = '8px';
-                    line.textContent = `• Equipment Bonus: +${essenceBreakdown.equipment.toFixed(2)}%`;
+                    line.textContent = i18n.tDefault('alcProfit.effEquipmentBonus', '• Equipment Bonus: +{value}%', {
+                        value: essenceBreakdown.equipment.toFixed(2),
+                    });
                     essenceContent.appendChild(line);
                 }
 
                 const essenceSection = this.createTrackedCollapsible(
                     '',
-                    `Essence Find: +${essenceBreakdown.total.toFixed(2)}%`,
+                    i18n.tDefault('alcProfit.essenceFind', 'Essence Find: +{value}%', {
+                        value: essenceBreakdown.total.toFixed(2),
+                    }),
                     null,
                     essenceContent,
                     false,
@@ -878,7 +1037,14 @@ class AlchemyProfitDisplay {
         // Create "Detailed Breakdown" collapsible
         const topLevelContent = document.createElement('div');
         topLevelContent.innerHTML = `
-            <div style="margin-bottom: 4px;">Actions: ${profitData.actionsPerHour.toFixed(2)}/hr | Success Rate: ${formatPercentage(profitData.successRate, 2)}</div>
+            <div style="margin-bottom: 4px;">${i18n.tDefault(
+                'alcProfit.actionsSuccessLine',
+                'Actions: {actions}/hr | Success Rate: {rate}',
+                {
+                    actions: profitData.actionsPerHour.toFixed(2),
+                    rate: formatPercentage(profitData.successRate, 2),
+                }
+            )}</div>
         `;
 
         // Add Net Profit line at top level (always visible when Profitability is expanded)
@@ -889,7 +1055,10 @@ class AlchemyProfitDisplay {
             color: ${profitColor};
             margin-bottom: 8px;
         `;
-        netProfitLine.textContent = `Net Profit: ${formatLargeNumber(profit)}/hr, ${formatLargeNumber(profitPerDay)}/day`;
+        netProfitLine.textContent = i18n.tDefault('alcProfit.netProfit', 'Net Profit: {perHour}/hr, {perDay}/day', {
+            perHour: formatLargeNumber(profit),
+            perDay: formatLargeNumber(profitPerDay),
+        });
         topLevelContent.appendChild(netProfitLine);
 
         // Add pricing mode label
@@ -902,12 +1071,12 @@ class AlchemyProfitDisplay {
             color: #888;
             font-size: 0.85em;
         `;
-        modeDiv.textContent = `Pricing Mode: ${modeLabel}`;
+        modeDiv.textContent = i18n.tDefault('alcProfit.pricingMode', 'Pricing Mode: {mode}', { mode: modeLabel });
         topLevelContent.appendChild(modeDiv);
 
         const detailedBreakdownSection = this.createTrackedCollapsible(
             '📊',
-            'Detailed Breakdown',
+            i18n.tDefault('alcProfit.detailedBreakdown', 'Detailed Breakdown'),
             null,
             detailsContent,
             false,
@@ -917,7 +1086,14 @@ class AlchemyProfitDisplay {
         topLevelContent.appendChild(detailedBreakdownSection);
 
         // Create main profit section
-        const profitSection = this.createTrackedCollapsible('💰', 'Profitability', summary, topLevelContent, false, 0);
+        const profitSection = this.createTrackedCollapsible(
+            '💰',
+            i18n.tDefault('alcProfit.profitability', 'Profitability'),
+            summary,
+            topLevelContent,
+            false,
+            0
+        );
         profitSection.id = 'mwi-alchemy-profit';
         profitSection.classList.add('mwi-alchemy-profit');
         profitSection.setAttribute('data-mwi-profit-display', 'true');
@@ -1035,7 +1211,12 @@ class AlchemyProfitDisplay {
 
             // Base time and speed
             const baseTime = 20;
-            lines.push(`Base: ${baseTime.toFixed(2)}s → ${actionTime.toFixed(2)}s`);
+            lines.push(
+                i18n.tDefault('alcProfit.baseTime', 'Base: {from}s → {to}s', {
+                    from: baseTime.toFixed(2),
+                    to: actionTime.toFixed(2),
+                })
+            );
 
             // Always show actions/hr
             lines.push(`${calculateActionsPerHour(actionTime).toFixed(0)}/hr`);
@@ -1043,7 +1224,9 @@ class AlchemyProfitDisplay {
             // Speed breakdown (if any bonuses exist)
             if (profitData.actionSpeedBreakdown && profitData.actionSpeedBreakdown.total > 0) {
                 const speedBonus = profitData.actionSpeedBreakdown.total;
-                lines.push(`Speed: +${formatPercentage(speedBonus, 1)}`);
+                lines.push(
+                    i18n.tDefault('alcProfit.speedLine', 'Speed: +{value}', { value: formatPercentage(speedBonus, 1) })
+                );
 
                 // Show detailed equipment breakdown if available
                 const speedBreakdown = profitData.actionSpeedBreakdown;
@@ -1054,7 +1237,11 @@ class AlchemyProfitDisplay {
                     }
                 } else if (speedBreakdown.equipment > 0) {
                     // Fallback to total if details not available
-                    lines.push(`  - Equipment: +${formatPercentage(speedBreakdown.equipment, 1)}`);
+                    lines.push(
+                        i18n.tDefault('alcProfit.speedEquipmentDash', '  - Equipment: +{value}', {
+                            value: formatPercentage(speedBreakdown.equipment, 1),
+                        })
+                    );
                 }
 
                 // Show tea speed if available
@@ -1064,34 +1251,70 @@ class AlchemyProfitDisplay {
                     }
                 } else if (speedBreakdown.tea > 0) {
                     // Fallback to total if details not available
-                    lines.push(`  - Tea: +${formatPercentage(speedBreakdown.tea, 1)}`);
+                    lines.push(
+                        i18n.tDefault('alcProfit.speedTeaDash', '  - Tea: +{value}', {
+                            value: formatPercentage(speedBreakdown.tea, 1),
+                        })
+                    );
                 }
             }
 
             // Efficiency breakdown
             lines.push('');
             lines.push(
-                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">Efficiency: +${(profitData.efficiency * 100).toFixed(2)}% → Output: ×${efficiencyMultiplier.toFixed(2)} (${effectiveActionsPerHour}/hr)</span>`
+                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">${i18n.tDefault(
+                    'alcProfit.efficiencyOutput',
+                    'Efficiency: +{eff}% → Output: ×{mult} ({actions}/hr)',
+                    {
+                        eff: (profitData.efficiency * 100).toFixed(2),
+                        mult: efficiencyMultiplier.toFixed(2),
+                        actions: effectiveActionsPerHour,
+                    }
+                )}</span>`
             );
 
             const effBreakdown = profitData.efficiencyBreakdown;
             if (effBreakdown.levelEfficiency > 0) {
-                lines.push(`  - Level: +${effBreakdown.levelEfficiency.toFixed(2)}%`);
+                lines.push(
+                    i18n.tDefault('alcProfit.effLevelDash', '  - Level: +{value}%', {
+                        value: effBreakdown.levelEfficiency.toFixed(2),
+                    })
+                );
             }
             if (effBreakdown.houseEfficiency > 0) {
-                lines.push(`  - House: +${effBreakdown.houseEfficiency.toFixed(2)}%`);
+                lines.push(
+                    i18n.tDefault('alcProfit.effHouseDash', '  - House: +{value}%', {
+                        value: effBreakdown.houseEfficiency.toFixed(2),
+                    })
+                );
             }
             if (effBreakdown.equipmentEfficiency > 0) {
-                lines.push(`  - Equipment: +${effBreakdown.equipmentEfficiency.toFixed(2)}%`);
+                lines.push(
+                    i18n.tDefault('alcProfit.effEquipmentDash', '  - Equipment: +{value}%', {
+                        value: effBreakdown.equipmentEfficiency.toFixed(2),
+                    })
+                );
             }
             if (effBreakdown.teaEfficiency > 0) {
-                lines.push(`  - Tea: +${effBreakdown.teaEfficiency.toFixed(2)}%`);
+                lines.push(
+                    i18n.tDefault('alcProfit.effTeaDash', '  - Tea: +{value}%', {
+                        value: effBreakdown.teaEfficiency.toFixed(2),
+                    })
+                );
             }
             if (effBreakdown.achievementEfficiency > 0) {
-                lines.push(`  - Achievement: +${effBreakdown.achievementEfficiency.toFixed(2)}%`);
+                lines.push(
+                    i18n.tDefault('alcProfit.effAchievementDash', '  - Achievement: +{value}%', {
+                        value: effBreakdown.achievementEfficiency.toFixed(2),
+                    })
+                );
             }
             if (effBreakdown.communityEfficiency > 0) {
-                lines.push(`  - Community: +${effBreakdown.communityEfficiency.toFixed(2)}%`);
+                lines.push(
+                    i18n.tDefault('alcProfit.effCommunityDash', '  - Community: +{value}%', {
+                        value: effBreakdown.communityEfficiency.toFixed(2),
+                    })
+                );
             }
 
             // Total time (dynamic)
@@ -1106,7 +1329,7 @@ class AlchemyProfitDisplay {
                 const inputValue = inputField.value;
 
                 if (inputValue === '∞') {
-                    totalTimeLine.textContent = 'Total time: ∞';
+                    totalTimeLine.textContent = i18n.tDefault('alcProfit.totalTimeInfinite', 'Total time: ∞');
                     return;
                 }
 
@@ -1114,9 +1337,13 @@ class AlchemyProfitDisplay {
                 if (repeatCount > 0) {
                     const baseActionsNeeded = Math.ceil(repeatCount / efficiencyMultiplier);
                     const totalSeconds = baseActionsNeeded * actionTime;
-                    totalTimeLine.textContent = `Total time: ${timeReadable(totalSeconds)}`;
+                    totalTimeLine.textContent = i18n.tDefault('alcProfit.totalTime', 'Total time: {time}', {
+                        time: timeReadable(totalSeconds),
+                    });
                 } else {
-                    totalTimeLine.textContent = 'Total time: 0s';
+                    totalTimeLine.textContent = i18n.tDefault('alcProfit.totalTime', 'Total time: {time}', {
+                        time: '0s',
+                    });
                 }
             };
 
@@ -1137,20 +1364,34 @@ class AlchemyProfitDisplay {
             const getSummary = () => {
                 const inputValue = inputField.value;
                 if (inputValue === '∞') {
-                    return `${effectiveActionsPerHour}/hr | Total time: ∞`;
+                    return i18n.tDefault('alcProfit.speedTimeSummaryInfinite', '{actions}/hr | Total time: ∞', {
+                        actions: effectiveActionsPerHour,
+                    });
                 }
                 const repeatCount = parseInt(inputValue) || 0;
                 if (repeatCount > 0) {
                     const baseActionsNeeded = Math.ceil(repeatCount / efficiencyMultiplier);
                     const totalSeconds = baseActionsNeeded * actionTime;
-                    return `${effectiveActionsPerHour}/hr | Total time: ${timeReadable(totalSeconds)}`;
+                    return i18n.tDefault('alcProfit.speedTimeSummary', '{actions}/hr | Total time: {time}', {
+                        actions: effectiveActionsPerHour,
+                        time: timeReadable(totalSeconds),
+                    });
                 }
-                return `${effectiveActionsPerHour}/hr | Total time: 0s`;
+                return i18n.tDefault('alcProfit.speedTimeSummary', '{actions}/hr | Total time: {time}', {
+                    actions: effectiveActionsPerHour,
+                    time: '0s',
+                });
             };
 
             const summary = getSummary();
 
-            return this.createTrackedCollapsible('⏱', 'Action Speed & Time', summary, content, false);
+            return this.createTrackedCollapsible(
+                '⏱',
+                i18n.tDefault('alcProfit.actionSpeedTime', 'Action Speed & Time'),
+                summary,
+                content,
+                false
+            );
         } catch (error) {
             console.error('[AlchemyProfitDisplay] Error creating action speed/time section:', error);
             return null;
@@ -1221,7 +1462,13 @@ class AlchemyProfitDisplay {
             const lines = [];
 
             // Current level and progress
-            lines.push(`Current: Level ${currentLevel} | ${progressPercent.toFixed(2)}% to Level ${nextLevel}`);
+            lines.push(
+                i18n.tDefault('alcProfit.currentLevel', 'Current: Level {level} | {percent}% to Level {next}', {
+                    level: currentLevel,
+                    percent: progressPercent.toFixed(2),
+                    next: nextLevel,
+                })
+            );
             lines.push('');
 
             // Calculate XP breakdown
@@ -1234,20 +1481,31 @@ class AlchemyProfitDisplay {
             // Show base → modified XP with multiplier
             const modifiedXPSuccess = baseXP * wisdomMultiplier;
             lines.push(
-                `XP per action: ${formatWithSeparator(baseXP.toFixed(2))} base → ${formatWithSeparator(modifiedXPSuccess.toFixed(2))} (×${wisdomMultiplier.toFixed(3)})`
+                i18n.tDefault('alcProfit.xpPerAction', 'XP per action: {base} base → {modified} (×{mult})', {
+                    base: formatWithSeparator(baseXP.toFixed(2)),
+                    modified: formatWithSeparator(modifiedXPSuccess.toFixed(2)),
+                    mult: wisdomMultiplier.toFixed(3),
+                })
             );
 
             // Show success rate impact on XP
             if (profitData.successRate < 1) {
                 lines.push(
-                    `  Expected XP: ${formatWithSeparator(xpPerAction.toFixed(2))} (${formatPercentage(profitData.successRate, 2)} success, 10% XP on fail)`
+                    i18n.tDefault('alcProfit.expectedXP', '  Expected XP: {xp} ({rate} success, 10% XP on fail)', {
+                        xp: formatWithSeparator(xpPerAction.toFixed(2)),
+                        rate: formatPercentage(profitData.successRate, 2),
+                    })
                 );
             }
 
             // XP breakdown (if any bonuses exist)
             if (xpData.totalWisdom > 0 || xpData.charmExperience > 0) {
                 const totalXPBonus = xpData.totalWisdom + xpData.charmExperience;
-                lines.push(`  Total XP Bonus: +${totalXPBonus.toFixed(2)}%`);
+                lines.push(
+                    i18n.tDefault('alcProfit.totalXPBonus', '  Total XP Bonus: +{value}%', {
+                        value: totalXPBonus.toFixed(2),
+                    })
+                );
 
                 // Equipment skill-specific XP (e.g., alchemy-specific equipment)
                 if (xpData.charmBreakdown && xpData.charmBreakdown.length > 0) {
@@ -1267,27 +1525,47 @@ class AlchemyProfitDisplay {
 
                 // House rooms
                 if (xpData.breakdown.houseWisdom > 0) {
-                    lines.push(`    • House Rooms: +${xpData.breakdown.houseWisdom.toFixed(2)}%`);
+                    lines.push(
+                        i18n.tDefault('alcProfit.houseRooms', '    • House Rooms: +{value}%', {
+                            value: xpData.breakdown.houseWisdom.toFixed(2),
+                        })
+                    );
                 }
 
                 // Community buff
                 if (xpData.breakdown.communityWisdom > 0) {
-                    lines.push(`    • Community Buff: +${xpData.breakdown.communityWisdom.toFixed(2)}%`);
+                    lines.push(
+                        i18n.tDefault('alcProfit.communityBuffXP', '    • Community Buff: +{value}%', {
+                            value: xpData.breakdown.communityWisdom.toFixed(2),
+                        })
+                    );
                 }
 
                 // Tea/Coffee
                 if (xpData.breakdown.consumableWisdom > 0) {
-                    lines.push(`    • Wisdom Tea: +${xpData.breakdown.consumableWisdom.toFixed(2)}%`);
+                    lines.push(
+                        i18n.tDefault('alcProfit.wisdomTea', '    • Wisdom Tea: +{value}%', {
+                            value: xpData.breakdown.consumableWisdom.toFixed(2),
+                        })
+                    );
                 }
 
                 // Achievement wisdom
                 if (xpData.breakdown.achievementWisdom > 0) {
-                    lines.push(`    • Achievement: +${xpData.breakdown.achievementWisdom.toFixed(2)}%`);
+                    lines.push(
+                        i18n.tDefault('alcProfit.achievementXP', '    • Achievement: +{value}%', {
+                            value: xpData.breakdown.achievementWisdom.toFixed(2),
+                        })
+                    );
                 }
 
                 // MooPass wisdom
                 if (xpData.breakdown.mooPassWisdom > 0) {
-                    lines.push(`    • MooPass: +${xpData.breakdown.mooPassWisdom.toFixed(2)}%`);
+                    lines.push(
+                        i18n.tDefault('alcProfit.mooPass', '    • MooPass: +{value}%', {
+                            value: xpData.breakdown.mooPassWisdom.toFixed(2),
+                        })
+                    );
                 }
             }
 
@@ -1295,10 +1573,18 @@ class AlchemyProfitDisplay {
 
             // To next level
             lines.push(
-                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">To Level ${nextLevel}:</span>`
+                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">${i18n.tDefault(
+                    'alcProfit.toLevel',
+                    'To Level {level}:',
+                    { level: nextLevel }
+                )}</span>`
             );
-            lines.push(`  Actions: ${formatWithSeparator(actionsNeeded)}`);
-            lines.push(`  Time: ${timeReadable(timeNeeded)}`);
+            lines.push(
+                i18n.tDefault('alcProfit.actionsNeeded', '  Actions: {value}', {
+                    value: formatWithSeparator(actionsNeeded),
+                })
+            );
+            lines.push(i18n.tDefault('alcProfit.timeNeeded', '  Time: {value}', { value: timeReadable(timeNeeded) }));
 
             lines.push('');
 
@@ -1306,10 +1592,13 @@ class AlchemyProfitDisplay {
             const savedTarget = this._alchemyTargetLevel;
             const initialTargetLevel = savedTarget && savedTarget > currentLevel ? savedTarget : nextLevel;
             lines.push(
-                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">Target Level Calculator:</span>`
+                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">${i18n.tDefault(
+                    'alcProfit.targetLevelCalculator',
+                    'Target Level Calculator:'
+                )}</span>`
             );
             lines.push(`<div style="margin-top: 4px;">
-                <span>To level </span>
+                <span>${i18n.tDefault('alcProfit.toLevelInput', 'To level ')}</span>
                 <input
                     type="number"
                     id="mwi-alchemy-target-level-input"
@@ -1329,12 +1618,18 @@ class AlchemyProfitDisplay {
                 <span>:</span>
             </div>`);
             lines.push(`<div id="mwi-alchemy-target-level-result" style="margin-top: 4px; margin-left: 8px;">
-                ${formatWithSeparator(actionsNeeded)} actions | ${timeReadable(timeNeeded)}
+                ${i18n.tDefault('alcProfit.targetResult', '{count} actions | {time}', {
+                    count: formatWithSeparator(actionsNeeded),
+                    time: timeReadable(timeNeeded),
+                })}
             </div>`);
 
             lines.push('');
             lines.push(
-                `XP/hour: ${formatWithSeparator(Math.round(xpPerHour))} | XP/day: ${formatWithSeparator(Math.round(xpPerDay))}`
+                i18n.tDefault('alcProfit.xpPerHourDay', 'XP/hour: {perHour} | XP/day: {perDay}', {
+                    perHour: formatWithSeparator(Math.round(xpPerHour)),
+                    perDay: formatWithSeparator(Math.round(xpPerDay)),
+                })
             );
 
             content.innerHTML = lines.join('<br>');
@@ -1357,10 +1652,13 @@ class AlchemyProfitDisplay {
                         xpPerAction,
                         levelExperienceTable
                     );
-                    targetLevelResult.innerHTML = `${formatWithSeparator(result.actionsNeeded)} actions | ${timeReadable(result.timeNeeded)}`;
+                    targetLevelResult.innerHTML = i18n.tDefault('alcProfit.targetResult', '{count} actions | {time}', {
+                        count: formatWithSeparator(result.actionsNeeded),
+                        time: timeReadable(result.timeNeeded),
+                    });
                     targetLevelResult.style.color = `var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY})`;
                 } else {
-                    targetLevelResult.textContent = 'Invalid level';
+                    targetLevelResult.textContent = i18n.tDefault('alcProfit.invalidLevel', 'Invalid level');
                     targetLevelResult.style.color = 'var(--color-error, #ff4444)';
                 }
             };
@@ -1373,9 +1671,18 @@ class AlchemyProfitDisplay {
             }
 
             // Create summary for collapsed view
-            const summary = `${timeReadable(timeNeeded)} to Level ${nextLevel}`;
+            const summary = i18n.tDefault('alcProfit.levelProgressSummary', '{time} to Level {level}', {
+                time: timeReadable(timeNeeded),
+                level: nextLevel,
+            });
 
-            return this.createTrackedCollapsible('📈', 'Level Progress', summary, content, false);
+            return this.createTrackedCollapsible(
+                '📈',
+                i18n.tDefault('alcProfit.levelProgress', 'Level Progress'),
+                summary,
+                content,
+                false
+            );
         } catch (error) {
             console.error('[AlchemyProfitDisplay] Error creating level progress section:', error);
             return null;

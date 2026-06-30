@@ -5,10 +5,12 @@
 
 import houseCostCalculator from './house-cost-calculator.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import { coinFormatter, formatWithSeparator } from '../../utils/formatters.js';
 import dataManager from '../../core/data-manager.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { createAutofillManager } from '../../utils/marketplace-autofill.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import {
     createMaterialTab,
     removeMaterialTabs,
@@ -261,7 +263,9 @@ class HouseCostDisplay {
             color: ${config.COLOR_ACCENT};
             text-align: center;
         `;
-        totalDiv.textContent = `Total Market Value: ${coinFormatter(costData.totalValue)}`;
+        totalDiv.textContent = i18n.tDefault('inventory.house.totalMarketValue', 'Total Market Value: {value}', {
+            value: coinFormatter(costData.totalValue),
+        });
         costsSection.appendChild(totalDiv);
     }
 
@@ -298,7 +302,7 @@ class HouseCostDisplay {
             font-weight: bold;
             font-size: 0.875rem;
         `;
-        label.textContent = 'Cumulative to Level:';
+        label.textContent = i18n.tDefault('inventory.house.cumulativeToLevel', 'Cumulative to Level:');
 
         const dropdown = document.createElement('select');
         dropdown.style.cssText = `
@@ -405,7 +409,9 @@ class HouseCostDisplay {
             color: ${config.COLOR_ACCENT};
             text-align: center;
         `;
-        totalDiv.textContent = `Total Market Value: ${coinFormatter(costData.totalValue)}`;
+        totalDiv.textContent = i18n.tDefault('inventory.house.totalMarketValue', 'Total Market Value: {value}', {
+            value: coinFormatter(costData.totalValue),
+        });
         container.appendChild(totalDiv);
 
         // Add Missing Mats Marketplace button if any materials are missing
@@ -479,7 +485,9 @@ class HouseCostDisplay {
             margin-left: auto;
             text-align: right;
         `;
-        missingSpan.textContent = `Missing: ${coinFormatter(amountNeeded)}`;
+        missingSpan.textContent = i18n.tDefault('inventory.house.missing', 'Missing: {value}', {
+            value: coinFormatter(amountNeeded),
+        });
         row.appendChild(missingSpan);
 
         container.appendChild(row);
@@ -514,7 +522,7 @@ class HouseCostDisplay {
                 if (itemDetails) {
                     missing.push({
                         itemHrid: material.itemHrid,
-                        itemName: itemDetails.name,
+                        itemName: getLocalizedItemName(material.itemHrid, itemDetails.name),
                         missing: missingAmount,
                         isTradeable: itemDetails.isTradable === true,
                     });
@@ -547,7 +555,7 @@ class HouseCostDisplay {
             transition: all 0.2s ease;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         `;
-        button.textContent = 'Missing Mats Marketplace';
+        button.textContent = i18n.tDefault('inventory.house.missingMatsMarketplace', 'Missing Mats Marketplace');
 
         // Hover effects
         button.addEventListener('mouseenter', () => {
@@ -826,14 +834,16 @@ class HouseCostDisplay {
 
             if (!material) {
                 statusColor = '#4ade80';
-                statusText = 'Complete';
+                statusText = i18n.tDefault('inventory.house.statusComplete', 'Complete');
             } else if (!material.isTradeable) {
                 statusColor = '#888888';
-                statusText = 'Not Tradeable';
+                statusText = i18n.tDefault('inventory.house.statusNotTradeable', 'Not Tradeable');
                 displayName = material.itemName;
             } else {
                 statusColor = '#ef4444';
-                statusText = `Missing: ${formatWithSeparator(material.missing)}`;
+                statusText = i18n.tDefault('inventory.house.missing', 'Missing: {value}', {
+                    value: formatWithSeparator(material.missing),
+                });
                 displayName = material.itemName;
             }
 

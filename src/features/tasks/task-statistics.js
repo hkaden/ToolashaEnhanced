@@ -12,6 +12,8 @@ import { calculateTaskProfit, calculateTaskTokenValue, calculateTaskRewardValue 
 import { calculateTaskCompletionSeconds } from './task-profit-display.js';
 import { timeReadable, formatKMB, formatDateTime } from '../../utils/formatters.js';
 import { TOOLASHA } from '../../utils/selectors.js';
+import { getLocalizedActionName, getLocalizedMonsterName } from '../../utils/localized-game-names.js';
+import i18n from '../../core/i18n/index.js';
 
 class TaskStatistics {
     constructor() {
@@ -82,7 +84,7 @@ class TaskStatistics {
         // Create button matching MUI tab styling
         const button = document.createElement('div');
         button.className = 'MuiButtonBase-root MuiTab-root MuiTab-textColorPrimary css-1q2h7u5 toolasha-task-stats-btn';
-        button.textContent = 'Statistics';
+        button.textContent = i18n.tDefault('tasks.stats.button', 'Statistics');
         button.style.cursor = 'pointer';
         button.onclick = () => this.showPopup();
 
@@ -150,7 +152,7 @@ class TaskStatistics {
     calculateOverflowTime() {
         const characterInfo = dataManager.characterData?.characterInfo;
         if (!characterInfo) {
-            return { error: 'Character info not available' };
+            return { error: i18n.tDefault('tasks.stats.charInfoUnavailable', 'Character info not available') };
         }
 
         const taskSlotCap = characterInfo.taskSlotCap;
@@ -186,7 +188,7 @@ class TaskStatistics {
     calculateSlotStatus() {
         const characterInfo = dataManager.characterData?.characterInfo;
         if (!characterInfo) {
-            return { error: 'Character info not available' };
+            return { error: i18n.tDefault('tasks.stats.charInfoUnavailable', 'Character info not available') };
         }
 
         const unreadTaskCount = characterInfo.unreadTaskCount || 0;
@@ -243,10 +245,10 @@ class TaskStatistics {
             let taskName = '';
             if (isCombat && monsterHrid) {
                 const monsterDetails = dataManager.getInitClientData()?.combatMonsterDetailMap?.[monsterHrid];
-                taskName = monsterDetails?.name || monsterHrid.split('/').pop();
+                taskName = getLocalizedMonsterName(monsterHrid, monsterDetails?.name) || monsterHrid.split('/').pop();
             } else if (actionHrid) {
                 const actionDetails = dataManager.getInitClientData()?.actionDetailMap?.[actionHrid];
-                taskName = actionDetails?.name || actionHrid.split('/').pop();
+                taskName = getLocalizedActionName(actionHrid, actionDetails?.name) || actionHrid.split('/').pop();
             }
 
             // Calculate action profit for non-combat tasks
@@ -376,7 +378,7 @@ class TaskStatistics {
         `;
 
         const title = document.createElement('h2');
-        title.textContent = 'Task Statistics';
+        title.textContent = i18n.tDefault('tasks.stats.title', 'Task Statistics');
         title.style.cssText = `margin: 0; color: ${textColor}; font-size: 24px;`;
 
         const closeButton = document.createElement('button');
@@ -480,27 +482,55 @@ class TaskStatistics {
      * @returns {HTMLElement} Section element
      */
     createOverflowSection(overflow, textColor) {
-        const section = this.createSection('Task Slots');
+        const section = this.createSection(i18n.tDefault('tasks.stats.taskSlots', 'Task Slots'));
 
         if (overflow.error) {
-            section.appendChild(this.createRow('Status', overflow.error, config.COLOR_LOSS));
+            section.appendChild(
+                this.createRow(i18n.tDefault('tasks.stats.statusLabel', 'Status'), overflow.error, config.COLOR_LOSS)
+            );
             return section;
         }
 
-        section.appendChild(this.createRow('Slots Used', `${overflow.usedSlots} / ${overflow.taskSlotCap}`, textColor));
-        section.appendChild(this.createRow('Available', `${overflow.availableSlots}`, textColor));
         section.appendChild(
-            this.createRow('Cooldown', `${overflow.taskCooldownHours}h per task`, config.COLOR_TEXT_SECONDARY)
+            this.createRow(
+                i18n.tDefault('tasks.stats.slotsUsed', 'Slots Used'),
+                `${overflow.usedSlots} / ${overflow.taskSlotCap}`,
+                textColor
+            )
+        );
+        section.appendChild(
+            this.createRow(i18n.tDefault('tasks.stats.available', 'Available'), `${overflow.availableSlots}`, textColor)
+        );
+        section.appendChild(
+            this.createRow(
+                i18n.tDefault('tasks.stats.cooldown', 'Cooldown'),
+                i18n.tDefault('tasks.stats.cooldownValue', '{h}h per task', { h: overflow.taskCooldownHours }),
+                config.COLOR_TEXT_SECONDARY
+            )
         );
 
         // Overflow time
         if (overflow.isOverflowing) {
-            section.appendChild(this.createRow('Status', 'Tasks full!', config.COLOR_LOSS));
+            section.appendChild(
+                this.createRow(
+                    i18n.tDefault('tasks.stats.statusLabel', 'Status'),
+                    i18n.tDefault('tasks.stats.tasksFull', 'Tasks full!'),
+                    config.COLOR_LOSS
+                )
+            );
         } else {
             const overflowTimeStr = timeReadable(overflow.msUntilOverflow / 1000);
             const overflowDateStr = formatDateTime(overflow.overflowDate);
-            section.appendChild(this.createRow('Full in', overflowTimeStr, config.COLOR_INFO));
-            section.appendChild(this.createRow('Full at', overflowDateStr, config.COLOR_TEXT_SECONDARY));
+            section.appendChild(
+                this.createRow(i18n.tDefault('tasks.stats.fullIn', 'Full in'), overflowTimeStr, config.COLOR_INFO)
+            );
+            section.appendChild(
+                this.createRow(
+                    i18n.tDefault('tasks.stats.fullAt', 'Full at'),
+                    overflowDateStr,
+                    config.COLOR_TEXT_SECONDARY
+                )
+            );
         }
 
         return section;
@@ -513,17 +543,37 @@ class TaskStatistics {
      * @returns {HTMLElement} Section element
      */
     createRewardsSection(rewards, textColor) {
-        const section = this.createSection('Expected Rewards');
+        const section = this.createSection(i18n.tDefault('tasks.stats.expectedRewards', 'Expected Rewards'));
 
-        section.appendChild(this.createRow('Total Coins', formatKMB(rewards.totalCoins), config.COLOR_GOLD));
-        section.appendChild(this.createRow('Total Task Tokens', String(rewards.totalTokens), textColor));
+        section.appendChild(
+            this.createRow(
+                i18n.tDefault('tasks.stats.totalCoins', 'Total Coins'),
+                formatKMB(rewards.totalCoins),
+                config.COLOR_GOLD
+            )
+        );
+        section.appendChild(
+            this.createRow(
+                i18n.tDefault('tasks.stats.totalTaskTokens', 'Total Task Tokens'),
+                String(rewards.totalTokens),
+                textColor
+            )
+        );
 
         if (!rewards.rewardValue.error) {
-            const tokenValueStr = `${formatKMB(Math.round(rewards.rewardValue.breakdown.tokenValue))} each`;
-            section.appendChild(this.createRow('Token Value', tokenValueStr, config.COLOR_TEXT_SECONDARY));
+            const tokenValueStr = i18n.tDefault('tasks.stats.eachValue', '{value} each', {
+                value: formatKMB(Math.round(rewards.rewardValue.breakdown.tokenValue)),
+            });
             section.appendChild(
                 this.createRow(
-                    'Tokens Value',
+                    i18n.tDefault('tasks.stats.tokenValue', 'Token Value'),
+                    tokenValueStr,
+                    config.COLOR_TEXT_SECONDARY
+                )
+            );
+            section.appendChild(
+                this.createRow(
+                    i18n.tDefault('tasks.stats.tokensValue', 'Tokens Value'),
                     formatKMB(Math.round(rewards.rewardValue.taskTokens)),
                     config.COLOR_PROFIT
                 )
@@ -543,13 +593,19 @@ class TaskStatistics {
 
             section.appendChild(
                 this.createRow(
-                    'Total Reward Value',
+                    i18n.tDefault('tasks.stats.totalRewardValue', 'Total Reward Value'),
                     formatKMB(Math.round(rewards.rewardValue.total)),
                     config.COLOR_ACCENT
                 )
             );
         } else {
-            section.appendChild(this.createRow('Token Value', 'Loading...', config.COLOR_TEXT_SECONDARY));
+            section.appendChild(
+                this.createRow(
+                    i18n.tDefault('tasks.stats.tokenValue', 'Token Value'),
+                    i18n.tDefault('tasks.stats.loading', 'Loading...'),
+                    config.COLOR_TEXT_SECONDARY
+                )
+            );
         }
 
         return section;
@@ -561,11 +617,11 @@ class TaskStatistics {
      * @returns {HTMLElement} Section element
      */
     createActionProfitSection(rewards) {
-        const section = this.createSection('Action Profit');
+        const section = this.createSection(i18n.tDefault('tasks.stats.actionProfit', 'Action Profit'));
 
         for (const detail of rewards.taskDetails) {
             const profitStr = detail.isCombat
-                ? 'N/A (combat)'
+                ? i18n.tDefault('tasks.stats.naCombat', 'N/A (combat)')
                 : detail.actionProfit !== null
                   ? formatKMB(Math.round(detail.actionProfit))
                   : 'N/A';
@@ -594,7 +650,9 @@ class TaskStatistics {
                   ? config.COLOR_LOSS
                   : config.COLOR_TEXT_SECONDARY;
 
-        section.appendChild(this.createRow('Total Action Profit', totalStr, totalColor));
+        section.appendChild(
+            this.createRow(i18n.tDefault('tasks.stats.totalActionProfit', 'Total Action Profit'), totalStr, totalColor)
+        );
 
         // Combined total
         const separator2 = document.createElement('div');
@@ -602,7 +660,11 @@ class TaskStatistics {
         section.appendChild(separator2);
 
         section.appendChild(
-            this.createRow('Combined Total', formatKMB(Math.round(rewards.combinedTotal)), config.COLOR_ACCENT)
+            this.createRow(
+                i18n.tDefault('tasks.stats.combinedTotal', 'Combined Total'),
+                formatKMB(Math.round(rewards.combinedTotal)),
+                config.COLOR_ACCENT
+            )
         );
 
         return section;
@@ -615,11 +677,11 @@ class TaskStatistics {
      * @returns {HTMLElement} Section element
      */
     createCompletionTimeSection(rewards, textColor) {
-        const section = this.createSection('Completion Time');
+        const section = this.createSection(i18n.tDefault('tasks.stats.completionTime', 'Completion Time'));
 
         for (const detail of rewards.taskDetails) {
             const timeStr = detail.isCombat
-                ? 'N/A (combat)'
+                ? i18n.tDefault('tasks.stats.naCombat', 'N/A (combat)')
                 : detail.completionSeconds !== null
                   ? timeReadable(detail.completionSeconds)
                   : 'N/A';
@@ -643,7 +705,13 @@ class TaskStatistics {
         const totalTimeStr =
             rewards.totalCompletionSeconds !== null ? timeReadable(rewards.totalCompletionSeconds) : 'N/A';
 
-        section.appendChild(this.createRow('Total (non-combat)', totalTimeStr, config.COLOR_INFO));
+        section.appendChild(
+            this.createRow(
+                i18n.tDefault('tasks.stats.totalNonCombat', 'Total (non-combat)'),
+                totalTimeStr,
+                config.COLOR_INFO
+            )
+        );
 
         return section;
     }

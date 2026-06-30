@@ -11,6 +11,7 @@ import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
 import storage from '../../core/storage.js';
 import marketAPI from '../../api/marketplace.js';
+import i18n from '../../core/i18n/index.js';
 import { getActionEfficiencyContext } from '../../utils/efficiency.js';
 import { formatRelativeTime } from '../../utils/formatters.js';
 
@@ -277,25 +278,30 @@ function buildFlags(includeFilters = true, includeFavorites = true) {
             { from: 8000, to: 9999, checked: true },
             { label: '10k-100k', from: 10000, to: 99999, checked: true },
             { label: '100k+', from: 100000, to: Infinity, checked: true },
-            { label: 'Not dungeon', className: 'nod', checked: true, fn: matchNoDungeon },
+            {
+                label: i18n.tDefault('misc.collection.notDungeon', 'Not dungeon'),
+                className: 'nod',
+                checked: true,
+                fn: matchNoDungeon,
+            },
             { dungeon: 'd1', checked: true },
             { dungeon: 'd2', checked: true },
             { dungeon: 'd3', checked: true },
             { dungeon: 'd4', checked: true },
             {
-                label: 'Skilling Outfits',
+                label: i18n.tDefault('misc.collection.skillingOutfits', 'Skilling Outfits'),
                 className: 'skilling-outfit',
                 checked: true,
                 fn: (itemId) => SKILLING_OUTFITS.has(itemId),
             },
             {
-                label: 'Uncollected Charms',
+                label: i18n.tDefault('misc.collection.uncollectedCharms', 'Uncollected Charms'),
                 className: 'charm',
                 checked: false,
                 fn: (itemId, n) => itemId.includes('charm') && n === 0,
             },
             {
-                label: 'Uncollected Celestials',
+                label: i18n.tDefault('misc.collection.uncollectedCelestials', 'Uncollected Celestials'),
                 className: 'celestial',
                 checked: false,
                 fn: (itemId, n) => itemId.includes('celestial') && n === 0,
@@ -305,7 +311,7 @@ function buildFlags(includeFilters = true, includeFavorites = true) {
 
     if (includeFavorites) {
         flags.push({
-            label: 'Always Show Favorites',
+            label: i18n.tDefault('misc.collection.alwaysShowFavorites', 'Always Show Favorites'),
             className: 'favorite',
             checked: true,
             fn: null,
@@ -778,12 +784,12 @@ class CollectionFilters {
         panelEl.insertAdjacentHTML(
             'beforeend',
             `<div class="toolasha-cf cf-sort-row" style="display:flex;align-items:center;gap:6px;margin-top:4px;">` +
-                `<span style="font-size:12px;color:#aaa;">Sort:</span>` +
+                `<span style="font-size:12px;color:#aaa;">${i18n.tDefault('misc.collection.sort', 'Sort:')}</span>` +
                 `<select class="toolasha-cf cf-sort-select" style="font-size:12px;background:#222;color:#eee;border:1px solid #444;border-radius:4px;padding:1px 4px;">` +
-                `<option value="default"${this.sortMode === 'default' ? ' selected' : ''}>Default</option>` +
-                `<option value="items-needed"${this.sortMode === 'items-needed' ? ' selected' : ''}>Items to next tier</option>` +
-                `<option value="gold-cost"${this.sortMode === 'gold-cost' ? ' selected' : ''}>Gold cost to next tier</option>` +
-                `<option value="time-to-next-tier"${this.sortMode === 'time-to-next-tier' ? ' selected' : ''}>Time to next tier</option>` +
+                `<option value="default"${this.sortMode === 'default' ? ' selected' : ''}>${i18n.tDefault('misc.collection.sortDefault', 'Default')}</option>` +
+                `<option value="items-needed"${this.sortMode === 'items-needed' ? ' selected' : ''}>${i18n.tDefault('misc.collection.sortItemsNeeded', 'Items to next tier')}</option>` +
+                `<option value="gold-cost"${this.sortMode === 'gold-cost' ? ' selected' : ''}>${i18n.tDefault('misc.collection.sortGoldCost', 'Gold cost to next tier')}</option>` +
+                `<option value="time-to-next-tier"${this.sortMode === 'time-to-next-tier' ? ' selected' : ''}>${i18n.tDefault('misc.collection.sortTimeToTier', 'Time to next tier')}</option>` +
                 `</select></div>`
         );
         panelEl.querySelector('.cf-sort-select').addEventListener('change', (e) => {
@@ -919,7 +925,7 @@ class CollectionFilters {
 
         const header = document.createElement('div');
         header.className = 'toolasha-cf-favorites-header';
-        header.textContent = 'Favorites';
+        i18n.bindDefault(header, 'misc.collection.favorites', 'Favorites');
         section.appendChild(header);
 
         // Record positions: use the next non-favorite sibling as reference
@@ -1125,11 +1131,17 @@ class CollectionFilters {
      */
     _getBadgeStalenessTooltip(count) {
         if (!this.collectionsLastUpdated) {
-            return 'Collection data not yet loaded \u2014 visit Collections page to refresh';
+            return i18n.tDefault(
+                'misc.collection.dataNotLoaded',
+                'Collection data not yet loaded \u2014 visit Collections page to refresh'
+            );
         }
         const age = Date.now() - this.collectionsLastUpdated;
         const relativeTime = formatRelativeTime(age);
-        return `${formatCount(count)} collected \u2014 updated ${relativeTime} ago`;
+        return i18n.tDefault('misc.collection.collectedUpdated', '{count} collected \u2014 updated {time} ago', {
+            count: formatCount(count),
+            time: relativeTime,
+        });
     }
 
     /**

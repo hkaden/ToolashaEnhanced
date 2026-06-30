@@ -12,6 +12,7 @@
 
 import webSocketHook from '../../core/websocket.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import domObserver from '../../core/dom-observer.js';
 import dataManager from '../../core/data-manager.js';
 
@@ -163,11 +164,18 @@ class CombatBattleCounter {
         }
 
         if (this.isLabyrinth) {
-            el.textContent = `· Attempt #${this.labyrinthAttempt}`;
+            el.textContent = i18n.tDefault('combat.battleCounter.attempt', '· Attempt #{n}', {
+                n: this.labyrinthAttempt,
+            });
         } else if (this.isDungeon) {
-            el.textContent = `· Wave ${this.currentWave} · Battle #${this.battleId}`;
+            el.textContent = i18n.tDefault('combat.battleCounter.waveBattle', '· Wave {wave} · Battle #{battle}', {
+                wave: this.currentWave,
+                battle: this.battleId,
+            });
         } else {
-            el.textContent = `· Battle #${this.battleId}`;
+            el.textContent = i18n.tDefault('combat.battleCounter.battle', '· Battle #{battle}', {
+                battle: this.battleId,
+            });
         }
     }
 

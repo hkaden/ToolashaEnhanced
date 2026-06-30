@@ -9,8 +9,10 @@ import domObserver from '../../core/dom-observer.js';
 import actionFilter from './action-filter.js';
 import alchemyProfit from '../alchemy/alchemy-profit.js';
 import { findOptimalTeas, getTeaBuffDescription, getRelevantTeas } from '../../utils/tea-optimizer.js';
+import { getLocalizedItemName, getLocalizedActionName } from '../../utils/localized-game-names.js';
 import { formatKMB } from '../../utils/formatters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
+import i18n from '../../core/i18n/index.js';
 
 /**
  * Get the currently selected location tab name
@@ -77,7 +79,7 @@ async function getAlchemyContext() {
 
     const enhancementLevel = requirements[0].enhancementLevel || 0;
     const itemDetails = dataManager.getItemDetails(itemHrid);
-    const itemName = itemDetails?.name || itemHrid.split('/').pop().replace(/_/g, ' ');
+    const itemName = getLocalizedItemName(itemHrid, itemDetails?.name || itemHrid.split('/').pop().replace(/_/g, ' '));
 
     return { actionType, itemHrid, enhancementLevel, itemName };
 }
@@ -190,7 +192,7 @@ class TeaRecommendation {
     createButton(label, goal, color) {
         const button = document.createElement('button');
         button.className = `mwi-tea-recommend-${goal}`;
-        button.textContent = label;
+        i18n.bindDefault(button, `actMisc.tea.button.${goal}`, label);
         button.style.cssText = `
             background: transparent;
             color: ${color};
@@ -237,7 +239,7 @@ class TeaRecommendation {
         // Get current skill name — action filter doesn't track alchemy, so override when needed
         const skillName = isAlchemy ? 'Alchemy' : actionFilter.getCurrentSkillName();
         if (!skillName) {
-            this.showError(anchorButton, 'Could not detect current skill');
+            this.showError(anchorButton, i18n.tDefault('actMisc.tea.errNoSkill', 'Could not detect current skill'));
             return;
         }
 
@@ -249,7 +251,10 @@ class TeaRecommendation {
         if (isAlchemy) {
             alchemyContext = await getAlchemyContext();
             if (!alchemyContext) {
-                this.showError(anchorButton, 'No item selected in alchemy panel');
+                this.showError(
+                    anchorButton,
+                    i18n.tDefault('actMisc.tea.errNoItem', 'No item selected in alchemy panel')
+                );
                 return;
             }
         }
@@ -334,7 +339,8 @@ class TeaRecommendation {
     buildPopupContent(popup, result, goal, skillName, locationTab, drilldownAction, alchemyContext = null) {
         popup.innerHTML = '';
 
-        const goalLabel = goal === 'xp' ? 'XP' : 'Gold';
+        const goalLabel =
+            goal === 'xp' ? i18n.tDefault('actMisc.tea.goalXp', 'XP') : i18n.tDefault('actMisc.tea.goalGold', 'Gold');
 
         // Header (draggable)
         const header = document.createElement('div');
@@ -348,18 +354,33 @@ class TeaRecommendation {
             cursor: grab;
             user-select: none;
         `;
-        header.title = 'Drag to move';
+        header.title = i18n.tDefault('actMisc.tea.dragToMove', 'Drag to move');
         if (drilldownAction) {
-            header.textContent = `Optimal ${goalLabel}/hr for ${drilldownAction}`;
+            header.textContent = i18n.tDefault('actMisc.tea.optimalForAction', 'Optimal {goal}/hr for {action}', {
+                goal: goalLabel,
+                action: drilldownAction,
+            });
         } else if (alchemyContext) {
             const dcPercent = result.drinkConcentration ? (result.drinkConcentration * 100).toFixed(2) : 0;
             const dcSuffix = dcPercent > 0 ? ` (${dcPercent}% DC)` : '';
-            header.textContent = `Optimal ${goalLabel}/hr for ${alchemyContext.actionType}: ${alchemyContext.itemName}${dcSuffix}`;
+            header.textContent = i18n.tDefault(
+                'actMisc.tea.optimalForAlchemy',
+                'Optimal {goal}/hr for {actionType}: {itemName}{dcSuffix}',
+                { goal: goalLabel, actionType: alchemyContext.actionType, itemName: alchemyContext.itemName, dcSuffix }
+            );
         } else {
             const displayName = locationTab || skillName;
             const dcPercent = result.drinkConcentration ? (result.drinkConcentration * 100).toFixed(2) : 0;
             const dcSuffix = dcPercent > 0 ? ` (${dcPercent}% DC)` : '';
-            header.textContent = `Optimal ${goalLabel}/hr for ${displayName}${dcSuffix}`;
+            header.textContent = i18n.tDefault(
+                'actMisc.tea.optimalForLocation',
+                'Optimal {goal}/hr for {target}{dcSuffix}',
+                {
+                    goal: goalLabel,
+                    target: displayName,
+                    dcSuffix,
+                }
+            );
         }
         popup.appendChild(header);
         this.makeDraggable(popup, header);
@@ -375,7 +396,10 @@ class TeaRecommendation {
                 background: rgba(0, 0, 0, 0.3);
                 border-radius: 4px;
             `;
-            noResult.textContent = 'No valid combinations with current constraints.';
+            noResult.textContent = i18n.tDefault(
+                'actMisc.tea.noValidCombos',
+                'No valid combinations with current constraints.'
+            );
             popup.appendChild(noResult);
         } else {
             const teaList = document.createElement('div');
@@ -433,11 +457,11 @@ class TeaRecommendation {
         stats.innerHTML = `
             <div style="margin-bottom: 4px;">
                 <span style="color: ${goal === 'xp' ? config.COLOR_INFO : config.COLOR_PROFIT};">
-                    Avg ${goalLabel}/hr: ${avgValue}
+                    ${i18n.tDefault('actMisc.tea.avgPerHr', 'Avg {goal}/hr: {value}', { goal: goalLabel, value: avgValue })}
                 </span>
             </div>
             <div style="font-size: 11px;">
-                Level ${result.playerLevel} •
+                ${i18n.tDefault('actMisc.tea.level', 'Level {level} •', { level: result.playerLevel })}
             </div>
         `;
 
@@ -449,7 +473,9 @@ class TeaRecommendation {
                 text-decoration: underline;
                 color: rgba(255, 255, 255, 0.5);
             `;
-            backLink.textContent = `← All ${skillName} actions`;
+            backLink.textContent = i18n.tDefault('actMisc.tea.allActions', '← All {skill} actions', {
+                skill: skillName,
+            });
             backLink.addEventListener('click', () => {
                 const allResult = findOptimalTeas(skillName, goal, locationTab, null, null, alchemyContext);
                 if (!allResult.error && allResult.optimal) {
@@ -466,13 +492,25 @@ class TeaRecommendation {
             } else if (goal === 'gold') {
                 actionsText =
                     excludedCount > 0
-                        ? `${profitableCount} profitable of ${result.actionsEvaluated} (+${excludedCount} excluded)`
-                        : `${profitableCount} profitable of ${result.actionsEvaluated}`;
+                        ? i18n.tDefault(
+                              'actMisc.tea.profitableOfExcluded',
+                              '{count} profitable of {total} (+{excluded} excluded)',
+                              { count: profitableCount, total: result.actionsEvaluated, excluded: excludedCount }
+                          )
+                        : i18n.tDefault('actMisc.tea.profitableOf', '{count} profitable of {total}', {
+                              count: profitableCount,
+                              total: result.actionsEvaluated,
+                          });
             } else {
                 actionsText =
                     excludedCount > 0
-                        ? `${result.actionsEvaluated} actions (+${excludedCount} excluded)`
-                        : `${result.actionsEvaluated} actions evaluated`;
+                        ? i18n.tDefault('actMisc.tea.actionsExcluded', '{count} actions (+{excluded} excluded)', {
+                              count: result.actionsEvaluated,
+                              excluded: excludedCount,
+                          })
+                        : i18n.tDefault('actMisc.tea.actionsEvaluated', '{count} actions evaluated', {
+                              count: result.actionsEvaluated,
+                          });
             }
 
             const actionsToggle = document.createElement('span');
@@ -482,7 +520,7 @@ class TeaRecommendation {
                 color: rgba(255, 255, 255, 0.5);
             `;
             actionsToggle.textContent = actionsText;
-            actionsToggle.title = 'Click to expand';
+            actionsToggle.title = i18n.tDefault('actMisc.tea.clickExpand', 'Click to expand');
 
             const actionsDetail = document.createElement('div');
             actionsDetail.style.cssText = `
@@ -508,7 +546,7 @@ class TeaRecommendation {
                     cursor: pointer;
                 `;
                 const actionName = document.createElement('span');
-                actionName.textContent = actionData.action;
+                actionName.textContent = getLocalizedActionName(actionData.hrid, actionData.action);
                 actionName.style.color = 'rgba(255, 255, 255, 0.7)';
 
                 const actionScore = document.createElement('span');
@@ -560,7 +598,11 @@ class TeaRecommendation {
                         color: rgba(255, 255, 255, 0.4);
                         padding-top: 4px;
                     `;
-                    separator.textContent = `Excluded (${excludedActions.length} - level too low)`;
+                    separator.textContent = i18n.tDefault(
+                        'actMisc.tea.excludedLowLevel',
+                        'Excluded ({count} - level too low)',
+                        { count: excludedActions.length }
+                    );
                     actionsDetail.appendChild(separator);
                 }
 
@@ -573,14 +615,16 @@ class TeaRecommendation {
                         padding: 2px 0;
                     `;
                     const actionName = document.createElement('span');
-                    actionName.textContent = excluded.action;
+                    actionName.textContent = getLocalizedActionName(excluded.hrid, excluded.action);
                     actionName.style.cssText = `
                         color: rgba(255, 255, 255, 0.35);
                         text-decoration: line-through;
                     `;
 
                     const levelReq = document.createElement('span');
-                    levelReq.textContent = `Lvl ${excluded.requiredLevel}`;
+                    levelReq.textContent = i18n.tDefault('actMisc.tea.lvl', 'Lvl {level}', {
+                        level: excluded.requiredLevel,
+                    });
                     levelReq.style.cssText = `
                         color: rgba(255, 255, 255, 0.35);
                         font-style: italic;
@@ -601,13 +645,20 @@ class TeaRecommendation {
                 } else if (goal === 'gold') {
                     expandedText =
                         excludedCount > 0
-                            ? `▼ ${profitableCount} profitable (+${excludedCount})`
-                            : `▼ ${profitableCount} profitable`;
+                            ? i18n.tDefault('actMisc.tea.expProfitableExcluded', '▼ {count} profitable (+{excluded})', {
+                                  count: profitableCount,
+                                  excluded: excludedCount,
+                              })
+                            : i18n.tDefault('actMisc.tea.expProfitable', '▼ {count} profitable', {
+                                  count: profitableCount,
+                              });
                 } else {
                     expandedText =
                         excludedCount > 0
                             ? `▼ ${result.actionsEvaluated} (+${excludedCount})`
-                            : `▼ ${result.actionsEvaluated} actions`;
+                            : i18n.tDefault('actMisc.tea.expActions', '▼ {count} actions', {
+                                  count: result.actionsEvaluated,
+                              });
                 }
                 actionsToggle.textContent = isHidden ? expandedText : actionsText;
             });
@@ -628,8 +679,11 @@ class TeaRecommendation {
                 text-decoration: underline;
                 color: ${config.COLOR_GOLD};
             `;
-            costToggle.textContent = `Tea cost: ${formatKMB(costData.total)}/hr ▶`;
-            costToggle.title = 'Click to expand';
+            costToggle.textContent = i18n.tDefault('actMisc.tea.teaCost', 'Tea cost: {value}/hr {arrow}', {
+                value: formatKMB(costData.total),
+                arrow: '▶',
+            });
+            costToggle.title = i18n.tDefault('actMisc.tea.clickExpand', 'Click to expand');
 
             const costDetail = document.createElement('div');
             costDetail.style.cssText = `
@@ -652,9 +706,14 @@ class TeaRecommendation {
                 border-bottom: 1px solid rgba(255, 255, 255, 0.15);
                 margin-bottom: 4px;
             `;
-            ['Tea', 'Units/hr', 'Unit cost', 'Cost/hr'].forEach((label) => {
+            [
+                ['actMisc.tea.colTea', 'Tea'],
+                ['actMisc.tea.colUnitsPerHr', 'Units/hr'],
+                ['actMisc.tea.colUnitCost', 'Unit cost'],
+                ['actMisc.tea.colCostPerHr', 'Cost/hr'],
+            ].forEach(([key, label]) => {
                 const cell = document.createElement('span');
-                cell.textContent = label;
+                cell.textContent = i18n.tDefault(key, label);
                 cell.style.textAlign = 'right';
                 if (label === 'Tea') cell.style.textAlign = 'left';
                 headerRow.appendChild(cell);
@@ -700,7 +759,7 @@ class TeaRecommendation {
                 border-top: 1px solid rgba(255, 255, 255, 0.15);
                 color: rgba(255, 255, 255, 0.5);
             `;
-            ['Total', '', '', formatKMB(costData.total)].forEach((text, i) => {
+            [i18n.tDefault('actMisc.tea.total', 'Total'), '', '', formatKMB(costData.total)].forEach((text, i) => {
                 const cell = document.createElement('span');
                 cell.textContent = text;
                 cell.style.textAlign = i === 0 ? 'left' : 'right';
@@ -712,7 +771,10 @@ class TeaRecommendation {
             costToggle.addEventListener('click', () => {
                 const isHidden = costDetail.style.display === 'none';
                 costDetail.style.display = isHidden ? 'block' : 'none';
-                costToggle.textContent = `Tea cost: ${formatKMB(costData.total)}/hr ${isHidden ? '▼' : '▶'}`;
+                costToggle.textContent = i18n.tDefault('actMisc.tea.teaCost', 'Tea cost: {value}/hr {arrow}', {
+                    value: formatKMB(costData.total),
+                    arrow: isHidden ? '▼' : '▶',
+                });
             });
 
             costSection.appendChild(costToggle);
@@ -737,7 +799,7 @@ class TeaRecommendation {
                 color: rgba(255, 255, 255, 0.5);
                 margin-bottom: 6px;
             `;
-            altHeader.textContent = 'Alternatives:';
+            altHeader.textContent = i18n.tDefault('actMisc.tea.alternatives', 'Alternatives:');
             altSection.appendChild(altHeader);
 
             // Show top 3 alternatives (skip the optimal)
@@ -750,7 +812,11 @@ class TeaRecommendation {
                     padding: 2px 0;
                 `;
                 const costSuffix =
-                    alt.teaCostPerHour?.total > 0 ? ` · ${formatKMB(alt.teaCostPerHour.total)} cost/hr` : '';
+                    alt.teaCostPerHour?.total > 0
+                        ? i18n.tDefault('actMisc.tea.altCostSuffix', ' · {value} cost/hr', {
+                              value: formatKMB(alt.teaCostPerHour.total),
+                          })
+                        : '';
                 altRow.textContent = `${alt.teas.join(', ')} (${formatKMB(alt.avgScore)}/hr${costSuffix})`;
                 altSection.appendChild(altRow);
             }
@@ -768,7 +834,7 @@ class TeaRecommendation {
 
         const constraintHeader = document.createElement('div');
         constraintHeader.style.cssText = `font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;`;
-        constraintHeader.textContent = 'Tea Constraints:';
+        constraintHeader.textContent = i18n.tDefault('actMisc.tea.constraints', 'Tea Constraints:');
         constraintSection.appendChild(constraintHeader);
 
         const relevantTeas = getRelevantTeas(skillName.toLowerCase(), goal);
@@ -778,7 +844,7 @@ class TeaRecommendation {
         for (const hrid of allConstraintTeas) {
             const isPinned = this.pinnedTeas.has(hrid);
             const isBanned = this.bannedTeas.has(hrid);
-            const teaDisplayName = gameData?.itemDetailMap?.[hrid]?.name || hrid;
+            const teaDisplayName = getLocalizedItemName(hrid, gameData?.itemDetailMap?.[hrid]?.name || hrid);
 
             const row = document.createElement('div');
             row.style.cssText = `
@@ -804,7 +870,9 @@ class TeaRecommendation {
             // Pin button ⊕
             const pinBtn = document.createElement('button');
             pinBtn.textContent = '⊕';
-            pinBtn.title = isPinned ? 'Remove pin' : 'Pin (force include)';
+            pinBtn.title = isPinned
+                ? i18n.tDefault('actMisc.tea.removePin', 'Remove pin')
+                : i18n.tDefault('actMisc.tea.pinInclude', 'Pin (force include)');
             pinBtn.style.cssText = `
                 background: transparent;
                 border: 1px solid ${isPinned ? config.COLOR_GOLD : 'rgba(255,255,255,0.2)'};
@@ -827,7 +895,9 @@ class TeaRecommendation {
             // Ban button ⊘
             const banBtn = document.createElement('button');
             banBtn.textContent = '⊘';
-            banBtn.title = isBanned ? 'Remove ban' : 'Ban (force exclude)';
+            banBtn.title = isBanned
+                ? i18n.tDefault('actMisc.tea.removeBan', 'Remove ban')
+                : i18n.tDefault('actMisc.tea.banExclude', 'Ban (force exclude)');
             banBtn.style.cssText = `
                 background: transparent;
                 border: 1px solid ${isBanned ? config.COLOR_LOSS : 'rgba(255,255,255,0.2)'};
@@ -921,8 +991,10 @@ class TeaRecommendation {
             cursor: grab;
             user-select: none;
         `;
-        header.textContent = `Optimal Teas for ${displayName}`;
-        header.title = 'Drag to move';
+        header.textContent = i18n.tDefault('actMisc.tea.optimalTeasFor', 'Optimal Teas for {target}', {
+            target: displayName,
+        });
+        header.title = i18n.tDefault('actMisc.tea.dragToMove', 'Drag to move');
         popup.appendChild(header);
 
         this.makeDraggable(popup, header);
@@ -946,7 +1018,9 @@ class TeaRecommendation {
                 color: ${config.COLOR_INFO};
                 margin-bottom: 8px;
             `;
-            xpHeader.textContent = `XP/hr: ${formatKMB(xpResult.optimal.avgScore)}`;
+            xpHeader.textContent = i18n.tDefault('actMisc.tea.xpPerHr', 'XP/hr: {value}', {
+                value: formatKMB(xpResult.optimal.avgScore),
+            });
             xpCol.appendChild(xpHeader);
 
             for (const tea of xpResult.optimal.teas) {
@@ -975,7 +1049,9 @@ class TeaRecommendation {
                 color: ${config.COLOR_PROFIT};
                 margin-bottom: 8px;
             `;
-            goldHeader.textContent = `Gold/hr: ${formatKMB(goldResult.optimal.avgScore)}`;
+            goldHeader.textContent = i18n.tDefault('actMisc.tea.goldPerHr', 'Gold/hr: {value}', {
+                value: formatKMB(goldResult.optimal.avgScore),
+            });
             goldCol.appendChild(goldHeader);
 
             for (const tea of goldResult.optimal.teas) {

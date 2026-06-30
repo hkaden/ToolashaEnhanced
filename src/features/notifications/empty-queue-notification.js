@@ -6,6 +6,7 @@
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import webSocketHook from '../../core/websocket.js';
+import i18n from '../../core/i18n/index.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 
 class EmptyQueueNotification {
@@ -119,7 +120,7 @@ class EmptyQueueNotification {
 
             // Use standard Notification API
             const notification = new Notification('Milky Way Idle', {
-                body: 'Your action queue is empty!',
+                body: i18n.tDefault('misc.notifications.queueEmptyBody', 'Your action queue is empty!'),
                 icon: 'https://www.milkywayidle.com/favicon.ico',
                 tag: 'empty-queue',
                 requireInteraction: false,

@@ -7,6 +7,7 @@
  */
 
 import dataManager from '../core/data-manager.js';
+import { resolveItemHridFromLocalizedName, resolveActionHridFromLocalizedName } from './localized-game-names.js';
 
 /**
  * Generate alternate display names to handle ★ ↔ (R) refined item naming.
@@ -52,7 +53,9 @@ export function getActionHridFromName(actionName) {
         }
     }
 
-    return null;
+    // Fall back to the game's localized name table (non-English UIs: the names
+    // above are English, so a Chinese/other name only resolves here).
+    return resolveActionHridFromLocalizedName(actionName);
 }
 
 /**
@@ -83,7 +86,9 @@ export function getItemHridFromName(itemName) {
         }
     }
 
-    return null;
+    // Fall back to the game's localized name table (non-English UIs: the names
+    // above are English, so a Chinese/other name only resolves here).
+    return resolveItemHridFromLocalizedName(itemName);
 }
 
 /**

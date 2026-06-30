@@ -7,6 +7,8 @@ import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
 import marketAPI from '../../api/marketplace.js';
+import i18n from '../../core/i18n/index.js';
+import { getLocalizedItemName, getLocalizedActionName } from '../../utils/localized-game-names.js';
 import profitCalculator from './profit-calculator.js';
 import alchemyProfitCalculator from './alchemy-profit-calculator.js';
 import expectedValueCalculator from './expected-value-calculator.js';
@@ -282,7 +284,7 @@ class TooltipPrices {
                         evData,
                         isCollectionTooltip,
                         keyPrice,
-                        keyDetails?.name
+                        getLocalizedItemName(chestKeyHrid, keyDetails?.name)
                     );
                 } else {
                     this.injectExpectedValueDisplay(tooltipElement, evData, isCollectionTooltip);
@@ -586,7 +588,10 @@ class TooltipPrices {
 
         // Show message if no market data at all
         if (price.ask <= 0 && price.bid <= 0) {
-            priceDiv.innerHTML = `Price: <span style="color: ${config.COLOR_TEXT_SECONDARY}; font-style: italic;">No market data</span>`;
+            priceDiv.innerHTML = `${i18n.tDefault('market.tooltip.price', 'Price:')} <span style="color: ${config.COLOR_TEXT_SECONDARY}; font-style: italic;">${i18n.tDefault(
+                'market.tooltip.noMarketData',
+                'No market data'
+            )}</span>`;
             tooltipText.appendChild(priceDiv);
             return;
         }
@@ -606,13 +611,16 @@ class TooltipPrices {
         }
 
         // Format: "Price: 1,200 / 950" or "Price: 1,200 / -" or "Price: - / 950"
-        priceDiv.innerHTML = `Price: ${askDisplay} / ${bidDisplay}${totalDisplay}`;
+        priceDiv.innerHTML = `${i18n.tDefault('market.tooltip.price', 'Price:')} ${askDisplay} / ${bidDisplay}${totalDisplay}`;
 
         if (config.getSetting('itemTooltip_effectivePrices') && (price.ask > 0 || price.bid > 0)) {
             const taxRate = itemHrid === COWBELL_BAG_HRID ? COWBELL_BAG_TAX : MARKET_TAX;
             const effAsk = price.ask > 0 ? formatTooltipPrice(calculatePriceAfterTax(price.ask, taxRate)) : '-';
             const effBid = price.bid > 0 ? formatTooltipPrice(calculatePriceAfterTax(price.bid, taxRate)) : '-';
-            priceDiv.innerHTML += `<br><span style="color: ${config.COLOR_TEXT_SECONDARY};">Eff: ${effAsk} / ${effBid}</span>`;
+            priceDiv.innerHTML += `<br><span style="color: ${config.COLOR_TEXT_SECONDARY};">${i18n.tDefault(
+                'market.tooltip.eff',
+                'Eff:'
+            )} ${effAsk} / ${effBid}</span>`;
         }
 
         tooltipText.appendChild(priceDiv);
@@ -652,13 +660,20 @@ class TooltipPrices {
 
         if (profitData.itemPrice.bid > 0 && profitData.itemPrice.ask > 0) {
             // Market data available - show profit
-            html += '<div style="font-weight: bold; margin-bottom: 4px;">PROFIT</div>';
+            html += `<div style="font-weight: bold; margin-bottom: 4px;">${i18n.tDefault(
+                'market.tooltip.profitHeader',
+                'PROFIT'
+            )}</div>`;
             html += '<div style="font-size: 0.9em; margin-left: 8px;">';
 
             const profitPerDay = profitData.profitPerDay;
             const profitColor = profitData.profitPerHour >= 0 ? config.COLOR_TOOLTIP_PROFIT : config.COLOR_TOOLTIP_LOSS;
 
-            html += `<div style="color: ${profitColor}; font-weight: bold;">Net: ${formatKMB(profitData.profitPerHour)}/hr (${formatKMB(profitPerDay)}/day)</div>`;
+            html += `<div style="color: ${profitColor}; font-weight: bold;">${i18n.tDefault(
+                'market.tooltip.netPerHrDay',
+                'Net: {perHour}/hr ({perDay}/day)',
+                { perHour: formatKMB(profitData.profitPerHour), perDay: formatKMB(profitPerDay) }
+            )}</div>`;
 
             // Show detailed breakdown if enabled
             if (showDetailed) {
@@ -671,7 +686,11 @@ class TooltipPrices {
             if (showDetailed) {
                 html += this.buildDetailedProfitDisplay(profitData, false);
             } else {
-                html += `<div style="font-weight: bold; color: ${config.COLOR_TOOLTIP_INFO};">Cost: ${formatKMB(profitData.totalMaterialCost)}/item</div>`;
+                html += `<div style="font-weight: bold; color: ${config.COLOR_TOOLTIP_INFO};">${i18n.tDefault(
+                    'market.tooltip.costPerItem',
+                    'Cost: {cost}/item',
+                    { cost: formatKMB(profitData.totalMaterialCost) }
+                )}</div>`;
             }
         }
 
@@ -719,11 +738,32 @@ class TooltipPrices {
             const deeperBid = deeperRows.reduce((s, r) => s + r.bidPrice * r.amount, 0);
             askPrice = craftAsk - deeperAsk;
             bidPrice = (craftBid || craftAsk) - deeperBid;
-            return [{ itemName: `Craft ${upgradeDetails.name}`, amount: 1, askPrice, bidPrice, depth }, ...deeperRows];
+            return [
+                {
+                    itemName: i18n.tDefault('market.tooltip.craftItem', 'Craft {name}', {
+                        name: getLocalizedItemName(upgradeHrid, upgradeDetails.name),
+                    }),
+                    amount: 1,
+                    askPrice,
+                    bidPrice,
+                    depth,
+                },
+                ...deeperRows,
+            ];
         }
 
         if (craftBid > 0 && (bidPrice === 0 || craftBid < bidPrice)) bidPrice = craftBid;
-        return [{ itemName: `Buy ${upgradeDetails.name}`, amount: 1, askPrice, bidPrice, depth }];
+        return [
+            {
+                itemName: i18n.tDefault('market.tooltip.buyItem', 'Buy {name}', {
+                    name: getLocalizedItemName(upgradeHrid, upgradeDetails.name),
+                }),
+                amount: 1,
+                askPrice,
+                bidPrice,
+                depth,
+            },
+        ];
     }
 
     /**
@@ -741,10 +781,22 @@ class TooltipPrices {
 
             // Table header
             html += `<tr style="border-bottom: 1px solid ${config.COLOR_BORDER};">`;
-            html += '<th style="padding: 2px 4px; text-align: left;">Material</th>';
-            html += '<th style="padding: 2px 4px; text-align: center;">Count</th>';
-            html += '<th style="padding: 2px 4px; text-align: right;">Ask</th>';
-            html += '<th style="padding: 2px 4px; text-align: right;">Bid</th>';
+            html += `<th style="padding: 2px 4px; text-align: left;">${i18n.tDefault(
+                'market.tooltip.colMaterial',
+                'Material'
+            )}</th>`;
+            html += `<th style="padding: 2px 4px; text-align: center;">${i18n.tDefault(
+                'market.tooltip.colCount',
+                'Count'
+            )}</th>`;
+            html += `<th style="padding: 2px 4px; text-align: right;">${i18n.tDefault(
+                'market.tooltip.colAsk',
+                'Ask'
+            )}</th>`;
+            html += `<th style="padding: 2px 4px; text-align: right;">${i18n.tDefault(
+                'market.tooltip.colBid',
+                'Bid'
+            )}</th>`;
             html += '</tr>';
 
             // Resolve prices for all materials through unified chain
@@ -768,10 +820,23 @@ class TooltipPrices {
                         const subBidTotal = subRows.reduce((s, r) => s + r.bidPrice * r.amount, 0);
                         askPrice = craftAsk - subAskTotal;
                         bidPrice = (craftBid || craftAsk) - subBidTotal;
-                        return { ...material, itemName: `Craft ${material.itemName}`, askPrice, bidPrice, subRows };
+                        return {
+                            ...material,
+                            itemName: i18n.tDefault('market.tooltip.craftItem', 'Craft {name}', {
+                                name: material.itemName,
+                            }),
+                            askPrice,
+                            bidPrice,
+                            subRows,
+                        };
                     }
                     if (craftBid > 0 && (bidPrice === 0 || craftBid < bidPrice)) bidPrice = craftBid;
-                    return { ...material, itemName: `Buy ${material.itemName}`, askPrice, bidPrice };
+                    return {
+                        ...material,
+                        itemName: i18n.tDefault('market.tooltip.buyItem', 'Buy {name}', { name: material.itemName }),
+                        askPrice,
+                        bidPrice,
+                    };
                 }
 
                 return { ...material, askPrice, bidPrice };
@@ -796,7 +861,10 @@ class TooltipPrices {
 
             // Total row
             html += `<tr style="border-bottom: 1px solid ${config.COLOR_BORDER};">`;
-            html += '<td style="padding: 2px 4px; font-weight: bold;">Total</td>';
+            html += `<td style="padding: 2px 4px; font-weight: bold;">${i18n.tDefault(
+                'market.tooltip.totalRow',
+                'Total'
+            )}</td>`;
             html += `<td style="padding: 2px 4px; text-align: center;">${totalCount.toFixed(1)}</td>`;
             html += `<td style="padding: 2px 4px; text-align: right;">${formatKMB(totalAsk)}</td>`;
             html += `<td style="padding: 2px 4px; text-align: right;">${formatKMB(totalBid)}</td>`;
@@ -834,7 +902,15 @@ class TooltipPrices {
             const profitPerDay = profitData.profitPerDay;
             const profitColor = profitData.profitPerHour >= 0 ? config.COLOR_TOOLTIP_PROFIT : config.COLOR_TOOLTIP_LOSS;
 
-            html += `<div style="color: ${profitColor};">Profit: ${formatKMB(profitPerAction)}/action, ${formatKMB(profitData.profitPerHour)}/hour, ${formatKMB(profitPerDay)}/day</div>`;
+            html += `<div style="color: ${profitColor};">${i18n.tDefault(
+                'market.tooltip.profitBreakdown',
+                'Profit: {perAction}/action, {perHour}/hour, {perDay}/day',
+                {
+                    perAction: formatKMB(profitPerAction),
+                    perHour: formatKMB(profitData.profitPerHour),
+                    perDay: formatKMB(profitPerDay),
+                }
+            )}</div>`;
             html += '</div>';
         }
 
@@ -871,15 +947,28 @@ class TooltipPrices {
         let html = '<div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px;">';
 
         // Header
-        html += '<div style="font-weight: bold; margin-bottom: 4px;">EXPECTED VALUE</div>';
+        html += `<div style="font-weight: bold; margin-bottom: 4px;">${i18n.tDefault(
+            'market.tooltip.evHeader',
+            'EXPECTED VALUE'
+        )}</div>`;
         html += '<div style="font-size: 0.9em; margin-left: 8px;">';
 
         // Expected value (simple display)
-        html += `<div style="color: ${config.COLOR_TOOLTIP_PROFIT}; font-weight: bold;">Expected Return: ${formatTooltipPrice(evData.expectedValue)}</div>`;
+        html += `<div style="color: ${config.COLOR_TOOLTIP_PROFIT}; font-weight: bold;">${i18n.tDefault(
+            'market.tooltip.expectedReturn',
+            'Expected Return: {value}',
+            { value: formatTooltipPrice(evData.expectedValue) }
+        )}</div>`;
         if (keyPrice > 0) {
-            const keyLabel = keyName ? `Key Cost (${keyName})` : 'Key Cost';
+            const keyLabel = keyName
+                ? i18n.tDefault('market.tooltip.keyCostNamed', 'Key Cost ({name})', { name: keyName })
+                : i18n.tDefault('market.tooltip.keyCost', 'Key Cost');
             html += `<div style="color: ${config.COLOR_TOOLTIP_LOSS};">- ${keyLabel}: ${formatTooltipPrice(keyPrice)}</div>`;
-            html += `<div style="color: ${config.COLOR_TOOLTIP_PROFIT}; font-weight: bold;">Net Value: ${formatTooltipPrice(evData.expectedValue - keyPrice)}</div>`;
+            html += `<div style="color: ${config.COLOR_TOOLTIP_PROFIT}; font-weight: bold;">${i18n.tDefault(
+                'market.tooltip.netValue',
+                'Net Value: {value}',
+                { value: formatTooltipPrice(evData.expectedValue - keyPrice) }
+            )}</div>`;
         }
 
         html += '</div>'; // Close summary section
@@ -892,30 +981,43 @@ class TooltipPrices {
 
             // Determine how many drops to show
             let dropsToShow = evData.drops;
-            let headerLabel = 'All Drops';
+            let headerLabel = i18n.tDefault('market.tooltip.dropsAll', 'All Drops');
 
             if (showDropsSetting === 'Top 5') {
                 dropsToShow = evData.drops.slice(0, 5);
-                headerLabel = 'Top 5 Drops';
+                headerLabel = i18n.tDefault('market.tooltip.dropsTop5', 'Top 5 Drops');
             } else if (showDropsSetting === 'Top 10') {
                 dropsToShow = evData.drops.slice(0, 10);
-                headerLabel = 'Top 10 Drops';
+                headerLabel = i18n.tDefault('market.tooltip.dropsTop10', 'Top 10 Drops');
             }
 
-            html += `<div style="font-weight: bold; margin-bottom: 4px;">${headerLabel} (${evData.drops.length} total):</div>`;
+            html += `<div style="font-weight: bold; margin-bottom: 4px;">${i18n.tDefault(
+                'market.tooltip.dropsHeader',
+                '{label} ({count} total):',
+                { label: headerLabel, count: evData.drops.length }
+            )}</div>`;
             html += '<div style="font-size: 0.9em; margin-left: 8px;">';
 
             // List each drop
             for (const drop of dropsToShow) {
+                const avgLabel = i18n.tDefault('market.tooltip.avg', 'avg');
                 if (!drop.hasPriceData) {
                     // Show item without price data in gray
-                    html += `<div style="color: ${config.COLOR_TEXT_SECONDARY};">• ${drop.itemName} (${formatPercentage(drop.dropRate, 2)}): ${drop.avgCount.toFixed(2)} avg → No price data</div>`;
+                    html += `<div style="color: ${config.COLOR_TEXT_SECONDARY};">• ${drop.itemName} (${formatPercentage(
+                        drop.dropRate,
+                        2
+                    )}): ${drop.avgCount.toFixed(2)} ${avgLabel} → ${i18n.tDefault(
+                        'market.tooltip.noPriceData',
+                        'No price data'
+                    )}</div>`;
                 } else {
                     // Format drop rate percentage
                     const dropRatePercent = formatPercentage(drop.dropRate, 2);
 
                     // Show full drop breakdown
-                    html += `<div>• ${drop.itemName} (${dropRatePercent}%): ${drop.avgCount.toFixed(2)} avg → ${formatTooltipPrice(drop.expectedValue)}</div>`;
+                    html += `<div>• ${drop.itemName} (${dropRatePercent}%): ${drop.avgCount.toFixed(
+                        2
+                    )} ${avgLabel} → ${formatTooltipPrice(drop.expectedValue)}</div>`;
                 }
             }
 
@@ -923,9 +1025,17 @@ class TooltipPrices {
 
             // Show total
             html += '<div style="border-top: 1px solid rgba(255,255,255,0.2); margin: 4px 0;"></div>';
-            html += `<div style="font-size: 0.9em; margin-left: 8px; font-weight: bold;">Total from ${evData.drops.length} drops: ${formatTooltipPrice(evData.expectedValue)}</div>`;
+            html += `<div style="font-size: 0.9em; margin-left: 8px; font-weight: bold;">${i18n.tDefault(
+                'market.tooltip.totalFromDrops',
+                'Total from {count} drops: {value}',
+                { count: evData.drops.length, value: formatTooltipPrice(evData.expectedValue) }
+            )}</div>`;
             if (keyPrice > 0) {
-                html += `<div style="font-size: 0.9em; margin-left: 8px; font-weight: bold;">Net after key: ${formatTooltipPrice(evData.expectedValue - keyPrice)}</div>`;
+                html += `<div style="font-size: 0.9em; margin-left: 8px; font-weight: bold;">${i18n.tDefault(
+                    'market.tooltip.netAfterKey',
+                    'Net after key: {value}',
+                    { value: formatTooltipPrice(evData.expectedValue - keyPrice) }
+                )}</div>`;
             }
         }
 
@@ -993,7 +1103,7 @@ class TooltipPrices {
             if (foundInDrop || isSolo) {
                 const actionData = {
                     actionHrid,
-                    actionName: action.name,
+                    actionName: getLocalizedActionName(actionHrid, action.name),
                     dropRate,
                 };
 
@@ -1079,19 +1189,29 @@ class TooltipPrices {
         );
 
         let html = '<div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px;">';
-        html += '<div style="font-weight: bold; margin-bottom: 4px;">GATHERING</div>';
+        html += `<div style="font-weight: bold; margin-bottom: 4px;">${i18n.tDefault(
+            'market.tooltip.gatheringHeader',
+            'GATHERING'
+        )}</div>`;
 
         // Solo actions section
         if (gatheringData.soloActions.length > 0) {
             html += '<div style="font-size: 0.9em; margin-left: 8px; margin-bottom: 6px;">';
-            html += '<div style="font-weight: 500; margin-bottom: 2px;">Solo:</div>';
+            html += `<div style="font-weight: 500; margin-bottom: 2px;">${i18n.tDefault(
+                'market.tooltip.solo',
+                'Solo:'
+            )}</div>`;
 
             for (const action of gatheringData.soloActions) {
                 const itemsPerHourStr = action.itemsPerHour ? Math.round(action.itemsPerHour) : '?';
                 const profitStr = action.profitPerHour ? formatKMB(Math.round(action.profitPerHour)) : '?';
                 const profitDayStr = action.profitPerHour ? formatKMB(Math.round(action.profitPerHour * 24)) : '?';
 
-                html += `<div style="margin-left: 8px;">• ${action.actionName}: ${itemsPerHourStr} items/hr | ${profitStr}/hr (${profitDayStr}/day)</div>`;
+                html += `<div style="margin-left: 8px;">• ${i18n.tDefault(
+                    'market.tooltip.soloLine',
+                    '{name}: {items} items/hr | {profit}/hr ({profitDay}/day)',
+                    { name: action.actionName, items: itemsPerHourStr, profit: profitStr, profitDay: profitDayStr }
+                )}</div>`;
             }
 
             html += '</div>';
@@ -1100,7 +1220,10 @@ class TooltipPrices {
         // Zone actions section
         if (zoneActions.length > 0) {
             html += '<div style="font-size: 0.9em; margin-left: 8px;">';
-            html += '<div style="font-weight: 500; margin-bottom: 2px;">Found in:</div>';
+            html += `<div style="font-weight: 500; margin-bottom: 2px;">${i18n.tDefault(
+                'market.tooltip.foundIn',
+                'Found in:'
+            )}</div>`;
 
             for (const action of zoneActions) {
                 // Use more decimal places for very rare drops (< 0.1%)
@@ -1111,13 +1234,21 @@ class TooltipPrices {
                 let itemsDisplay;
                 if (action.isRareDrop) {
                     const itemsPerDayStr = action.itemsPerDay ? action.itemsPerDay.toFixed(2) : '?';
-                    itemsDisplay = `${itemsPerDayStr} items/day`;
+                    itemsDisplay = i18n.tDefault('market.tooltip.itemsPerDay', '{count} items/day', {
+                        count: itemsPerDayStr,
+                    });
                 } else {
                     const itemsPerHourStr = action.itemsPerHour ? Math.round(action.itemsPerHour) : '?';
-                    itemsDisplay = `${itemsPerHourStr} items/hr`;
+                    itemsDisplay = i18n.tDefault('market.tooltip.itemsPerHr', '{count} items/hr', {
+                        count: itemsPerHourStr,
+                    });
                 }
 
-                html += `<div style="margin-left: 8px;">• ${action.actionName}: ${itemsDisplay} (${dropRatePercent}% drop)</div>`;
+                html += `<div style="margin-left: 8px;">• ${i18n.tDefault(
+                    'market.tooltip.zoneLine',
+                    '{name}: {display} ({pct}% drop)',
+                    { name: action.actionName, display: itemsDisplay, pct: dropRatePercent }
+                )}</div>`;
             }
 
             html += '</div>';
@@ -1337,21 +1468,30 @@ class TooltipPrices {
         if (!abilityStatus.learned) {
             // Not learned
             html += `<div style="color: ${config.COLOR_TOOLTIP_LOSS}; font-weight: 600;">`;
-            html += `\u26A0 Unlearned</div>`;
+            html += `\u26A0 ${i18n.tDefault('market.tooltip.unlearned', 'Unlearned')}</div>`;
         } else {
             // Learned
             html += `<div style="color: ${config.COLOR_TOOLTIP_INFO}; font-weight: 600;">`;
-            html += `\u2714 Learned</div>`;
+            html += `\u2714 ${i18n.tDefault('market.tooltip.learned', 'Learned')}</div>`;
 
             // Show level and progress
             html += `<div style="margin-top: 4px; margin-left: 8px; font-size: 0.9em;">`;
-            html += `<div>Level: ${abilityStatus.level}</div>`;
+            html += `<div>${i18n.tDefault('market.tooltip.abilityLevel', 'Level: {level}', {
+                level: abilityStatus.level,
+            })}</div>`;
 
             if (abilityStatus.maxLevel) {
-                html += `<div style="color: ${config.COLOR_TOOLTIP_INFO};">Max Level Reached</div>`;
+                html += `<div style="color: ${config.COLOR_TOOLTIP_INFO};">${i18n.tDefault(
+                    'market.tooltip.maxLevel',
+                    'Max Level Reached'
+                )}</div>`;
             } else if (abilityStatus.percentToNext !== undefined) {
-                html += `<div>Progress: ${formatPercentage(abilityStatus.percentToNext)}</div>`;
-                html += `<div style="opacity: 0.7;">XP to Next: ${numberFormatter(abilityStatus.xpToNext)}</div>`;
+                html += `<div>${i18n.tDefault('market.tooltip.progress', 'Progress: {pct}', {
+                    pct: formatPercentage(abilityStatus.percentToNext),
+                })}</div>`;
+                html += `<div style="opacity: 0.7;">${i18n.tDefault('market.tooltip.xpToNext', 'XP to Next: {xp}', {
+                    xp: numberFormatter(abilityStatus.xpToNext),
+                })}</div>`;
             }
 
             html += '</div>';

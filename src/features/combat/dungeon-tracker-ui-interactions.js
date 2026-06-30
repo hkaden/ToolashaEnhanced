@@ -7,6 +7,7 @@ import dungeonTracker from './dungeon-tracker.js';
 import dungeonTrackerChatAnnotations from './dungeon-tracker-chat-annotations.js';
 import config from '../../core/config.js';
 import storage from '../../core/storage.js';
+import i18n from '../../core/i18n/index.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { bringPanelToFront } from '../../utils/panel-z-index.js';
 
@@ -202,11 +203,18 @@ class DungeonTrackerUIInteractions {
         if (!clearBtn) return;
 
         clearBtn.addEventListener('click', async () => {
-            if (confirm('Delete ALL run history data?\n\nThis cannot be undone!')) {
+            if (
+                confirm(
+                    i18n.tDefault(
+                        'combat.dungeon.confirmClearAll',
+                        'Delete ALL run history data?\n\nThis cannot be undone!'
+                    )
+                )
+            ) {
                 try {
                     // Clear unified storage completely
                     await storage.setJSON('allRuns', [], 'unifiedRuns', true);
-                    alert('All run history cleared.');
+                    alert(i18n.tDefault('combat.dungeon.allHistoryCleared', 'All run history cleared.'));
 
                     // Refresh both history and chart display
                     if (this.callbacks.onUpdateHistory) await this.callbacks.onUpdateHistory();
@@ -216,7 +224,12 @@ class DungeonTrackerUIInteractions {
                     await dungeonTrackerChatAnnotations.refreshRunCounts();
                 } catch (error) {
                     console.error('[Dungeon Tracker UI Interactions] Clear all history error:', error);
-                    alert('Failed to clear run history. Check console for details.');
+                    alert(
+                        i18n.tDefault(
+                            'combat.dungeon.clearFailed',
+                            'Failed to clear run history. Check console for details.'
+                        )
+                    );
                 }
             }
         });
@@ -259,7 +272,7 @@ class DungeonTrackerUIInteractions {
 
         backfillBtn.addEventListener('click', async () => {
             // Change button text to show loading
-            backfillBtn.textContent = '⟳ Processing...';
+            backfillBtn.textContent = i18n.tDefault('combat.dungeon.backfillProcessing', '⟳ Processing...');
             backfillBtn.disabled = true;
 
             try {
@@ -268,9 +281,15 @@ class DungeonTrackerUIInteractions {
 
                 // Show result message
                 if (result.runsAdded > 0) {
-                    alert(`Backfill complete!\n\nRuns added: ${result.runsAdded}\nTeams: ${result.teams.length}`);
+                    alert(
+                        i18n.tDefault(
+                            'combat.dungeon.backfillComplete',
+                            'Backfill complete!\n\nRuns added: {runs}\nTeams: {teams}',
+                            { runs: result.runsAdded, teams: result.teams.length }
+                        )
+                    );
                 } else {
-                    alert('No new runs found to backfill.');
+                    alert(i18n.tDefault('combat.dungeon.backfillNoNew', 'No new runs found to backfill.'));
                 }
 
                 // Refresh both history and chart display
@@ -281,10 +300,10 @@ class DungeonTrackerUIInteractions {
                 await dungeonTrackerChatAnnotations.refreshRunCounts();
             } catch (error) {
                 console.error('[Dungeon Tracker UI Interactions] Backfill error:', error);
-                alert('Backfill failed. Check console for details.');
+                alert(i18n.tDefault('combat.dungeon.backfillFailed', 'Backfill failed. Check console for details.'));
             } finally {
                 // Reset button
-                backfillBtn.textContent = '⟳ Backfill';
+                backfillBtn.textContent = i18n.tDefault('combat.dungeon.backfill', '⟳ Backfill');
                 backfillBtn.disabled = false;
             }
         });
@@ -510,7 +529,7 @@ class DungeonTrackerUIInteractions {
         this.state.save();
 
         // Show brief notification
-        this.showNotification('Dungeon Tracker position reset');
+        this.showNotification(i18n.tDefault('combat.dungeon.positionReset', 'Dungeon Tracker position reset'));
     }
 
     /**

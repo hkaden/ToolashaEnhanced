@@ -7,6 +7,8 @@
 import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import { resolveItemHridFromLocalizedName } from '../../utils/localized-game-names.js';
+import i18n from '../../core/i18n/index.js';
 import { navigateToMarketplace } from '../../utils/marketplace-tabs.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { setReactInputValue } from '../../utils/react-input.js';
@@ -140,14 +142,21 @@ class MarketplaceShortcuts {
                     const ageMs = Date.now() - new Date(topAsk.createdTimestamp).getTime();
                     if (ageMs > 0) {
                         const ageStr = formatRelativeTime(ageMs);
-                        ageHtml = `<div style="font-size: 0.7em; opacity: 0.7; margin-top: 1px;">Top ask: ~${ageStr}</div>`;
+                        ageHtml = `<div style="font-size: 0.7em; opacity: 0.7; margin-top: 1px;">${i18n.tDefault(
+                            'market.shortcuts.topAsk',
+                            'Top ask: ~{age}',
+                            { age: ageStr }
+                        )}</div>`;
                     }
                 }
             }
         }
 
         toggle.innerHTML =
-            '<span style="flex: 1; text-align: center;">Marketplace Action' +
+            `<span style="flex: 1; text-align: center;">${i18n.tDefault(
+                'market.shortcuts.marketplaceAction',
+                'Marketplace Action'
+            )}` +
             ageHtml +
             '</span>' +
             '<span class="mwi-mp-chevron" style="font-size: 0.65em; transition: transform 0.15s; display: inline-block;">▼</span>';
@@ -175,10 +184,18 @@ class MarketplaceShortcuts {
 
         // Action buttons
         const actions = [
-            { label: 'Sell Now', type: 'sell', color: '#c2410c' },
-            { label: 'Buy Now', type: 'buy', color: '#2fc4a7' },
-            { label: 'New Sell Listing', type: 'sell-listing', color: '#9a3412' },
-            { label: 'New Buy Listing', type: 'buy-listing', color: '#2fc4a7' },
+            { label: i18n.tDefault('market.shortcuts.sellNow', 'Sell Now'), type: 'sell', color: '#c2410c' },
+            { label: i18n.tDefault('market.shortcuts.buyNow', 'Buy Now'), type: 'buy', color: '#2fc4a7' },
+            {
+                label: i18n.tDefault('market.shortcuts.newSellListing', 'New Sell Listing'),
+                type: 'sell-listing',
+                color: '#9a3412',
+            },
+            {
+                label: i18n.tDefault('market.shortcuts.newBuyListing', 'New Buy Listing'),
+                type: 'buy-listing',
+                color: '#2fc4a7',
+            },
         ];
 
         for (const action of actions) {
@@ -481,7 +498,13 @@ class MarketplaceShortcuts {
             // + toggle button
             const addToggle = document.createElement('button');
             addToggle.textContent = '+';
-            addToggle.title = 'Toggle add mode: click to accumulate counts instead of setting them';
+            i18n.bindDefault(
+                addToggle,
+                'market.shortcuts.addModeTitle',
+                'Toggle add mode: click to accumulate counts instead of setting them',
+                undefined,
+                'title'
+            );
             addToggle.style.cssText = `
                 font-size: 11px;
                 font-weight: 700;
@@ -627,7 +650,7 @@ class MarketplaceShortcuts {
             const ownedEl = document.createElement('div');
             ownedEl.className = 'mwi-owned-count';
             ownedEl.style.cssText = `text-align: center; font-size: 13px; color: ${config.COLOR_TEXT_SECONDARY}; margin: 4px 0;`;
-            ownedEl.innerHTML = `Owned: <span style="color: ${config.COLOR_ACCENT}; font-weight: 600;">${formatWithSeparator(count)}</span>`;
+            ownedEl.innerHTML = `${i18n.tDefault('market.shortcuts.owned', 'Owned:')} <span style="color: ${config.COLOR_ACCENT}; font-weight: 600;">${formatWithSeparator(count)}</span>`;
             quantityRow.insertAdjacentElement('beforebegin', ownedEl);
         }, 100);
     }
@@ -697,7 +720,7 @@ class MarketplaceShortcuts {
             }
         }
 
-        return this.itemNameToHridCache.get(itemName) || null;
+        return this.itemNameToHridCache.get(itemName) || resolveItemHridFromLocalizedName(itemName);
     }
 
     /**

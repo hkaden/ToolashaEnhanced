@@ -10,8 +10,10 @@ import { getDrinkConcentration } from './tea-parser.js';
 import { parseEquipmentSpeedBonuses, parseEquipmentEfficiencyBonuses } from './equipment-parser.js';
 import { calculateActionsPerHour, calculateEffectiveActionsPerHour, calculateDrinksPerHour } from './profit-helpers.js';
 import { getItemPrice } from './market-data.js';
+import { getLocalizedItemName, getLocalizedSkillName } from './localized-game-names.js';
 import { calculateBonusRevenue } from './bonus-revenue-calculator.js';
 import alchemyProfitCalculator from '../features/market/alchemy-profit-calculator.js';
+import i18n from '../core/i18n/index.js';
 
 // Skill name to action type mapping
 const SKILL_TO_ACTION_TYPE = {
@@ -698,7 +700,7 @@ function calculateTeaCostPerHour(teaHrids, drinkConcentration) {
         // Use getItemPrice with 'profit' context and 'buy' side to match tile calculation
         const unitPrice = getItemPrice(teaHrid, { context: 'profit', side: 'buy' }) || 0;
         const costPerHour = unitPrice * drinksPerHour;
-        const name = gameData?.itemDetailMap?.[teaHrid]?.name || teaHrid;
+        const name = getLocalizedItemName(teaHrid, gameData?.itemDetailMap?.[teaHrid]?.name || teaHrid);
         breakdown.push({ hrid: teaHrid, name, unitsPerHour: drinksPerHour, unitPrice, costPerHour });
         total += costPerHour;
     }
@@ -805,12 +807,12 @@ export function findOptimalTeas(
     const isProduction = PRODUCTION_SKILLS.includes(normalizedSkill);
 
     if (!isGathering && !isProduction) {
-        return { error: `Unknown skill: ${skillName}` };
+        return { error: i18n.tDefault('actMisc.tea.errUnknownSkill', 'Unknown skill: {skill}', { skill: skillName }) };
     }
 
     const gameData = dataManager.getInitClientData();
     if (!gameData?.itemDetailMap) {
-        return { error: 'Game data not loaded' };
+        return { error: i18n.tDefault('actMisc.tea.errGameData', 'Game data not loaded') };
     }
 
     // Get player's skill level
@@ -871,14 +873,27 @@ export function findOptimalTeas(
 
     // Check if there are no available actions (even if there are excluded ones)
     if (actions.length === 0) {
-        const locationSuffix = locationName ? ` at ${locationName}` : '';
+        const locationSuffix = locationName
+            ? i18n.tDefault('actMisc.tea.atLocationSuffix', ' at {loc}', { loc: locationName })
+            : '';
+        const localizedSkill = getLocalizedSkillName(skillHrid, skillName);
         if (excludedActions.length > 0) {
             const lowestLevel = Math.min(...excludedActions.map((item) => item.requiredLevel));
             return {
-                error: `No actions available for ${skillName}${locationSuffix} at level ${playerLevel}. All actions require level ${lowestLevel}+.`,
+                error: i18n.tDefault(
+                    'actMisc.tea.errNoActionsMinLevel',
+                    'No actions available for {skill}{suffix} at level {level}. All actions require level {min}+.',
+                    { skill: localizedSkill, suffix: locationSuffix, level: playerLevel, min: lowestLevel }
+                ),
             };
         } else {
-            return { error: `No actions available for ${skillName}${locationSuffix} at level ${playerLevel}` };
+            return {
+                error: i18n.tDefault(
+                    'actMisc.tea.errNoActions',
+                    'No actions available for {skill}{suffix} at level {level}',
+                    { skill: localizedSkill, suffix: locationSuffix, level: playerLevel }
+                ),
+            };
         }
     }
 
@@ -960,7 +975,7 @@ export function findOptimalTeas(
                     }
                 }
 
-                actionScores.push({ action: action.name, score });
+                actionScores.push({ action: action.name, hrid: action.hrid, score });
             }
         }
 
@@ -982,12 +997,13 @@ export function findOptimalTeas(
     results.sort((a, b) => b.totalScore - a.totalScore);
 
     // Get tea names for display
-    const getTeaName = (hrid) => gameData.itemDetailMap[hrid]?.name || hrid;
+    const getTeaName = (hrid) => getLocalizedItemName(hrid, gameData.itemDetailMap[hrid]?.name || hrid);
 
     // Format excluded actions for display
     const excludedForDisplay = excludedActions
         .map((item) => ({
             action: item.action.name,
+            hrid: item.action.hrid,
             reason: item.reason,
             requiredLevel: item.requiredLevel,
         }))

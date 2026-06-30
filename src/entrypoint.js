@@ -20,7 +20,7 @@ const Combat = window.Toolasha.Combat;
 const UI = window.Toolasha.UI;
 
 // Destructure core modules
-const { storage, config, webSocketHook, domObserver, dataManager, featureRegistry } = Core;
+const { storage, config, webSocketHook, domObserver, dataManager, featureRegistry, i18n } = Core;
 
 const { setupScrollTooltipDismissal } = Utils.dom;
 
@@ -731,6 +731,9 @@ if (isCombatSimulatorPage()) {
             // Initialize config (loads settings from storage)
             await config.initialize();
 
+            // Apply UI language changes live (re-renders bound i18n strings)
+            config.onSettingChange('language', (value) => i18n.setLocale(value));
+
             // Add beforeunload handler to flush all pending writes
             window.addEventListener('beforeunload', () => {
                 storage.flushAll();
@@ -739,10 +742,14 @@ if (isCombatSimulatorPage()) {
             // Initialize Data Manager immediately
             // Don't wait for localStorageUtil - it handles missing data gracefully
             dataManager.initialize();
+
+            // Resolve the UI language (manual override or game-language auto-detect)
+            i18n.init();
         } catch (error) {
             console.error('[Toolasha] Storage/config initialization failed:', error);
             // Initialize anyway
             dataManager.initialize();
+            i18n.init();
         }
     })();
 

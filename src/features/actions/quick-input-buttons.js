@@ -38,11 +38,13 @@ import { calculateExpPerHour, calculateMultiLevelProgress } from '../../utils/ex
 import { createCollapsibleSection } from '../../utils/ui-components.js';
 import { calculateActionsPerHour, calculateEffectiveActionsPerHour } from '../../utils/profit-helpers.js';
 import { getActionHridFromName } from '../../utils/game-lookups.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import { MIN_ACTION_TIME_SECONDS } from '../../utils/profit-constants.js';
 import { createCleanupRegistry } from '../../utils/cleanup-registry.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
 import scrollSimulator from '../combat/scroll-simulator.js';
 import { SCROLL_BUFF_ITEMS } from '../../utils/scroll-buff-values.js';
+import i18n from '../../core/i18n/index.js';
 
 let _qibSpriteUrl = null;
 function scrollSpriteHtml(buffTypeHrid, size = 14) {
@@ -154,7 +156,10 @@ class QuickInputButtons {
 
         const addToggle = document.createElement('button');
         addToggle.textContent = '+';
-        addToggle.title = 'Toggle add mode: click to accumulate counts instead of setting them';
+        addToggle.title = i18n.tDefault(
+            'actMisc.quickInput.addModeTitle',
+            'Toggle add mode: click to accumulate counts instead of setting them'
+        );
         addToggle.style.cssText = `
             font-size: 11px;
             font-weight: 700;
@@ -176,7 +181,7 @@ class QuickInputButtons {
         });
         fragment.appendChild(addToggle);
 
-        fragment.appendChild(document.createTextNode('Do '));
+        fragment.appendChild(document.createTextNode(i18n.tDefault('actMisc.quickInput.doPrefix', 'Do ')));
 
         const activePresetValues = this._parsePresets(
             config.getSettingValue('actionPanel_quickInputs_countPresets', ''),
@@ -198,7 +203,7 @@ class QuickInputButtons {
             fragment.appendChild(button);
         });
 
-        const maxButton = this.createButton('Max', () => {
+        const maxButton = this.createButton(i18n.tDefault('actMisc.quickInput.max', 'Max'), () => {
             const currentInput =
                 panel.querySelector('[class*="maxActionCountInput"] input') ||
                 panel.querySelector('input[type="number"]') ||
@@ -216,7 +221,7 @@ class QuickInputButtons {
         });
         fragment.appendChild(maxButton);
 
-        fragment.appendChild(document.createTextNode(' times'));
+        fragment.appendChild(document.createTextNode(i18n.tDefault('actMisc.quickInput.timesSuffix', ' times')));
 
         return fragment;
     }
@@ -367,11 +372,18 @@ class QuickInputButtons {
                     timeAfterEquipment < MIN_ACTION_TIME_SECONDS ? ` (${timeAfterEquipment.toFixed(2)}s)` : '';
 
                 speedLines.push(
-                    `Base: ${baseTime.toFixed(2)}s → ${displayTimeAfterEquipment.toFixed(2)}s${equipmentClampSuffix}`
+                    i18n.tDefault('actMisc.quickInput.speedBase', 'Base: {base}s → {after}s{clamp}', {
+                        base: baseTime.toFixed(2),
+                        after: displayTimeAfterEquipment.toFixed(2),
+                        clamp: equipmentClampSuffix,
+                    })
                 );
                 if (speedBonus > 0) {
                     speedLines.push(
-                        `Speed: +${formatPercentage(speedBonus, 1)} | ${calculateActionsPerHour(timeAfterEquipment).toFixed(0)}/hr`
+                        i18n.tDefault('actMisc.quickInput.speedLine', 'Speed: +{percent} | {rate}/hr', {
+                            percent: formatPercentage(speedBonus, 1),
+                            rate: calculateActionsPerHour(timeAfterEquipment).toFixed(0),
+                        })
                     );
                 } else {
                     speedLines.push(`${calculateActionsPerHour(timeAfterEquipment).toFixed(0)}/hr`);
@@ -388,7 +400,7 @@ class QuickInputButtons {
                                 ? ` (${formatPercentage(item.baseBonus, 1)} + ${formatPercentage(item.enhancementBonus * item.enhancementLevel, 1)})`
                                 : '';
                         speedLines.push(
-                            `  - ${item.itemName}${enhText}: +${formatPercentage(item.scaledBonus, 1)}${detailText}`
+                            `  - ${getLocalizedItemName(item.itemHrid, item.itemName)}${enhText}: +${formatPercentage(item.scaledBonus, 1)}${detailText}`
                         );
                     }
 
@@ -419,7 +431,10 @@ class QuickInputButtons {
                 if (isTaskAction && taskSpeedBonus > 0) {
                     speedLines.push(''); // Empty line separator
                     speedLines.push(
-                        `<span style="font-weight: 500;">Task Speed (multiplicative): +${taskSpeedBonus.toFixed(2)}%</span>`
+                        `<span style="font-weight: 500;">${i18n.tDefault(
+                            'actMisc.quickInput.taskSpeedLabel',
+                            'Task Speed (multiplicative):'
+                        )} +${taskSpeedBonus.toFixed(2)}%</span>`
                     );
                     speedLines.push(
                         `${displayTimeAfterEquipment.toFixed(2)}s${equipmentClampSuffix} → ${actionTime.toFixed(2)}s | ${calculateActionsPerHour(actionTime).toFixed(0)}/hr`
@@ -444,7 +459,7 @@ class QuickInputButtons {
                                     : '';
 
                             speedLines.push(
-                                `  - ${itemDetails.name}${enhText}: +${taskSpeedBonus.toFixed(2)}%${detailText}`
+                                `  - ${getLocalizedItemName(trinketSlot.itemHrid, itemDetails.name)}${enhText}: +${taskSpeedBonus.toFixed(2)}%${detailText}`
                             );
                         }
                     }
@@ -453,7 +468,15 @@ class QuickInputButtons {
                 // Add Efficiency breakdown
                 speedLines.push(''); // Empty line
                 speedLines.push(
-                    `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">Efficiency: +${totalEfficiency.toFixed(2)}% → Output: ×${efficiencyMultiplier.toFixed(2)} (${Math.round(calculateActionsPerHour(actionTime) * efficiencyMultiplier)}/hr)</span>`
+                    `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">${i18n.tDefault(
+                        'actMisc.quickInput.efficiencyLine',
+                        'Efficiency: +{eff}% → Output: ×{mult} ({rate}/hr)',
+                        {
+                            eff: totalEfficiency.toFixed(2),
+                            mult: efficiencyMultiplier.toFixed(2),
+                            rate: Math.round(calculateActionsPerHour(actionTime) * efficiencyMultiplier),
+                        }
+                    )}</span>`
                 );
 
                 // Detailed efficiency breakdown
@@ -465,11 +488,23 @@ class QuickInputButtons {
                     const rawLevelDelta = efficiencyBreakdown.skillLevel - efficiencyBreakdown.baseRequirement;
 
                     // Show final level efficiency
-                    speedLines.push(`  - Level: +${efficiencyBreakdown.levelEfficiency.toFixed(2)}%`);
+                    speedLines.push(
+                        `  - ${i18n.tDefault('actMisc.quickInput.effLevel', 'Level: +{percent}%', {
+                            percent: efficiencyBreakdown.levelEfficiency.toFixed(2),
+                        })}`
+                    );
 
                     // Show raw level delta (what you'd get without Action Level bonuses)
                     speedLines.push(
-                        `    - Raw level delta: +${rawLevelDelta.toFixed(2)}% (${efficiencyBreakdown.skillLevel} - ${efficiencyBreakdown.baseRequirement} base requirement)`
+                        `    - ${i18n.tDefault(
+                            'actMisc.quickInput.rawLevelDelta',
+                            'Raw level delta: +{delta}% ({skillLevel} - {baseReq} base requirement)',
+                            {
+                                delta: rawLevelDelta.toFixed(2),
+                                skillLevel: efficiencyBreakdown.skillLevel,
+                                baseReq: efficiencyBreakdown.baseRequirement,
+                            }
+                        )}`
                     );
 
                     // Show Action Level bonus teas that reduce level efficiency
@@ -481,13 +516,25 @@ class QuickInputButtons {
                             // Calculate impact: base tea effect reduces efficiency
                             const baseTeaImpact = -tea.baseActionLevel;
                             speedLines.push(
-                                `    - ${tea.name} impact: ${baseTeaImpact.toFixed(2)}% (raises requirement)`
+                                `    - ${i18n.tDefault(
+                                    'actMisc.quickInput.teaImpact',
+                                    '{name} impact: {value}% (raises requirement)',
+                                    { name: tea.name, value: baseTeaImpact.toFixed(2) }
+                                )}`
                             );
 
                             // Show DC contribution as additional reduction if > 0
                             if (tea.dcContribution > 0) {
                                 const dcImpact = -tea.dcContribution;
-                                speedLines.push(`      - Drink Concentration: ${dcImpact.toFixed(2)}%`);
+                                speedLines.push(
+                                    `      - ${i18n.tDefault(
+                                        'actMisc.quickInput.drinkConc',
+                                        'Drink Concentration: {value}%',
+                                        {
+                                            value: dcImpact.toFixed(2),
+                                        }
+                                    )}`
+                                );
                             }
                         }
                     }
@@ -496,14 +543,25 @@ class QuickInputButtons {
                     // Get house room name
                     const houseRoomName = this.getHouseRoomName(actionDetails.type);
                     speedLines.push(
-                        `  - House: +${efficiencyBreakdown.houseEfficiency.toFixed(2)}% (${houseRoomName})`
+                        `  - ${i18n.tDefault('actMisc.quickInput.effHouse', 'House: +{value}% ({room})', {
+                            value: efficiencyBreakdown.houseEfficiency.toFixed(2),
+                            room: houseRoomName,
+                        })}`
                     );
                 }
                 if (efficiencyBreakdown.equipmentEfficiency > 0) {
-                    speedLines.push(`  - Equipment: +${efficiencyBreakdown.equipmentEfficiency.toFixed(2)}%`);
+                    speedLines.push(
+                        `  - ${i18n.tDefault('actMisc.quickInput.effEquipment', 'Equipment: +{value}%', {
+                            value: efficiencyBreakdown.equipmentEfficiency.toFixed(2),
+                        })}`
+                    );
                 }
                 if (efficiencyBreakdown.achievementEfficiency > 0) {
-                    speedLines.push(`  - Achievement: +${efficiencyBreakdown.achievementEfficiency.toFixed(2)}%`);
+                    speedLines.push(
+                        `  - ${i18n.tDefault('actMisc.quickInput.achievement', 'Achievement: +{value}%', {
+                            value: efficiencyBreakdown.achievementEfficiency.toFixed(2),
+                        })}`
+                    );
                 }
                 // Break out individual teas - show BASE efficiency on main line, DC as sub-line
                 if (efficiencyBreakdown.teaBreakdown && efficiencyBreakdown.teaBreakdown.length > 0) {
@@ -512,7 +570,15 @@ class QuickInputButtons {
                         speedLines.push(`  - ${tea.name}: +${tea.baseEfficiency.toFixed(2)}%`);
                         // Show DC contribution as sub-line if > 0
                         if (tea.dcContribution > 0) {
-                            speedLines.push(`    - Drink Concentration: +${tea.dcContribution.toFixed(2)}%`);
+                            speedLines.push(
+                                `    - ${i18n.tDefault(
+                                    'actMisc.quickInput.drinkConc',
+                                    'Drink Concentration: {value}%',
+                                    {
+                                        value: `+${tea.dcContribution.toFixed(2)}`,
+                                    }
+                                )}`
+                            );
                         }
                     }
                 }
@@ -521,14 +587,22 @@ class QuickInputButtons {
                         '/community_buff_types/production_efficiency'
                     );
                     speedLines.push(
-                        `  - Community: +${efficiencyBreakdown.communityEfficiency.toFixed(2)}% (Production Efficiency T${communityBuffLevel})`
+                        `  - ${i18n.tDefault(
+                            'actMisc.quickInput.effCommunity',
+                            'Community: +{value}% (Production Efficiency T{tier})',
+                            { value: efficiencyBreakdown.communityEfficiency.toFixed(2), tier: communityBuffLevel }
+                        )}`
                     );
                 }
                 if (efficiencyBreakdown.personalEfficiency > 0) {
                     const simSprite = dataManager.isBuffBeingSimulated(actionDetails.type, '/buff_types/efficiency')
                         ? scrollSpriteHtml('/buff_types/efficiency')
                         : '';
-                    speedLines.push(`  - ${simSprite}Seal: +${efficiencyBreakdown.personalEfficiency.toFixed(2)}%`);
+                    speedLines.push(
+                        `  - ${simSprite}${i18n.tDefault('actMisc.quickInput.effSeal', 'Seal: +{value}%', {
+                            value: efficiencyBreakdown.personalEfficiency.toFixed(2),
+                        })}`
+                    );
                 }
 
                 // Total time (dynamic)
@@ -543,7 +617,13 @@ class QuickInputButtons {
                     const inputValue = numberInput.value;
 
                     if (inputValue === '∞') {
-                        totalTimeLine.textContent = 'Total time: ∞';
+                        totalTimeLine.textContent = i18n.tDefault(
+                            'actMisc.quickInput.totalTime',
+                            'Total time: {time}',
+                            {
+                                time: '∞',
+                            }
+                        );
                         return;
                     }
 
@@ -554,9 +634,21 @@ class QuickInputButtons {
                         // Calculate time-consuming actions needed
                         const baseActionsNeeded = Math.ceil(queueCount / efficiencyMultiplier);
                         const totalSeconds = baseActionsNeeded * actionTime;
-                        totalTimeLine.textContent = `Total time: ${timeReadable(totalSeconds)}`;
+                        totalTimeLine.textContent = i18n.tDefault(
+                            'actMisc.quickInput.totalTime',
+                            'Total time: {time}',
+                            {
+                                time: timeReadable(totalSeconds),
+                            }
+                        );
                     } else {
-                        totalTimeLine.textContent = 'Total time: 0s';
+                        totalTimeLine.textContent = i18n.tDefault(
+                            'actMisc.quickInput.totalTime',
+                            'Total time: {time}',
+                            {
+                                time: '0s',
+                            }
+                        );
                     }
                 };
 
@@ -604,11 +696,15 @@ class QuickInputButtons {
                 const actionsPerHourWithEfficiency = Math.round(
                     calculateEffectiveActionsPerHour(calculateActionsPerHour(actionTime), efficiencyMultiplier)
                 );
-                const initialSummary = `${actionsPerHourWithEfficiency}/hr | Total time: 0s`;
+                const initialSummary = i18n.tDefault(
+                    'actMisc.quickInput.speedSummary',
+                    '{rate}/hr | Total time: {time}',
+                    { rate: actionsPerHourWithEfficiency, time: '0s' }
+                );
 
                 speedSection = createCollapsibleSection(
                     '⏱',
-                    'Action Speed & Time',
+                    i18n.tDefault('actMisc.quickInput.speedSection', 'Action Speed & Time'),
                     initialSummary,
                     speedContent,
                     false // Collapsed by default
@@ -626,15 +722,27 @@ class QuickInputButtons {
                     if (speedSummaryDiv) {
                         const inputValue = numberInput.value;
                         if (inputValue === '∞') {
-                            speedSummaryDiv.textContent = `${actionsPerHourWithEfficiency}/hr | Total time: ∞`;
+                            speedSummaryDiv.textContent = i18n.tDefault(
+                                'actMisc.quickInput.speedSummary',
+                                '{rate}/hr | Total time: {time}',
+                                { rate: actionsPerHourWithEfficiency, time: '∞' }
+                            );
                         } else {
                             const queueCount = parseInt(inputValue) || 0;
                             if (queueCount > 0) {
                                 const baseActionsNeeded = Math.ceil(queueCount / efficiencyMultiplier);
                                 const totalSeconds = baseActionsNeeded * actionTime;
-                                speedSummaryDiv.textContent = `${actionsPerHourWithEfficiency}/hr | Total time: ${timeReadable(totalSeconds)}`;
+                                speedSummaryDiv.textContent = i18n.tDefault(
+                                    'actMisc.quickInput.speedSummary',
+                                    '{rate}/hr | Total time: {time}',
+                                    { rate: actionsPerHourWithEfficiency, time: timeReadable(totalSeconds) }
+                                );
                             } else {
-                                speedSummaryDiv.textContent = `${actionsPerHourWithEfficiency}/hr | Total time: 0s`;
+                                speedSummaryDiv.textContent = i18n.tDefault(
+                                    'actMisc.quickInput.speedSummary',
+                                    '{rate}/hr | Total time: {time}',
+                                    { rate: actionsPerHourWithEfficiency, time: '0s' }
+                                );
                             }
                         }
                     }
@@ -702,7 +810,7 @@ class QuickInputButtons {
                 `;
 
                 // FIRST ROW: Time-based buttons (hours)
-                queueContent.appendChild(document.createTextNode('Do '));
+                queueContent.appendChild(document.createTextNode(i18n.tDefault('actMisc.quickInput.doPrefix', 'Do ')));
 
                 const activePresetHours = this._parsePresets(
                     config.getSettingValue('actionPanel_quickInputs_hourPresets', ''),
@@ -861,7 +969,7 @@ class QuickInputButtons {
         };
 
         const roomHrid = roomMapping[actionType];
-        if (!roomHrid) return 'Unknown Room';
+        if (!roomHrid) return i18n.tDefault('actMisc.quickInput.unknownRoom', 'Unknown Room');
 
         const room = houseRooms.get(roomHrid);
         const roomName = roomHrid
@@ -872,7 +980,7 @@ class QuickInputButtons {
             .join(' ');
         const level = room?.level || 0;
 
-        return `${roomName} level ${level}`;
+        return i18n.tDefault('actMisc.quickInput.roomLevel', '{room} level {level}', { room: roomName, level });
     }
 
     /**
@@ -952,7 +1060,7 @@ class QuickInputButtons {
             if (teaInfo) {
                 const scaledSpeed = teaInfo.baseSpeed * (1 + drinkConcentration);
                 consumables.push({
-                    name: teaInfo.name,
+                    name: getLocalizedItemName(drink.itemHrid, teaInfo.name),
                     baseSpeed: teaInfo.baseSpeed * 100,
                     drinkConcentration: drinkConcentration * 100,
                     speed: scaledSpeed * 100,
@@ -1249,18 +1357,32 @@ class QuickInputButtons {
             const lines = [];
 
             // Current level and progress
-            lines.push(`Current: Level ${currentLevel} | ${progressPercent.toFixed(2)}% to Level ${nextLevel}`);
+            lines.push(
+                i18n.tDefault(
+                    'actMisc.quickInput.currentLevel',
+                    'Current: Level {level} | {percent}% to Level {next}',
+                    { level: currentLevel, percent: progressPercent.toFixed(2), next: nextLevel }
+                )
+            );
             lines.push('');
 
             // Action details
             lines.push(
-                `XP per action: ${formatWithSeparator(baseXP.toFixed(2))} base → ${formatWithSeparator(modifiedXP.toFixed(2))} (×${xpData.totalMultiplier.toFixed(2)})`
+                i18n.tDefault('actMisc.quickInput.xpPerAction', 'XP per action: {base} base → {modified} (×{mult})', {
+                    base: formatWithSeparator(baseXP.toFixed(2)),
+                    modified: formatWithSeparator(modifiedXP.toFixed(2)),
+                    mult: xpData.totalMultiplier.toFixed(2),
+                })
             );
 
             // XP breakdown (if any bonuses exist)
             if (xpData.totalWisdom > 0 || xpData.charmExperience > 0) {
                 const totalXPBonus = xpData.totalWisdom + xpData.charmExperience;
-                lines.push(`  Total XP Bonus: +${totalXPBonus.toFixed(2)}%`);
+                lines.push(
+                    `  ${i18n.tDefault('actMisc.quickInput.totalXpBonus', 'Total XP Bonus: +{value}%', {
+                        value: totalXPBonus.toFixed(2),
+                    })}`
+                );
 
                 // List all sources that contribute
 
@@ -1282,22 +1404,38 @@ class QuickInputButtons {
 
                 // House rooms
                 if (xpData.breakdown.houseWisdom > 0) {
-                    lines.push(`    • House Rooms: +${xpData.breakdown.houseWisdom.toFixed(2)}%`);
+                    lines.push(
+                        `    • ${i18n.tDefault('actMisc.quickInput.wisHouseRooms', 'House Rooms: +{value}%', {
+                            value: xpData.breakdown.houseWisdom.toFixed(2),
+                        })}`
+                    );
                 }
 
                 // Community buff
                 if (xpData.breakdown.communityWisdom > 0) {
-                    lines.push(`    • Community Buff: +${xpData.breakdown.communityWisdom.toFixed(2)}%`);
+                    lines.push(
+                        `    • ${i18n.tDefault('actMisc.quickInput.wisCommunityBuff', 'Community Buff: +{value}%', {
+                            value: xpData.breakdown.communityWisdom.toFixed(2),
+                        })}`
+                    );
                 }
 
                 // Tea/Coffee
                 if (xpData.breakdown.consumableWisdom > 0) {
-                    lines.push(`    • Wisdom Tea: +${xpData.breakdown.consumableWisdom.toFixed(2)}%`);
+                    lines.push(
+                        `    • ${i18n.tDefault('actMisc.quickInput.wisWisdomTea', 'Wisdom Tea: +{value}%', {
+                            value: xpData.breakdown.consumableWisdom.toFixed(2),
+                        })}`
+                    );
                 }
 
                 // Achievement wisdom
                 if (xpData.breakdown.achievementWisdom > 0) {
-                    lines.push(`    • Achievement: +${xpData.breakdown.achievementWisdom.toFixed(2)}%`);
+                    lines.push(
+                        `    • ${i18n.tDefault('actMisc.quickInput.achievement', 'Achievement: +{value}%', {
+                            value: xpData.breakdown.achievementWisdom.toFixed(2),
+                        })}`
+                    );
                 }
 
                 // MooPass wisdom
@@ -1331,10 +1469,22 @@ class QuickInputButtons {
             );
 
             lines.push(
-                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">To Level ${nextLevel}:</span>`
+                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">${i18n.tDefault(
+                    'actMisc.quickInput.toLevel',
+                    'To Level {level}:',
+                    { level: nextLevel }
+                )}</span>`
             );
-            lines.push(`  Actions: ${formatWithSeparator(singleLevel.actionsNeeded)}`);
-            lines.push(`  Time: ${timeReadable(singleLevel.timeNeeded)}`);
+            lines.push(
+                `  ${i18n.tDefault('actMisc.quickInput.actionsLabel', 'Actions: {count}', {
+                    count: formatWithSeparator(singleLevel.actionsNeeded),
+                })}`
+            );
+            lines.push(
+                `  ${i18n.tDefault('actMisc.quickInput.timeLabel', 'Time: {time}', {
+                    time: timeReadable(singleLevel.timeNeeded),
+                })}`
+            );
 
             lines.push('');
 
@@ -1343,10 +1493,13 @@ class QuickInputButtons {
             const initialTargetLevel =
                 savedTargetLevel && savedTargetLevel > currentLevel ? savedTargetLevel : nextLevel;
             lines.push(
-                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">Target Level Calculator:</span>`
+                `<span style="font-weight: 500; color: var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY});">${i18n.tDefault(
+                    'actMisc.quickInput.targetCalc',
+                    'Target Level Calculator:'
+                )}</span>`
             );
             lines.push(`<div style="margin-top: 4px;">
-                <span>To level </span>
+                <span>${i18n.tDefault('actMisc.quickInput.toLevelInput', 'To level ')}</span>
                 <input
                     type="number"
                     id="mwi-target-level-input"
@@ -1368,12 +1521,18 @@ class QuickInputButtons {
 
             // Dynamic result line (will be updated by JS)
             lines.push(`<div id="mwi-target-level-result" style="margin-top: 4px; margin-left: 8px;">
-                ${formatWithSeparator(singleLevel.actionsNeeded)} actions | ${timeReadable(singleLevel.timeNeeded)}
+                ${i18n.tDefault('actMisc.quickInput.resultLine', '{count} actions | {time}', {
+                    count: formatWithSeparator(singleLevel.actionsNeeded),
+                    time: timeReadable(singleLevel.timeNeeded),
+                })}
             </div>`);
 
             lines.push('');
             lines.push(
-                `XP/hour: ${formatWithSeparator(Math.round(xpPerHour))} | XP/day: ${formatWithSeparator(Math.round(xpPerDay))}`
+                i18n.tDefault('actMisc.quickInput.xpHourDay', 'XP/hour: {hour} | XP/day: {day}', {
+                    hour: formatWithSeparator(Math.round(xpPerHour)),
+                    day: formatWithSeparator(Math.round(xpPerDay)),
+                })
             );
 
             content.innerHTML = lines.join('<br>');
@@ -1398,14 +1557,17 @@ class QuickInputButtons {
                     );
 
                     targetLevelResult.innerHTML = `
-                        ${formatWithSeparator(result.actionsNeeded)} actions | ${timeReadable(result.timeNeeded)}
+                        ${i18n.tDefault('actMisc.quickInput.resultLine', '{count} actions | {time}', {
+                            count: formatWithSeparator(result.actionsNeeded),
+                            time: timeReadable(result.timeNeeded),
+                        })}
                     `;
                     targetLevelResult.style.color = 'var(--text-color-primary, ${config.COLOR_TEXT_PRIMARY})';
 
                     // Auto-fill queue input when target level changes
                     this.setInputValue(numberInput, result.actionsNeeded);
                 } else {
-                    targetLevelResult.textContent = 'Invalid level';
+                    targetLevelResult.textContent = i18n.tDefault('actMisc.quickInput.invalidLevel', 'Invalid level');
                     targetLevelResult.style.color = 'var(--color-error, #ff4444)';
                 }
             };
@@ -1419,12 +1581,15 @@ class QuickInputButtons {
             }
 
             // Create summary for collapsed view (time to next level)
-            const summary = `${timeReadable(singleLevel.timeNeeded)} to Level ${nextLevel}`;
+            const summary = i18n.tDefault('actMisc.quickInput.summaryToLevel', '{time} to Level {level}', {
+                time: timeReadable(singleLevel.timeNeeded),
+                level: nextLevel,
+            });
 
             // Create collapsible section
             return createCollapsibleSection(
                 '📈',
-                'Level Progress',
+                i18n.tDefault('actMisc.quickInput.levelProgressSection', 'Level Progress'),
                 summary,
                 content,
                 false // Collapsed by default

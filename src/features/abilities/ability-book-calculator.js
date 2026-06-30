@@ -7,6 +7,7 @@
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import marketAPI from '../../api/marketplace.js';
+import i18n from '../../core/i18n/index.js';
 import { numberFormatter, formatKMB } from '../../utils/formatters.js';
 import dom from '../../utils/dom.js';
 import domObserver from '../../core/dom-observer.js';
@@ -225,10 +226,10 @@ class AbilityBookCalculator {
 
         calculatorDiv.innerHTML = `
             <div style="margin-bottom: 8px; font-size: 0.95em;">
-                <strong>Current level:</strong> ${currentLevel}
+                <strong>${i18n.tDefault('misc.abilities.currentLevel', 'Current level:')}</strong> ${currentLevel}
             </div>
             <div style="margin-bottom: 8px;">
-                <label for="tillLevelInput">To level: </label>
+                <label for="tillLevelInput">${i18n.tDefault('misc.abilities.toLevel', 'To level: ')}</label>
                 <input
                     id="tillLevelInput"
                     type="number"
@@ -239,12 +240,15 @@ class AbilityBookCalculator {
                 >
             </div>
             <div id="tillLevelNumber" style="font-size: 0.95em;">
-                Books needed: <strong>${numberFormatter(booksNeeded)}</strong>
+                ${i18n.tDefault('misc.abilities.booksNeeded', 'Books needed:')} <strong>${numberFormatter(booksNeeded)}</strong>
                 <br>
-                Cost: ${formatKMB(Math.ceil(booksNeeded * ask))} / ${formatKMB(Math.ceil(booksNeeded * bid))} (ask / bid)
+                ${i18n.tDefault('misc.abilities.cost', 'Cost: {ask} / {bid} (ask / bid)', {
+                    ask: formatKMB(Math.ceil(booksNeeded * ask)),
+                    bid: formatKMB(Math.ceil(booksNeeded * bid)),
+                })}
             </div>
             <div style="font-size: 0.85em; color: #999; margin-top: 8px; font-style: italic;">
-                Refresh page to update current level
+                ${i18n.tDefault('misc.abilities.refreshNote', 'Refresh page to update current level')}
             </div>
         `;
 
@@ -261,13 +265,19 @@ class AbilityBookCalculator {
                 const books = this.calculateBooksNeeded(currentLevel, currentXp, target, xpPerBook);
                 currentBooks = books;
                 display.innerHTML = `
-                    Books needed: <strong>${numberFormatter(books)}</strong>
+                    ${i18n.tDefault('misc.abilities.booksNeeded', 'Books needed:')} <strong>${numberFormatter(books)}</strong>
                     <br>
-                    Cost: ${formatKMB(Math.ceil(books * ask))} / ${formatKMB(Math.ceil(books * bid))} (ask / bid)
+                    ${i18n.tDefault('misc.abilities.cost', 'Cost: {ask} / {bid} (ask / bid)', {
+                        ask: formatKMB(Math.ceil(books * ask)),
+                        bid: formatKMB(Math.ceil(books * bid)),
+                    })}
                 `;
             } else {
                 currentBooks = 0;
-                display.innerHTML = '<span style="color: ${config.COLOR_LOSS};">Invalid target level</span>';
+                display.innerHTML =
+                    '<span style="color: ${config.COLOR_LOSS};">' +
+                    i18n.tDefault('misc.abilities.invalidTarget', 'Invalid target level') +
+                    '</span>';
             }
         };
 
@@ -276,7 +286,7 @@ class AbilityBookCalculator {
 
         // Buy on Marketplace button
         const buyButton = document.createElement('button');
-        buyButton.textContent = 'Buy on Marketplace';
+        i18n.bindDefault(buyButton, 'misc.abilities.buyOnMarketplace', 'Buy on Marketplace');
         buyButton.style.cssText = `
             margin-top: 8px;
             padding: 4px 10px;

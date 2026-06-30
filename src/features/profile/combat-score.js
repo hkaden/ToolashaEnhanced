@@ -7,6 +7,7 @@ import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import storage from '../../core/storage.js';
 import webSocketHook from '../../core/websocket.js';
+import i18n from '../../core/i18n/index.js';
 import { calculateCombatScore } from './score-calculator.js';
 import { numberFormatter } from '../../utils/formatters.js';
 import { constructExportObject } from '../combat/combat-sim-export.js';
@@ -162,9 +163,12 @@ class CombatScore {
             this.currentPanel = null;
         }
 
-        const playerName = profileData.profile?.sharableCharacter?.name || 'Player';
+        const playerName =
+            profileData.profile?.sharableCharacter?.name || i18n.tDefault('misc.profile.player', 'Player');
         const equipmentHiddenText =
-            scoreData.equipmentHidden && !scoreData.hasEquipmentData ? ' (Equipment hidden)' : '';
+            scoreData.equipmentHidden && !scoreData.hasEquipmentData
+                ? i18n.tDefault('misc.profile.equipmentHidden', ' (Equipment hidden)')
+                : '';
 
         // Create panel element
         const panel = document.createElement('div');
@@ -227,7 +231,7 @@ class CombatScore {
                     font-weight: bold;
                     font-size: 0.85rem;
                     flex: 1;
-                ">View Card</button>
+                ">${i18n.tDefault('misc.profile.viewCard', 'View Card')}</button>
                 <button id="mwi-character-card-loadout-btn" style="
                     padding: 8px 10px;
                     background: ${config.COLOR_ACCENT};
@@ -266,28 +270,36 @@ class CombatScore {
                     color: #aaa;
                     padding: 0 5px;
                     line-height: 1;
-                " title="Close">×</span>
+                " title="${i18n.tDefault('misc.profile.close', 'Close')}">×</span>
             </div>
             <div style="cursor: pointer; font-weight: bold; margin-bottom: 8px; color: ${config.COLOR_PROFIT}; ${!config.getSetting('combatScore') ? 'display: none;' : ''}" id="mwi-score-toggle">
-                + Combat Score: ${numberFormatter(scoreData.total.toFixed(1))}${equipmentHiddenText}
+                + ${i18n.tDefault('misc.profile.combatScore', 'Combat Score: {score}', {
+                    score: numberFormatter(scoreData.total.toFixed(1)),
+                })}${equipmentHiddenText}
             </div>
             <div id="mwi-score-details" style="display: none; margin-left: 10px; color: ${config.COLOR_TEXT_PRIMARY};">
                 <div style="cursor: pointer; margin-bottom: 4px;" id="mwi-house-toggle">
-                    + House: ${numberFormatter(scoreData.house.toFixed(1))}
+                    + ${i18n.tDefault('misc.profile.house', 'House: {score}', {
+                        score: numberFormatter(scoreData.house.toFixed(1)),
+                    })}
                 </div>
                 <div id="mwi-house-breakdown" style="display: none; margin-bottom: 6px;">
                     ${houseBreakdownHTML}
                 </div>
 
                 <div style="cursor: pointer; margin-bottom: 4px;" id="mwi-ability-toggle">
-                    + Ability: ${numberFormatter(scoreData.ability.toFixed(1))}
+                    + ${i18n.tDefault('misc.profile.ability', 'Ability: {score}', {
+                        score: numberFormatter(scoreData.ability.toFixed(1)),
+                    })}
                 </div>
                 <div id="mwi-ability-breakdown" style="display: none; margin-bottom: 6px;">
                     ${abilityBreakdownHTML}
                 </div>
 
                 <div style="cursor: pointer; margin-bottom: 4px;" id="mwi-equipment-toggle">
-                    + Equipment: ${numberFormatter(scoreData.equipment.toFixed(1))}
+                    + ${i18n.tDefault('misc.profile.equipment', 'Equipment: {score}', {
+                        score: numberFormatter(scoreData.equipment.toFixed(1)),
+                    })}
                 </div>
                 <div id="mwi-equipment-breakdown" style="display: none;">
                     ${equipmentBreakdownHTML}
@@ -295,11 +307,15 @@ class CombatScore {
             </div>
 
             <div style="cursor: pointer; font-weight: bold; margin-top: 12px; margin-bottom: 8px; color: ${config.COLOR_PROFIT}; ${!config.getSetting('combatScore') ? 'display: none;' : ''}" id="mwi-skiller-score-toggle">
-                + Skiller Score: ${numberFormatter(scoreData.skillerTotal.toFixed(1))}
+                + ${i18n.tDefault('misc.profile.skillerScore', 'Skiller Score: {score}', {
+                    score: numberFormatter(scoreData.skillerTotal.toFixed(1)),
+                })}
             </div>
             <div id="mwi-skiller-score-details" style="display: none; margin-left: 10px; color: ${config.COLOR_TEXT_PRIMARY};">
                 <div style="cursor: pointer; margin-bottom: 4px;" id="mwi-skiller-equipment-toggle">
-                    + Equipment: ${numberFormatter(scoreData.skillerEquipment.toFixed(1))}
+                    + ${i18n.tDefault('misc.profile.equipment', 'Equipment: {score}', {
+                        score: numberFormatter(scoreData.skillerEquipment.toFixed(1)),
+                    })}
                 </div>
                 <div id="mwi-skiller-equipment-breakdown" style="display: none;">
                     ${skillerEquipmentBreakdownHTML}
@@ -318,7 +334,7 @@ class CombatScore {
                         font-weight: bold;
                         font-size: 0.85rem;
                         flex: 1;
-                    ">Combat Sim Export</button>
+                    ">${i18n.tDefault('misc.profile.combatSimExport', 'Combat Sim Export')}</button>
                     <button id="mwi-combat-sim-loadout-btn" style="
                         padding: 8px 10px;
                         background: ${config.COLOR_ACCENT};
@@ -355,7 +371,7 @@ class CombatScore {
                     font-weight: bold;
                     font-size: 0.85rem;
                     width: 100%;
-                ">Sim Character</button>
+                ">${i18n.tDefault('misc.profile.simCharacter', 'Sim Character')}</button>
                 <button id="mwi-milkonomy-export-btn" style="
                     padding: 8px 12px;
                     background: ${config.COLOR_ACCENT};
@@ -366,7 +382,7 @@ class CombatScore {
                     font-weight: bold;
                     font-size: 0.85rem;
                     width: 100%;
-                ">Milkonomy Export</button>
+                ">${i18n.tDefault('misc.profile.milkonomyExport', 'Milkonomy Export')}</button>
                 ${viewCardButtonHTML}
             </div>
         `;
@@ -438,7 +454,10 @@ class CombatScore {
                 details.style.display = isCollapsed ? 'block' : 'none';
                 toggleBtn.textContent =
                     (isCollapsed ? '- ' : '+ ') +
-                    `Combat Score: ${numberFormatter(scoreData.total.toFixed(1))}${equipmentHiddenText}`;
+                    i18n.tDefault('misc.profile.combatScore', 'Combat Score: {score}', {
+                        score: numberFormatter(scoreData.total.toFixed(1)),
+                    }) +
+                    equipmentHiddenText;
             });
         }
 
@@ -450,7 +469,10 @@ class CombatScore {
                 const isCollapsed = houseBreakdown.style.display === 'none';
                 houseBreakdown.style.display = isCollapsed ? 'block' : 'none';
                 houseToggle.textContent =
-                    (isCollapsed ? '- ' : '+ ') + `House: ${numberFormatter(scoreData.house.toFixed(1))}`;
+                    (isCollapsed ? '- ' : '+ ') +
+                    i18n.tDefault('misc.profile.house', 'House: {score}', {
+                        score: numberFormatter(scoreData.house.toFixed(1)),
+                    });
             });
         }
 
@@ -462,7 +484,10 @@ class CombatScore {
                 const isCollapsed = abilityBreakdown.style.display === 'none';
                 abilityBreakdown.style.display = isCollapsed ? 'block' : 'none';
                 abilityToggle.textContent =
-                    (isCollapsed ? '- ' : '+ ') + `Ability: ${numberFormatter(scoreData.ability.toFixed(1))}`;
+                    (isCollapsed ? '- ' : '+ ') +
+                    i18n.tDefault('misc.profile.ability', 'Ability: {score}', {
+                        score: numberFormatter(scoreData.ability.toFixed(1)),
+                    });
             });
         }
 
@@ -474,7 +499,10 @@ class CombatScore {
                 const isCollapsed = equipmentBreakdown.style.display === 'none';
                 equipmentBreakdown.style.display = isCollapsed ? 'block' : 'none';
                 equipmentToggle.textContent =
-                    (isCollapsed ? '- ' : '+ ') + `Equipment: ${numberFormatter(scoreData.equipment.toFixed(1))}`;
+                    (isCollapsed ? '- ' : '+ ') +
+                    i18n.tDefault('misc.profile.equipment', 'Equipment: {score}', {
+                        score: numberFormatter(scoreData.equipment.toFixed(1)),
+                    });
             });
         }
 
@@ -487,7 +515,9 @@ class CombatScore {
                 skillerScoreDetails.style.display = isCollapsed ? 'block' : 'none';
                 skillerScoreToggle.textContent =
                     (isCollapsed ? '- ' : '+ ') +
-                    `Skiller Score: ${numberFormatter(scoreData.skillerTotal.toFixed(1))}`;
+                    i18n.tDefault('misc.profile.skillerScore', 'Skiller Score: {score}', {
+                        score: numberFormatter(scoreData.skillerTotal.toFixed(1)),
+                    });
             });
         }
 
@@ -500,7 +530,9 @@ class CombatScore {
                 skillerEquipmentBreakdown.style.display = isCollapsed ? 'block' : 'none';
                 skillerEquipmentToggle.textContent =
                     (isCollapsed ? '- ' : '+ ') +
-                    `Equipment: ${numberFormatter(scoreData.skillerEquipment.toFixed(1))}`;
+                    i18n.tDefault('misc.profile.equipment', 'Equipment: {score}', {
+                        score: numberFormatter(scoreData.skillerEquipment.toFixed(1)),
+                    });
             });
         }
 
@@ -522,13 +554,14 @@ class CombatScore {
         const simCharBtn = panel.querySelector('#mwi-sim-character-btn');
         if (simCharBtn) {
             simCharBtn.addEventListener('click', () => {
-                const playerName = profileData?.profile?.sharableCharacter?.name || 'Player';
+                const playerName =
+                    profileData?.profile?.sharableCharacter?.name || i18n.tDefault('misc.profile.player', 'Player');
                 const dto = buildPlayerDTOFromProfile(profileData);
                 if (!dto) {
-                    simCharBtn.textContent = '\u2717 No Data';
+                    simCharBtn.textContent = i18n.tDefault('misc.profile.noData', '\u2717 No Data');
                     simCharBtn.style.background = config.COLOR_LOSS;
                     const resetTimeout = setTimeout(() => {
-                        simCharBtn.textContent = 'Sim Character';
+                        simCharBtn.textContent = i18n.tDefault('misc.profile.simCharacter', 'Sim Character');
                         simCharBtn.style.background = 'linear-gradient(135deg, #3a7bd5, #5f3dc4)';
                     }, 3000);
                     this.timerRegistry.registerTimeout(resetTimeout);
@@ -734,7 +767,8 @@ class CombatScore {
             return;
         }
 
-        const playerName = profileData.profile?.sharableCharacter?.name || 'Player';
+        const playerName =
+            profileData.profile?.sharableCharacter?.name || i18n.tDefault('misc.profile.player', 'Player');
 
         // Create panel element
         const panel = document.createElement('div');
@@ -758,17 +792,21 @@ class CombatScore {
         // Create panel HTML
         panel.innerHTML = `
             <div id="mwi-abilities-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-shrink: 0; cursor: move; user-select: none;">
-                <div style="font-weight: bold; color: ${config.COLOR_ACCENT}; font-size: 0.9rem;">${playerName} - Abilities & Triggers</div>
+                <div style="font-weight: bold; color: ${config.COLOR_ACCENT}; font-size: 0.9rem;">${i18n.tDefault(
+                    'misc.profile.abilitiesTriggersTitle',
+                    '{name} - Abilities & Triggers',
+                    { name: playerName }
+                )}</div>
                 <span id="mwi-abilities-close-btn" style="
                     cursor: pointer;
                     font-size: 18px;
                     color: #aaa;
                     padding: 0 5px;
                     line-height: 1;
-                " title="Close">×</span>
+                " title="${i18n.tDefault('misc.profile.close', 'Close')}">×</span>
             </div>
             <div style="cursor: pointer; font-weight: bold; margin-bottom: 8px; color: ${config.COLOR_ACCENT}; flex-shrink: 0;" id="mwi-abilities-toggle">
-                + Show Details
+                + ${i18n.tDefault('misc.profile.showDetails', 'Show Details')}
             </div>
             <div id="mwi-abilities-details" style="display: none; overflow-y: auto; flex: 1; min-height: 0;">
                 ${abilitiesTriggersHTML}
@@ -836,7 +874,11 @@ class CombatScore {
             toggleBtn.addEventListener('click', () => {
                 const isCollapsed = details.style.display === 'none';
                 details.style.display = isCollapsed ? 'block' : 'none';
-                toggleBtn.textContent = (isCollapsed ? '- ' : '+ ') + (isCollapsed ? 'Hide Details' : 'Show Details');
+                toggleBtn.textContent =
+                    (isCollapsed ? '- ' : '+ ') +
+                    (isCollapsed
+                        ? i18n.tDefault('misc.profile.hideDetails', 'Hide Details')
+                        : i18n.tDefault('misc.profile.showDetails', 'Show Details'));
                 // Re-anchor to bottom after size change
                 requestAnimationFrame(() => {
                     const bottomGap = 10;
@@ -944,7 +986,7 @@ class CombatScore {
             // Get export data in single-player format (for pasting into "Player 1 import" field)
             const exportData = await constructExportObject(currentProfileId, true);
             if (!exportData) {
-                button.textContent = '✗ No Data';
+                button.textContent = i18n.tDefault('misc.profile.noData', '✗ No Data');
                 button.style.background = '${config.COLOR_LOSS}';
                 const resetTimeout = setTimeout(() => {
                     button.textContent = originalText;
@@ -957,7 +999,7 @@ class CombatScore {
             const exportString = JSON.stringify(exportData.exportObj);
             await navigator.clipboard.writeText(exportString);
 
-            button.textContent = '✓ Copied';
+            button.textContent = i18n.tDefault('misc.profile.copied', '✓ Copied');
             button.style.background = '${config.COLOR_PROFIT}';
             const resetTimeout = setTimeout(() => {
                 button.textContent = originalText;
@@ -966,7 +1008,7 @@ class CombatScore {
             this.timerRegistry.registerTimeout(resetTimeout);
         } catch (error) {
             console.error('[Combat Score] Combat Sim export failed:', error);
-            button.textContent = '✗ Failed';
+            button.textContent = i18n.tDefault('misc.profile.failed', '✗ Failed');
             button.style.background = '${config.COLOR_LOSS}';
             const resetTimeout = setTimeout(() => {
                 button.textContent = originalText;
@@ -995,7 +1037,7 @@ class CombatScore {
             // Get base export (skills, house, achievements, triggers)
             const exportData = await constructExportObject(null, true);
             if (!exportData) {
-                button.textContent = '✗ No Data';
+                button.textContent = i18n.tDefault('misc.profile.noData', '✗ No Data');
                 button.style.background = '${config.COLOR_LOSS}';
                 const resetTimeout = setTimeout(() => {
                     button.textContent = originalText;
@@ -1079,7 +1121,7 @@ class CombatScore {
             const exportString = JSON.stringify(playerObj);
             await navigator.clipboard.writeText(exportString);
 
-            button.textContent = '✓ Copied';
+            button.textContent = i18n.tDefault('misc.profile.copied', '✓ Copied');
             button.style.background = '${config.COLOR_PROFIT}';
             const resetTimeout = setTimeout(() => {
                 button.textContent = originalText;
@@ -1088,7 +1130,7 @@ class CombatScore {
             this.timerRegistry.registerTimeout(resetTimeout);
         } catch (error) {
             console.error('[Combat Score] Combat Sim snapshot export failed:', error);
-            button.textContent = '✗ Failed';
+            button.textContent = i18n.tDefault('misc.profile.failed', '✗ Failed');
             button.style.background = '${config.COLOR_LOSS}';
             const resetTimeout = setTimeout(() => {
                 button.textContent = originalText;
@@ -1113,7 +1155,7 @@ class CombatScore {
             // Get export data (pass profile ID if viewing external profile)
             const exportData = await constructMilkonomyExport(currentProfileId);
             if (!exportData) {
-                button.textContent = '✗ No Data';
+                button.textContent = i18n.tDefault('misc.profile.noData', '✗ No Data');
                 button.style.background = '${config.COLOR_LOSS}';
                 const resetTimeout = setTimeout(() => {
                     button.textContent = originalText;
@@ -1126,7 +1168,7 @@ class CombatScore {
             const exportString = JSON.stringify(exportData);
             await navigator.clipboard.writeText(exportString);
 
-            button.textContent = '✓ Copied';
+            button.textContent = i18n.tDefault('misc.profile.copied', '✓ Copied');
             button.style.background = '${config.COLOR_PROFIT}';
             const resetTimeout = setTimeout(() => {
                 button.textContent = originalText;
@@ -1135,7 +1177,7 @@ class CombatScore {
             this.timerRegistry.registerTimeout(resetTimeout);
         } catch (error) {
             console.error('[Combat Score] Milkonomy export failed:', error);
-            button.textContent = '✗ Failed';
+            button.textContent = i18n.tDefault('misc.profile.failed', '✗ Failed');
             button.style.background = '${config.COLOR_LOSS}';
             const resetTimeout = setTimeout(() => {
                 button.textContent = originalText;
@@ -1171,10 +1213,10 @@ class CombatScore {
      */
     formatDependency(dependencyHrid) {
         const map = {
-            '/combat_trigger_dependencies/self': 'Self',
-            '/combat_trigger_dependencies/targeted_enemy': 'Target',
-            '/combat_trigger_dependencies/all_enemies': 'All Enemies',
-            '/combat_trigger_dependencies/all_allies': 'All Allies',
+            '/combat_trigger_dependencies/self': i18n.tDefault('misc.profile.trigger.self', 'Self'),
+            '/combat_trigger_dependencies/targeted_enemy': i18n.tDefault('misc.profile.trigger.target', 'Target'),
+            '/combat_trigger_dependencies/all_enemies': i18n.tDefault('misc.profile.trigger.allEnemies', 'All Enemies'),
+            '/combat_trigger_dependencies/all_allies': i18n.tDefault('misc.profile.trigger.allAllies', 'All Allies'),
         };
         return map[dependencyHrid] || dependencyHrid.split('/').pop().replace(/_/g, ' ');
     }
@@ -1186,11 +1228,14 @@ class CombatScore {
      */
     formatCondition(conditionHrid) {
         const map = {
-            '/combat_trigger_conditions/current_hp': 'HP',
-            '/combat_trigger_conditions/missing_hp': 'Missing HP',
-            '/combat_trigger_conditions/current_mp': 'MP',
-            '/combat_trigger_conditions/missing_mp': 'Missing MP',
-            '/combat_trigger_conditions/number_of_active_units': 'Active Units',
+            '/combat_trigger_conditions/current_hp': i18n.tDefault('misc.profile.trigger.hp', 'HP'),
+            '/combat_trigger_conditions/missing_hp': i18n.tDefault('misc.profile.trigger.missingHp', 'Missing HP'),
+            '/combat_trigger_conditions/current_mp': i18n.tDefault('misc.profile.trigger.mp', 'MP'),
+            '/combat_trigger_conditions/missing_mp': i18n.tDefault('misc.profile.trigger.missingMp', 'Missing MP'),
+            '/combat_trigger_conditions/number_of_active_units': i18n.tDefault(
+                'misc.profile.trigger.activeUnits',
+                'Active Units'
+            ),
         };
         if (map[conditionHrid]) return map[conditionHrid];
 
@@ -1232,7 +1277,11 @@ class CombatScore {
 
         // Handle is_active/is_inactive specially
         if (comparator === 'is active' || comparator === 'is inactive') {
-            return `${dependency}: ${conditionName} ${comparator}`;
+            const comparatorText =
+                comparator === 'is active'
+                    ? i18n.tDefault('misc.profile.trigger.isActive', 'is active')
+                    : i18n.tDefault('misc.profile.trigger.isInactive', 'is inactive');
+            return `${dependency}: ${conditionName} ${comparatorText}`;
         }
 
         return `${dependency}: ${conditionName} ${comparator} ${condition.value}`;
@@ -1244,9 +1293,12 @@ class CombatScore {
      * @returns {string} Formatted trigger string
      */
     formatTriggers(conditions) {
-        if (!conditions || conditions.length === 0) return 'No trigger';
+        if (!conditions || conditions.length === 0)
+            return i18n.tDefault('misc.profile.trigger.noTrigger', 'No trigger');
 
-        return conditions.map((c) => this.formatTriggerCondition(c)).join(' AND ');
+        return conditions
+            .map((c) => this.formatTriggerCondition(c))
+            .join(i18n.tDefault('misc.profile.trigger.and', ' AND '));
     }
 
     /**
@@ -1304,7 +1356,9 @@ class CombatScore {
             for (const ability of abilities) {
                 const abilityIconId = ability.abilityHrid.split('/').pop();
                 const triggers = abilityTriggers[ability.abilityHrid];
-                const triggerText = triggers ? this.formatTriggers(triggers) : 'No trigger';
+                const triggerText = triggers
+                    ? this.formatTriggers(triggers)
+                    : i18n.tDefault('misc.profile.trigger.noTrigger', 'No trigger');
 
                 html += `
                     <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
@@ -1321,13 +1375,15 @@ class CombatScore {
         const consumableKeys = Object.keys(consumableTriggers);
         if (consumableKeys.length > 0 && itemsSpriteUrl) {
             if (abilities.length > 0) {
-                html += `<div style="margin-top: 6px; margin-bottom: 6px; font-weight: 600; color: ${config.COLOR_TEXT_SECONDARY}; font-size: 0.85rem;">Food & Drinks</div>`;
+                html += `<div style="margin-top: 6px; margin-bottom: 6px; font-weight: 600; color: ${config.COLOR_TEXT_SECONDARY}; font-size: 0.85rem;">${i18n.tDefault('misc.profile.foodDrinks', 'Food & Drinks')}</div>`;
             }
 
             for (const itemHrid of consumableKeys) {
                 const itemIconId = itemHrid.split('/').pop();
                 const triggers = consumableTriggers[itemHrid];
-                const triggerText = triggers ? this.formatTriggers(triggers) : 'No trigger';
+                const triggerText = triggers
+                    ? this.formatTriggers(triggers)
+                    : i18n.tDefault('misc.profile.trigger.noTrigger', 'No trigger');
 
                 html += `
                     <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">

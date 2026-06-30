@@ -8,7 +8,15 @@ import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import webSocketHook from '../../core/websocket.js';
 import domObserver from '../../core/dom-observer.js';
+import i18n from '../../core/i18n/index.js';
 import { formatKMB } from '../../utils/formatters.js';
+import {
+    getLocalizedItemName,
+    getLocalizedActionName,
+    getLocalizedSkillName,
+    getLocalizedAbilityName,
+    getLocalizedMonsterName,
+} from '../../utils/localized-game-names.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { chatBlockList } from './chat-block-list.js';
 
@@ -70,8 +78,15 @@ const SKILL_HRID_TO_NAME = {
  */
 function resolveSystemMessage(messageKey, meta) {
     if (messageKey === 'systemChatMessage.characterLeveledUp') {
-        const skillName = SKILL_HRID_TO_NAME[meta.skillHrid] || meta.skillHrid.split('/').pop().replace(/_/g, ' ');
-        return `🎉 ${meta.name} reached ${skillName} ${meta.level}!`;
+        const skillName = getLocalizedSkillName(
+            meta.skillHrid,
+            SKILL_HRID_TO_NAME[meta.skillHrid] || meta.skillHrid.split('/').pop().replace(/_/g, ' ')
+        );
+        return i18n.tDefault('misc.chat.popout.leveledUp', '🎉 {name} reached {skill} {level}!', {
+            name: meta.name,
+            skill: skillName,
+            level: meta.level,
+        });
     }
     return null;
 }
@@ -84,44 +99,67 @@ function resolveSystemMessage(messageKey, meta) {
 function resolveLink(link) {
     if (link.linkType === '/chat_link_types/market_listing') {
         const itemDetails = dataManager.getItemDetails(link.itemHrid);
-        const itemName = itemDetails?.name || link.itemHrid.split('/').pop().replace(/_/g, ' ');
+        const itemName = getLocalizedItemName(
+            link.itemHrid,
+            itemDetails?.name || link.itemHrid.split('/').pop().replace(/_/g, ' ')
+        );
         const enhancement = link.itemEnhancementLevel > 0 ? ` +${link.itemEnhancementLevel}` : '';
         const count = link.itemCount > 1 ? ` ×${link.itemCount}` : '';
         const price = formatKMB(link.price);
-        const side = link.isSell ? 'Sell' : 'Buy';
+        const side = link.isSell
+            ? i18n.tDefault('misc.chat.popout.linkSell', 'Sell')
+            : i18n.tDefault('misc.chat.popout.linkBuy', 'Buy');
         return `[${itemName}${enhancement}${count} @ ${price} ${side}]`;
     }
     if (link.linkType === '/chat_link_types/item') {
         const itemDetails = dataManager.getItemDetails(link.itemHrid);
-        const itemName = itemDetails?.name || link.itemHrid.split('/').pop().replace(/_/g, ' ');
+        const itemName = getLocalizedItemName(
+            link.itemHrid,
+            itemDetails?.name || link.itemHrid.split('/').pop().replace(/_/g, ' ')
+        );
         const enhancement = link.itemEnhancementLevel > 0 ? ` +${link.itemEnhancementLevel}` : '';
         const count = link.itemCount > 1 ? ` ×${link.itemCount}` : '';
         return `[${itemName}${enhancement}${count}]`;
     }
     if (link.linkType === '/chat_link_types/ability') {
         const abilityDetails = dataManager.getInitClientData()?.abilityDetailMap?.[link.abilityHrid];
-        const abilityName = abilityDetails?.name || link.abilityHrid.split('/').pop().replace(/_/g, ' ');
+        const abilityName = getLocalizedAbilityName(
+            link.abilityHrid,
+            abilityDetails?.name || link.abilityHrid.split('/').pop().replace(/_/g, ' ')
+        );
         return `[${abilityName} Lv.${link.abilityLevel}]`;
     }
     if (link.linkType === '/chat_link_types/skill') {
-        const skillName = SKILL_HRID_TO_NAME[link.skillHrid] || link.skillHrid.split('/').pop().replace(/_/g, ' ');
+        const skillName = getLocalizedSkillName(
+            link.skillHrid,
+            SKILL_HRID_TO_NAME[link.skillHrid] || link.skillHrid.split('/').pop().replace(/_/g, ' ')
+        );
         return `[${skillName} Lv.${link.skillLevel}]`;
     }
     if (link.linkType === '/chat_link_types/party') {
         const actionDetails = dataManager.getActionDetails(link.partyActionHrid);
-        const zoneName = actionDetails?.name || link.partyActionHrid.split('/').pop().replace(/_/g, ' ');
+        const zoneName = getLocalizedActionName(
+            link.partyActionHrid,
+            actionDetails?.name || link.partyActionHrid.split('/').pop().replace(/_/g, ' ')
+        );
         const tier = ` T${link.partyDifficultyTier ?? 0}`;
-        return `[Party: ${zoneName}${tier}]`;
+        return `[${i18n.tDefault('misc.chat.popout.linkParty', 'Party:')} ${zoneName}${tier}]`;
     }
     if (link.linkType === '/chat_link_types/collection') {
         const itemDetails = dataManager.getItemDetails(link.itemHrid);
-        const itemName = itemDetails?.name || link.itemHrid.split('/').pop().replace(/_/g, ' ');
-        return `[Collection: ${itemName} ×${formatKMB(link.itemCount)}]`;
+        const itemName = getLocalizedItemName(
+            link.itemHrid,
+            itemDetails?.name || link.itemHrid.split('/').pop().replace(/_/g, ' ')
+        );
+        return `[${i18n.tDefault('misc.chat.popout.linkCollection', 'Collection:')} ${itemName} ×${formatKMB(link.itemCount)}]`;
     }
     if (link.linkType === '/chat_link_types/bestiary') {
         const monsterDetails = dataManager.getInitClientData()?.combatMonsterDetailMap?.[link.monsterHrid];
-        const monsterName = monsterDetails?.name || link.monsterHrid.split('/').pop().replace(/_/g, ' ');
-        return `[Bestiary: ${monsterName} ×${link.monsterCount}]`;
+        const monsterName = getLocalizedMonsterName(
+            link.monsterHrid,
+            monsterDetails?.name || link.monsterHrid.split('/').pop().replace(/_/g, ' ')
+        );
+        return `[${i18n.tDefault('misc.chat.popout.linkBestiary', 'Bestiary:')} ${monsterName} ×${link.monsterCount}]`;
     }
     // Fallback: humanize the HRID
     return `[${link.linkType.split('/').pop().replace(/_/g, ' ')}]`;
@@ -228,7 +266,7 @@ class PopOutChat {
         const btn = document.createElement('button');
         btn.setAttribute('data-mwi-popout-chat', 'true');
         btn.textContent = '⧉';
-        btn.title = 'Pop out chat';
+        i18n.bindDefault(btn, 'misc.chat.popOutChat', 'Pop out chat', undefined, 'title');
         btn.style.cssText = `
             padding: 2px 6px;
             font-size: 13px;
@@ -454,6 +492,23 @@ class PopOutChat {
      * @returns {string}
      */
     _buildPopoutHTML() {
+        // The inline <script> below runs in an isolated blob document with no access
+        // to the i18n module, so translations are resolved here (main window) and
+        // injected as a build-time table (TR) consumed by the pop-out script.
+        const tr = {
+            filterNone: i18n.tDefault('misc.chat.popout.filterNone', 'No filter'),
+            filterEnhancedBuy: i18n.tDefault('misc.chat.popout.filterEnhancedBuy', 'Enhanced Buy'),
+            filterEnhancedSell: i18n.tDefault('misc.chat.popout.filterEnhancedSell', 'Enhanced Sell'),
+            filterBuyOnly: i18n.tDefault('misc.chat.popout.filterBuyOnly', 'Buy only'),
+            filterSellOnly: i18n.tDefault('misc.chat.popout.filterSellOnly', 'Sell only'),
+            filterCustom: i18n.tDefault('misc.chat.popout.filterCustom', 'Custom…'),
+            filterPlaceholder: i18n.tDefault('misc.chat.popout.filterPlaceholder', 'text or /regex/'),
+            typeMessage: i18n.tDefault('misc.chat.popout.typeMessage', 'Type a message...'),
+            send: i18n.tDefault('misc.chat.popout.send', 'SEND'),
+            dragToReorder: i18n.tDefault('misc.chat.popout.dragToReorder', 'Drag to reorder'),
+            closePane: i18n.tDefault('misc.chat.popout.closePane', 'Close pane'),
+        };
+
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -611,9 +666,12 @@ class PopOutChat {
 <div id="topbar">
   <span id="topbar-title">MWI Chat</span>
   <span id="topbar-name"></span>
-  <button id="add-pane-btn">+ Pane</button>
-  <label id="vertical-label"><input type="checkbox" id="vertical-toggle"> Vertical</label>
-  <div id="disconnect-banner">⚠ Disconnected from game tab</div>
+  <button id="add-pane-btn">${i18n.tDefault('misc.chat.popout.addPane', '+ Pane')}</button>
+  <label id="vertical-label"><input type="checkbox" id="vertical-toggle"> ${i18n.tDefault(
+      'misc.chat.popout.vertical',
+      'Vertical'
+  )}</label>
+  <div id="disconnect-banner">${i18n.tDefault('misc.chat.popout.disconnected', '⚠ Disconnected from game tab')}</div>
 </div>
 <div id="panes"></div>
 
@@ -625,14 +683,15 @@ class PopOutChat {
   const SEND  = '${SEND_CHANNEL}';
   const MAX_PER_CHANNEL = 500;
   const STORAGE_KEY = 'mwi-chat-popout-layout';
+  const TR = ${JSON.stringify(tr)};
 
   const FILTER_PRESETS = [
-    { value: 'none',         label: 'No filter',      regex: null },
-    { value: 'enhanced_buy', label: 'Enhanced Buy',   regex: /\\+\\d+.*Buy\\]/i },
-    { value: 'enhanced_sell',label: 'Enhanced Sell',  regex: /\\+\\d+.*Sell\\]/i },
-    { value: 'buy_only',     label: 'Buy only',       regex: /Buy\\]/i },
-    { value: 'sell_only',    label: 'Sell only',      regex: /Sell\\]/i },
-    { value: 'custom',       label: 'Custom\u2026',   regex: null },
+    { value: 'none',         label: TR.filterNone,        regex: null },
+    { value: 'enhanced_buy', label: TR.filterEnhancedBuy, regex: /\\+\\d+.*Buy\\]/i },
+    { value: 'enhanced_sell',label: TR.filterEnhancedSell,regex: /\\+\\d+.*Sell\\]/i },
+    { value: 'buy_only',     label: TR.filterBuyOnly,     regex: /Buy\\]/i },
+    { value: 'sell_only',    label: TR.filterSellOnly,    regex: /Sell\\]/i },
+    { value: 'custom',       label: TR.filterCustom,      regex: null },
   ];
 
   function buildCustomRegex(text) {
@@ -730,7 +789,7 @@ class PopOutChat {
     const dragHandle = document.createElement('span');
     dragHandle.className = 'pane-drag-handle';
     dragHandle.textContent = '⠿';
-    dragHandle.title = 'Drag to reorder';
+    dragHandle.title = TR.dragToReorder;
 
     const select = document.createElement('select');
     select.className = 'pane-channel-select';
@@ -739,7 +798,7 @@ class PopOutChat {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'pane-close-btn';
     closeBtn.textContent = '✕';
-    closeBtn.title = 'Close pane';
+    closeBtn.title = TR.closePane;
     closeBtn.addEventListener('click', () => removePane(id));
 
     header.appendChild(dragHandle);
@@ -763,7 +822,7 @@ class PopOutChat {
     const filterInput = document.createElement('input');
     filterInput.className = 'pane-filter-input';
     filterInput.type = 'text';
-    filterInput.placeholder = 'text or /regex/';
+    filterInput.placeholder = TR.filterPlaceholder;
     filterInput.value = savedFilterCustom || '';
     filterInput.style.display = filterSelect.value === 'custom' ? '' : 'none';
 
@@ -781,12 +840,12 @@ class PopOutChat {
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'pane-input';
-    input.placeholder = 'Type a message...';
+    input.placeholder = TR.typeMessage;
     input.maxLength = 500;
 
     const sendBtn = document.createElement('button');
     sendBtn.className = 'pane-send-btn';
-    sendBtn.textContent = 'SEND';
+    sendBtn.textContent = TR.send;
 
     const doSend = () => {
       const text = input.value.trim();

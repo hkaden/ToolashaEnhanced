@@ -5,6 +5,7 @@
  */
 
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import dataManager from '../../core/data-manager.js';
 import { settingsGroups } from '../../core/settings-schema.js';
 import settingsStorage from '../../core/settings-storage.js';
@@ -383,8 +384,11 @@ class SettingsUI {
             header.innerHTML = `
                 <span class="collapse-icon">▼</span>
                 <span class="icon">${group.icon}</span>
-                ${group.title}
             `;
+            const groupTitle = document.createElement('span');
+            groupTitle.className = 'toolasha-settings-group-title';
+            i18n.bindDefault(groupTitle, `settings.groups.${groupKey}`, group.title);
+            header.appendChild(groupTitle);
             // Bind toggleGroup method to this instance
             header.addEventListener('click', this.toggleGroup.bind(this, groupContainer));
 
@@ -508,16 +512,19 @@ class SettingsUI {
         labelContainer.style.flex = '1';
         labelContainer.style.gap = '6px';
 
-        // Create label
+        // Create label (text in its own span so live re-binding doesn't wipe help)
         const label = document.createElement('span');
         label.className = 'toolasha-setting-label';
-        label.textContent = settingDef.label;
+        const labelText = document.createElement('span');
+        labelText.className = 'toolasha-setting-label-text';
+        i18n.bindDefault(labelText, `settings.items.${settingId}.label`, settingDef.label);
+        label.appendChild(labelText);
 
         // Add help text if present
         if (settingDef.help) {
             const help = document.createElement('span');
             help.className = 'toolasha-setting-help';
-            help.textContent = settingDef.help;
+            i18n.bindDefault(help, `settings.items.${settingId}.help`, settingDef.help);
             label.appendChild(help);
         }
 
@@ -613,7 +620,8 @@ class SettingsUI {
                 const optionsHTML = options
                     .map((option) => {
                         const optValue = typeof option === 'object' ? option.value : option;
-                        const optLabel = typeof option === 'object' ? option.label : option;
+                        const optLabelRaw = typeof option === 'object' ? option.label : option;
+                        const optLabel = i18n.tDefault(`settings.items.${settingId}.options.${optValue}`, optLabelRaw);
                         const selected = optValue === value ? 'selected' : '';
                         return `<option value="${optValue}" ${selected}>${optLabel}</option>`;
                     })
@@ -661,7 +669,10 @@ class SettingsUI {
                     const options = settingDef.tiers
                         .map(
                             (t) =>
-                                `<option value="${t.value}" ${t.value === tier ? 'selected' : ''}>${t.label}</option>`
+                                `<option value="${t.value}" ${t.value === tier ? 'selected' : ''}>${i18n.tDefault(
+                                    `settings.items.${settingId}.tiers.${t.value}`,
+                                    t.label
+                                )}</option>`
                         )
                         .join('');
                     tierHTML = `<select id="${settingId}_tier" class="toolasha-select-input" style="width:100px; font-size:12px; padding:2px 4px; ${disabledStyle}">${options}</select>`;
@@ -714,7 +725,7 @@ class SettingsUI {
                             white-space: nowrap;
                             transition: all 0.2s;
                         ">
-                        Manage Overrides${count > 0 ? ` (${count})` : ''}
+                        ${i18n.tDefault('settingsUi.manageOverrides', 'Manage Overrides')}${count > 0 ? ` (${count})` : ''}
                     </button>
                 `;
             }
@@ -770,7 +781,7 @@ class SettingsUI {
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
         searchInput.className = 'toolasha-search-input';
-        searchInput.placeholder = 'Search settings...';
+        i18n.bindDefault(searchInput, 'settingsUi.searchSettings', 'Search settings...', undefined, 'placeholder');
         searchInput.style.cssText = `
             flex: 1;
             padding: 8px 12px;
@@ -783,7 +794,7 @@ class SettingsUI {
 
         // Clear button
         const clearButton = document.createElement('button');
-        clearButton.textContent = 'Clear';
+        i18n.bindDefault(clearButton, 'settingsUi.clear', 'Clear');
         clearButton.className = 'toolasha-search-clear';
         clearButton.style.cssText = `
             padding: 8px 16px;
@@ -869,43 +880,43 @@ class SettingsUI {
 
         // Sync button (at top - most important)
         const syncBtn = document.createElement('button');
-        syncBtn.textContent = 'Copy Settings to All Characters';
+        i18n.bindDefault(syncBtn, 'settingsUi.copyToAll', 'Copy Settings to All Characters');
         syncBtn.className = 'toolasha-utility-button toolasha-sync-button';
         syncBtn.addEventListener('click', () => this.handleSync());
 
         // Fetch Latest Prices button
         const fetchPricesBtn = document.createElement('button');
-        fetchPricesBtn.textContent = '🔄 Fetch Latest Prices';
+        i18n.bindDefault(fetchPricesBtn, 'settingsUi.fetchLatestPrices', '🔄 Fetch Latest Prices');
         fetchPricesBtn.className = 'toolasha-utility-button toolasha-fetch-prices-button';
         fetchPricesBtn.addEventListener('click', () => this.handleFetchPrices(fetchPricesBtn));
 
         // Reset button
         const resetBtn = document.createElement('button');
-        resetBtn.textContent = 'Reset to Defaults';
+        i18n.bind(resetBtn, 'pilot.resetButton');
         resetBtn.className = 'toolasha-utility-button';
         resetBtn.addEventListener('click', () => this.handleReset());
 
         // Export button
         const exportBtn = document.createElement('button');
-        exportBtn.textContent = 'Export Settings';
+        i18n.bind(exportBtn, 'pilot.exportButton');
         exportBtn.className = 'toolasha-utility-button';
         exportBtn.addEventListener('click', () => this.handleExport());
 
         // Import button
         const importBtn = document.createElement('button');
-        importBtn.textContent = 'Import Settings';
+        i18n.bind(importBtn, 'pilot.importButton');
         importBtn.className = 'toolasha-utility-button';
         importBtn.addEventListener('click', () => this.handleImport());
 
         // All Off button
         const allOffBtn = document.createElement('button');
-        allOffBtn.textContent = 'All Off';
+        i18n.bindDefault(allOffBtn, 'settingsUi.allOff', 'All Off');
         allOffBtn.className = 'toolasha-utility-button';
         allOffBtn.addEventListener('click', () => this.handleAllOff(restoreBtn));
 
         // Restore button (only shown when an All Off snapshot exists)
         const restoreBtn = document.createElement('button');
-        restoreBtn.textContent = 'Restore';
+        i18n.bindDefault(restoreBtn, 'settingsUi.restore', 'Restore');
         restoreBtn.className = 'toolasha-utility-button';
         restoreBtn.style.display = 'none';
         restoreBtn.addEventListener('click', () => this.handleRestore(restoreBtn));
@@ -926,7 +937,7 @@ class SettingsUI {
         buttonsDiv.appendChild(importBtn);
 
         const pformanceBtn = document.createElement('button');
-        pformanceBtn.textContent = 'PFormance';
+        i18n.bindDefault(pformanceBtn, 'settingsUi.pformance', 'PFormance');
         pformanceBtn.className = 'toolasha-utility-button';
         pformanceBtn.addEventListener('click', () => pformancePanel.show());
         buttonsDiv.appendChild(pformanceBtn);
@@ -941,7 +952,7 @@ class SettingsUI {
     addRefreshNotice(container) {
         const notice = document.createElement('div');
         notice.className = 'toolasha-refresh-notice';
-        notice.textContent = 'Some settings require a page refresh to take effect';
+        i18n.bind(notice, 'pilot.refreshNotice');
         container.appendChild(notice);
     }
 
@@ -981,9 +992,12 @@ class SettingsUI {
             if (titleEl) {
                 if (targetButton.id === 'toolasha-settings-tab') {
                     const ver = (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window).Toolasha?.version || '';
-                    titleEl.textContent = `⚙️ Toolasha ${ver ? `v${ver} ` : ''}Settings (refresh to apply)`;
+                    titleEl.textContent = `⚙️ Toolasha ${ver ? `v${ver} ` : ''}${i18n.tDefault(
+                        'settingsUi.titleRefresh',
+                        'Settings (refresh to apply)'
+                    )}`;
                 } else {
-                    titleEl.textContent = 'Settings';
+                    titleEl.textContent = i18n.t('pilot.settingsTitle');
                 }
             }
         };
@@ -1209,13 +1223,13 @@ class SettingsUI {
             const params = getEnhancingParams();
             const fmt = (v) => (typeof v === 'number' ? v.toFixed(2).replace(/\.?0+$/, '') : v);
             return `
-                <span style="color:#6b9fff; font-weight:bold;">Computed Stats</span><br>
-                Effective Level: <span style="color:#e0e0e0;">${fmt(params.enhancingLevel)}</span> &nbsp;|&nbsp;
-                Tool Success: <span style="color:#e0e0e0;">${fmt(params.toolBonus)}%</span> &nbsp;|&nbsp;
-                Speed: <span style="color:#e0e0e0;">${fmt(params.speedBonus)}%</span><br>
-                Drink Conc: <span style="color:#e0e0e0;">${fmt((params.guzzlingBonus - 1) * 100)}%</span> &nbsp;|&nbsp;
-                Rare Find: <span style="color:#e0e0e0;">${fmt(params.rareFindBonus)}%</span> &nbsp;|&nbsp;
-                Experience: <span style="color:#e0e0e0;">${fmt(params.experienceBonus)}%</span>
+                <span style="color:#6b9fff; font-weight:bold;">${i18n.tDefault('settingsUi.computedStats', 'Computed Stats')}</span><br>
+                ${i18n.tDefault('settingsUi.effectiveLevel', 'Effective Level')}: <span style="color:#e0e0e0;">${fmt(params.enhancingLevel)}</span> &nbsp;|&nbsp;
+                ${i18n.tDefault('settingsUi.toolSuccess', 'Tool Success')}: <span style="color:#e0e0e0;">${fmt(params.toolBonus)}%</span> &nbsp;|&nbsp;
+                ${i18n.tDefault('settingsUi.speed', 'Speed')}: <span style="color:#e0e0e0;">${fmt(params.speedBonus)}%</span><br>
+                ${i18n.tDefault('settingsUi.drinkConc', 'Drink Conc')}: <span style="color:#e0e0e0;">${fmt((params.guzzlingBonus - 1) * 100)}%</span> &nbsp;|&nbsp;
+                ${i18n.tDefault('settingsUi.rareFind', 'Rare Find')}: <span style="color:#e0e0e0;">${fmt(params.rareFindBonus)}%</span> &nbsp;|&nbsp;
+                ${i18n.tDefault('settingsUi.experience', 'Experience')}: <span style="color:#e0e0e0;">${fmt(params.experienceBonus)}%</span>
             `;
         } catch {
             return '<span style="color:#666;">Stats unavailable (game data not loaded)</span>';
@@ -1260,7 +1274,9 @@ class SettingsUI {
         if (result.success) {
             alert(`Settings successfully copied to ${result.count} character${result.count > 1 ? 's' : ''}!`);
         } else {
-            alert(`Failed to sync settings: ${result.error || 'Unknown error'}`);
+            alert(
+                `${i18n.tDefault('settingsUi.failedSyncSettings', 'Failed to sync settings: ')}${result.error || 'Unknown error'}`
+            );
         }
     }
 
@@ -1272,7 +1288,7 @@ class SettingsUI {
         // Disable button and show loading state
         const originalText = button.textContent;
         button.disabled = true;
-        button.textContent = '⏳ Fetching...';
+        button.textContent = i18n.tDefault('settingsUi.fetching', '⏳ Fetching...');
 
         try {
             // Clear cache and fetch fresh data
@@ -1285,7 +1301,7 @@ class SettingsUI {
                 });
 
                 // Show success state
-                button.textContent = '✅ Updated!';
+                button.textContent = i18n.tDefault('settingsUi.updated', '✅ Updated!');
                 button.style.backgroundColor = '#00ff00';
                 button.style.color = '#000';
 
@@ -1299,7 +1315,7 @@ class SettingsUI {
                 this.timerRegistry.registerTimeout(resetSuccessTimeout);
             } else {
                 // Failed - show error state
-                button.textContent = '❌ Failed';
+                button.textContent = i18n.tDefault('settingsUi.failed', '❌ Failed');
                 button.style.backgroundColor = '#ff0000';
 
                 // Reset button after 3 seconds
@@ -1314,7 +1330,7 @@ class SettingsUI {
             console.error('[SettingsUI] Fetch prices failed:', error);
 
             // Show error state
-            button.textContent = '❌ Error';
+            button.textContent = i18n.tDefault('settingsUi.errorState', '❌ Error');
             button.style.backgroundColor = '#ff0000';
 
             // Reset button after 3 seconds
@@ -1382,11 +1398,16 @@ class SettingsUI {
                     alert(msg);
                     window.location.reload();
                 } else {
-                    alert('Failed to import settings. Please check the file format.');
+                    alert(
+                        i18n.tDefault(
+                            'settingsUi.failedImportFormat',
+                            'Failed to import settings. Please check the file format.'
+                        )
+                    );
                 }
             } catch (error) {
                 console.error('[Toolasha Settings] Import error:', error);
-                alert('Failed to import settings.');
+                alert(i18n.tDefault('settingsUi.failedImport', 'Failed to import settings.'));
             }
         });
 
@@ -1595,7 +1616,10 @@ class SettingsUI {
         // Available variables section
         const variablesSection = document.createElement('div');
         variablesSection.style.cssText = 'margin-bottom: 20px;';
-        variablesSection.innerHTML = '<h4 style="margin: 0 0 10px 0; color: #e0e0e0;">Add Variable:</h4>';
+        variablesSection.innerHTML = `<h4 style="margin: 0 0 10px 0; color: #e0e0e0;">${i18n.tDefault(
+            'settingsUi.addVariable',
+            'Add Variable:'
+        )}</h4>`;
 
         const variablesContainer = document.createElement('div');
         variablesContainer.style.cssText = `
@@ -1641,7 +1665,7 @@ class SettingsUI {
         // Add text button
         const addTextBtn = document.createElement('button');
         addTextBtn.type = 'button';
-        addTextBtn.textContent = '+ Add Text';
+        i18n.bindDefault(addTextBtn, 'settingsUi.addText', '+ Add Text');
         addTextBtn.style.cssText = `
             background: #2a2a2a;
             border: 1px solid #4a4a4a;
@@ -1686,7 +1710,7 @@ class SettingsUI {
         // Restore to Default button (left side)
         const restoreBtn = document.createElement('button');
         restoreBtn.type = 'button';
-        restoreBtn.textContent = 'Restore to Default';
+        i18n.bindDefault(restoreBtn, 'settingsUi.restoreToDefault', 'Restore to Default');
         restoreBtn.style.cssText = `
             background: #6b5b3a;
             border: 1px solid #8b7b5a;
@@ -1712,7 +1736,7 @@ class SettingsUI {
 
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
-        cancelBtn.textContent = 'Cancel';
+        i18n.bindDefault(cancelBtn, 'settingsUi.cancel', 'Cancel');
         cancelBtn.style.cssText = `
             background: #2a2a2a;
             border: 1px solid #4a4a4a;
@@ -1726,7 +1750,7 @@ class SettingsUI {
 
         const saveBtn = document.createElement('button');
         saveBtn.type = 'button';
-        saveBtn.textContent = 'Save';
+        i18n.bindDefault(saveBtn, 'settingsUi.save', 'Save');
         saveBtn.style.cssText = `
             background: #4a7c59;
             border: 1px solid #5a8c69;
@@ -1887,11 +1911,11 @@ class SettingsUI {
 
         const searchLabel = document.createElement('div');
         searchLabel.style.cssText = 'font-size: 11px; color: #888; margin-bottom: 4px;';
-        searchLabel.textContent = 'Item';
+        i18n.bindDefault(searchLabel, 'settingsUi.labelItem', 'Item');
 
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = 'Search items...';
+        i18n.bindDefault(searchInput, 'settingsUi.searchItems', 'Search items...', undefined, 'placeholder');
         searchInput.style.cssText = `
             width: 100%;
             padding: 6px 10px;
@@ -1926,7 +1950,7 @@ class SettingsUI {
         const enhWrapper = document.createElement('div');
         const enhLabel = document.createElement('div');
         enhLabel.style.cssText = 'font-size: 11px; color: #888; margin-bottom: 4px;';
-        enhLabel.textContent = 'Enh';
+        i18n.bindDefault(enhLabel, 'settingsUi.labelEnh', 'Enh');
 
         const enhInput = document.createElement('input');
         enhInput.type = 'number';
@@ -2050,7 +2074,11 @@ class SettingsUI {
             if (entries.length === 0) {
                 const empty = document.createElement('div');
                 empty.style.cssText = 'padding: 20px; text-align: center; color: #666; font-size: 13px;';
-                empty.textContent = 'No custom price overrides. Use the search bar above to add items.';
+                i18n.bindDefault(
+                    empty,
+                    'settingsUi.noCustomOverrides',
+                    'No custom price overrides. Use the search bar above to add items.'
+                );
                 tableContainer.appendChild(empty);
                 return;
             }
@@ -2235,7 +2263,7 @@ class SettingsUI {
 
         const clearAllBtn = document.createElement('button');
         clearAllBtn.type = 'button';
-        clearAllBtn.textContent = 'Clear All';
+        i18n.bindDefault(clearAllBtn, 'settingsUi.clearAll', 'Clear All');
         clearAllBtn.style.cssText = `
             background: #6b3a3a;
             border: 1px solid #8b5a5a;
@@ -2259,7 +2287,7 @@ class SettingsUI {
 
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
-        cancelBtn.textContent = 'Cancel';
+        i18n.bindDefault(cancelBtn, 'settingsUi.cancel', 'Cancel');
         cancelBtn.style.cssText = `
             background: #2a2a2a;
             border: 1px solid #4a4a4a;
@@ -2273,7 +2301,7 @@ class SettingsUI {
 
         const saveBtn = document.createElement('button');
         saveBtn.type = 'button';
-        saveBtn.textContent = 'Save';
+        i18n.bindDefault(saveBtn, 'settingsUi.save', 'Save');
         saveBtn.style.cssText = `
             background: #4a7c59;
             border: 1px solid #5a8c69;
@@ -2310,7 +2338,7 @@ class SettingsUI {
             const btn = document.querySelector('.toolasha-custom-price-edit-btn');
             if (btn) {
                 const count = Object.keys(workingOverrides).length;
-                btn.textContent = `Manage Overrides${count > 0 ? ` (${count})` : ''}`;
+                btn.textContent = `${i18n.tDefault('settingsUi.manageOverrides', 'Manage Overrides')}${count > 0 ? ` (${count})` : ''}`;
             }
 
             overlay.remove();
@@ -2404,7 +2432,7 @@ class SettingsUI {
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.textContent = '×';
-        deleteBtn.title = 'Remove';
+        i18n.bindDefault(deleteBtn, 'settingsUi.remove', 'Remove', undefined, 'title');
         deleteBtn.style.cssText = `
             background: #8b0000;
             border: 1px solid #a00000;
@@ -2501,7 +2529,7 @@ class SettingsUI {
 
         const title = document.createElement('div');
         title.style.cssText = `font-weight: 700; font-size: 14px; color: ${enabled ? '#d4900a' : '#c0c0c0'};`;
-        title.textContent = 'Iron Cow Mode';
+        i18n.bindDefault(title, 'settingsUi.ironCowMode', 'Iron Cow Mode');
 
         const desc = document.createElement('div');
         desc.style.cssText = 'font-size: 12px; color: #888; margin-top: 2px;';

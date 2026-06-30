@@ -6,7 +6,9 @@
 
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import { resolveItemHridFromLocalizedName, getLocalizedItemName } from '../../utils/localized-game-names.js';
 import domObserver from '../../core/dom-observer.js';
+import i18n from '../../core/i18n/index.js';
 import dom from '../../utils/dom.js';
 import { formatKMB } from '../../utils/formatters.js';
 import { getItemPrices } from '../../utils/market-data.js';
@@ -147,7 +149,13 @@ class DungeonTokenTooltips {
         const shopItems = this._getDungeonShopItems(tokenHrid);
         if (!shopItems || shopItems.length === 0) return;
 
-        this._injectShopTable(tooltipElement, shopItems, 'Token Shop Value:', 'Gold/Token', isCollectionTooltip);
+        this._injectShopTable(
+            tooltipElement,
+            shopItems,
+            i18n.tDefault('inventory.tokenTooltip.tokenShopValue', 'Token Shop Value:'),
+            i18n.tDefault('inventory.tokenTooltip.goldPerToken', 'Gold/Token'),
+            isCollectionTooltip
+        );
         dom.fixTooltipOverflow(tooltipElement);
     }
 
@@ -159,7 +167,13 @@ class DungeonTokenTooltips {
         const shopItems = this._getTaskShopItems();
         if (!shopItems || shopItems.length === 0) return;
 
-        this._injectShopTable(tooltipElement, shopItems, 'Task Shop Value:', 'Gold/Token', isCollectionTooltip);
+        this._injectShopTable(
+            tooltipElement,
+            shopItems,
+            i18n.tDefault('inventory.tokenTooltip.taskShopValue', 'Task Shop Value:'),
+            i18n.tDefault('inventory.tokenTooltip.goldPerToken', 'Gold/Token'),
+            isCollectionTooltip
+        );
         dom.fixTooltipOverflow(tooltipElement);
     }
 
@@ -170,7 +184,13 @@ class DungeonTokenTooltips {
         const shopItems = this._getLabyrinthShopItems();
         if (!shopItems || shopItems.length === 0) return;
 
-        this._injectShopTable(tooltipElement, shopItems, 'Labyrinth Shop Value:', 'Gold/Token', isCollectionTooltip);
+        this._injectShopTable(
+            tooltipElement,
+            shopItems,
+            i18n.tDefault('inventory.tokenTooltip.labyrinthShopValue', 'Labyrinth Shop Value:'),
+            i18n.tDefault('inventory.tokenTooltip.goldPerToken', 'Gold/Token'),
+            isCollectionTooltip
+        );
         dom.fixTooltipOverflow(tooltipElement);
     }
 
@@ -189,8 +209,11 @@ class DungeonTokenTooltips {
 
         this._injectSimpleValue(
             tooltipElement,
-            `Value: ${formatKMB(sealValue)} gold`,
-            `= ${SEAL_TOKEN_COST} Labyrinth Tokens × ${formatKMB(Math.floor(bestGoldPerToken))} gold/token`,
+            i18n.tDefault('inventory.tokenTooltip.valueGold', 'Value: {value} gold', { value: formatKMB(sealValue) }),
+            i18n.tDefault('inventory.tokenTooltip.sealDetail', '= {count} Labyrinth Tokens × {price} gold/token', {
+                count: SEAL_TOKEN_COST,
+                price: formatKMB(Math.floor(bestGoldPerToken)),
+            }),
             isCollectionTooltip
         );
         dom.fixTooltipOverflow(tooltipElement);
@@ -208,8 +231,12 @@ class DungeonTokenTooltips {
 
         this._injectSimpleValue(
             tooltipElement,
-            `Value: ${formatKMB(cowbellValue)} gold`,
-            `= Bag of 10 Cowbells (${formatKMB(bagPrice)}) ÷ 10`,
+            i18n.tDefault('inventory.tokenTooltip.valueGold', 'Value: {value} gold', {
+                value: formatKMB(cowbellValue),
+            }),
+            i18n.tDefault('inventory.tokenTooltip.cowbellDetail', '= Bag of 10 Cowbells ({price}) ÷ 10', {
+                price: formatKMB(bagPrice),
+            }),
             isCollectionTooltip
         );
         dom.fixTooltipOverflow(tooltipElement);
@@ -227,7 +254,7 @@ class DungeonTokenTooltips {
         }
 
         if (this.itemNameToHridCache && this.itemNameToHridCacheSource === gameData.itemDetailMap) {
-            return this.itemNameToHridCache.get(itemName) || null;
+            return this.itemNameToHridCache.get(itemName) || resolveItemHridFromLocalizedName(itemName);
         }
 
         const map = new Map();
@@ -264,7 +291,10 @@ class DungeonTokenTooltips {
                 if (!askPrice || askPrice <= 0) return null;
 
                 return {
-                    name: itemDetails?.name || 'Unknown Item',
+                    name: getLocalizedItemName(
+                        shopItem.itemHrid,
+                        itemDetails?.name || i18n.tDefault('inventory.unknownItem', 'Unknown Item')
+                    ),
                     cost: tokenCost,
                     askPrice,
                     goldPerToken: askPrice / tokenCost,
@@ -313,7 +343,10 @@ class DungeonTokenTooltips {
                 if (itemValue <= 0) return null;
 
                 return {
-                    name: itemDetails?.name || 'Unknown Item',
+                    name: getLocalizedItemName(
+                        shopItem.itemHrid,
+                        itemDetails?.name || i18n.tDefault('inventory.unknownItem', 'Unknown Item')
+                    ),
                     cost: tokenCost,
                     askPrice: itemValue,
                     goldPerToken: itemValue / tokenCost,
@@ -350,7 +383,10 @@ class DungeonTokenTooltips {
                 const totalValue = askPrice * outputCount;
 
                 return {
-                    name: itemDetails?.name || 'Unknown Item',
+                    name: getLocalizedItemName(
+                        shopItem.itemHrid,
+                        itemDetails?.name || i18n.tDefault('inventory.unknownItem', 'Unknown Item')
+                    ),
                     cost: tokenCost,
                     askPrice: totalValue,
                     goldPerToken: totalValue / tokenCost,
@@ -381,9 +417,9 @@ class DungeonTokenTooltips {
         let html = `<div style="margin-top: 8px;"><strong>${title}</strong></div>`;
         html += '<table style="width: 100%; margin-top: 4px; font-size: 12px;">';
         html += '<tr style="border-bottom: 1px solid #444;">';
-        html += '<th style="text-align: left; padding: 2px 4px;">Item</th>';
-        html += '<th style="text-align: right; padding: 2px 4px;">Cost</th>';
-        html += '<th style="text-align: right; padding: 2px 4px;">Value</th>';
+        html += `<th style="text-align: left; padding: 2px 4px;">${i18n.tDefault('inventory.tokenTooltip.colItem', 'Item')}</th>`;
+        html += `<th style="text-align: right; padding: 2px 4px;">${i18n.tDefault('inventory.tokenTooltip.colCost', 'Cost')}</th>`;
+        html += `<th style="text-align: right; padding: 2px 4px;">${i18n.tDefault('inventory.tokenTooltip.colValue', 'Value')}</th>`;
         html += `<th style="text-align: right; padding: 2px 4px;">${efficiencyLabel}</th>`;
         html += '</tr>';
 

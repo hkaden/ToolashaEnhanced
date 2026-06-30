@@ -8,6 +8,7 @@ import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
 import marketAPI from '../../api/marketplace.js';
 import dataManager from '../../core/data-manager.js';
+import { resolveItemHridFromLocalizedName } from '../../utils/localized-game-names.js';
 import { calculateEnhancementPath } from '../enhancement/tooltip-enhancement.js';
 import { getEnhancingParams } from '../../utils/enhancement-config.js';
 import networthCache from '../networth/networth-cache.js';
@@ -610,8 +611,9 @@ class InventoryBadgeManager {
             this.buildNameToHridMap(gameData);
         }
 
-        // O(1) lookup
-        return this.nameToHridMap.get(itemName) || null;
+        // O(1) lookup; fall back to the game's localized name table (non-English UIs:
+        // the aria-label is localized but nameToHridMap is keyed by English names).
+        return this.nameToHridMap.get(itemName) || resolveItemHridFromLocalizedName(itemName);
     }
 
     /**

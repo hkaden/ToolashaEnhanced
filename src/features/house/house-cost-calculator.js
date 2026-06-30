@@ -4,8 +4,10 @@
  */
 
 import dataManager from '../../core/data-manager.js';
+import i18n from '../../core/i18n/index.js';
 import marketAPI from '../../api/marketplace.js';
 import { getItemPrice } from '../../utils/market-data.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 
 class HouseCostCalculator {
     constructor() {
@@ -180,12 +182,12 @@ class HouseCostCalculator {
      */
     getItemName(itemHrid) {
         if (itemHrid === '/items/coin') {
-            return 'Gold';
+            return i18n.tDefault('inventory.house.gold', 'Gold');
         }
 
         const initData = dataManager.getInitClientData();
         const itemData = initData?.itemDetailMap?.[itemHrid];
-        return itemData?.name || 'Unknown Item';
+        return getLocalizedItemName(itemHrid, itemData?.name || i18n.tDefault('inventory.unknownItem', 'Unknown Item'));
     }
 
     /**

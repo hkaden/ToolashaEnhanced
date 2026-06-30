@@ -7,7 +7,9 @@
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import storage from '../../core/storage.js';
+import i18n from '../../core/i18n/index.js';
 import { timeReadable } from '../../utils/formatters.js';
+import { getLocalizedActionName } from '../../utils/localized-game-names.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { registerFloatingPanel, unregisterFloatingPanel, bringPanelToFront } from '../../utils/panel-z-index.js';
 import queueSnapshot from './queue-snapshot.js';
@@ -108,7 +110,7 @@ class QueueMonitorUI {
             user-select: none;
         `;
         header.innerHTML = `
-            <span style="font-weight:600; font-size:12px; color:${ACCENT};">Queue Monitor</span>
+            <span style="font-weight:600; font-size:12px; color:${ACCENT};">${i18n.tDefault('misc.queueMonitor.title', 'Queue Monitor')}</span>
             <button id="toolasha-qm-toggle" style="
                 background:none; border:none; color:#aaa; font-size:16px;
                 cursor:pointer; padding:0; line-height:1;">${this.collapsed ? '+' : '−'}</button>
@@ -189,7 +191,7 @@ class QueueMonitorUI {
 
         if (snapshots.length === 0) {
             this.bodyEl.innerHTML = `<div style="color:#666; font-size:11px; text-align:center; padding:4px 0;">
-                No other character data yet.<br>Switch characters to capture queue state.
+                ${i18n.tDefault('misc.queueMonitor.noData', 'No other character data yet.<br>Switch characters to capture queue state.')}
             </div>`;
             return;
         }
@@ -219,11 +221,11 @@ class QueueMonitorUI {
             // Time display
             let timeDisplay;
             if (snap.actions.length === 0) {
-                timeDisplay = 'Idle';
+                timeDisplay = i18n.tDefault('misc.queueMonitor.idle', 'Idle');
             } else if (snap.hasInfiniteAction && remaining <= 0) {
                 timeDisplay = '∞';
             } else if (remaining <= 0) {
-                timeDisplay = 'Done';
+                timeDisplay = i18n.tDefault('misc.queueMonitor.done', 'Done');
             } else {
                 timeDisplay = timeReadable(remaining);
                 if (snap.hasInfiniteAction) {
@@ -240,7 +242,7 @@ class QueueMonitorUI {
             html += `</div>`;
 
             if (isStale) {
-                html += `<div style="color:#f39c12; font-size:10px; margin-left:14px; margin-top:2px;">Stale (>${Math.round((Date.now() - snap.timestamp) / 3600000)}h ago)</div>`;
+                html += `<div style="color:#f39c12; font-size:10px; margin-left:14px; margin-top:2px;">${i18n.tDefault('misc.queueMonitor.stale', 'Stale (>{hours}h ago)', { hours: Math.round((Date.now() - snap.timestamp) / 3600000) })}</div>`;
             }
 
             // Expanded action details
@@ -253,7 +255,10 @@ class QueueMonitorUI {
                         actionTimeStr = '∞';
                     } else if (action.estimatedSeconds !== null) {
                         const actionRemaining = Math.max(0, action.estimatedSeconds - Math.max(0, actionElapsed));
-                        actionTimeStr = actionRemaining <= 0 ? 'Done' : timeReadable(actionRemaining);
+                        actionTimeStr =
+                            actionRemaining <= 0
+                                ? i18n.tDefault('misc.queueMonitor.done', 'Done')
+                                : timeReadable(actionRemaining);
                     } else {
                         actionTimeStr = '?';
                     }
@@ -261,7 +266,7 @@ class QueueMonitorUI {
                     const countStr = action.hasMaxCount ? `${action.currentCount}/${action.maxCount}` : '';
 
                     html += `<div style="display:flex; justify-content:space-between; gap:8px; padding:1px 0;">`;
-                    html += `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${this._escapeHtml(action.actionName)}</span>`;
+                    html += `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${this._escapeHtml(getLocalizedActionName(action.actionHrid, action.actionName))}</span>`;
                     html += `<span style="white-space:nowrap; color:#777;">${countStr ? countStr + ' · ' : ''}${actionTimeStr}</span>`;
                     html += `</div>`;
                 }

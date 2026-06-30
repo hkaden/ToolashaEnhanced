@@ -10,6 +10,7 @@ import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
 import { formatKMB } from '../../utils/formatters.js';
 import { getActionHridFromName } from '../../utils/game-lookups.js';
+import i18n from '../../core/i18n/index.js';
 
 const GATHERING_TYPES = ['/action_types/foraging', '/action_types/woodcutting', '/action_types/milking'];
 const PRODUCTION_TYPES = [
@@ -262,7 +263,12 @@ class InventoryCountDisplay {
             margin-top: 2px;
             pointer-events: none;
         `;
-        span.textContent = count > 0 ? `(${formatCount(count)} in inventory)` : '';
+        span.textContent =
+            count > 0
+                ? i18n.tDefault('actMisc.inventoryCount.inInventory', '({count} in inventory)', {
+                      count: formatCount(count),
+                  })
+                : '';
 
         // Insert after the info container (nameEl's parent) so it sits on its own
         // line below the action name row. Inserting after nameEl itself puts the span
@@ -298,7 +304,12 @@ class InventoryCountDisplay {
             if (!span || !span.dataset.outputHrid) continue;
             const count = countMap.get(span.dataset.outputHrid) || 0;
             span.style.color = config.COLOR_INV_COUNT;
-            span.textContent = count > 0 ? `(${formatCount(count)} in inventory)` : '';
+            span.textContent =
+                count > 0
+                    ? i18n.tDefault('actMisc.inventoryCount.inInventory', '({count} in inventory)', {
+                          count: formatCount(count),
+                      })
+                    : '';
         }
     }
 

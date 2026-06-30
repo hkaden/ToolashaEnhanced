@@ -5,6 +5,7 @@
  */
 
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { registerFloatingPanel, unregisterFloatingPanel, bringPanelToFront } from '../../utils/panel-z-index.js';
 
@@ -121,7 +122,7 @@ class PFormancePanel {
         });
 
         const closeBtn = this._headerButton('✕', () => this._removePanel());
-        closeBtn.title = 'Close';
+        i18n.bindDefault(closeBtn, 'misc.pformance.close', 'Close', undefined, 'title');
 
         buttons.appendChild(collapseBtn);
         buttons.appendChild(closeBtn);
@@ -265,7 +266,11 @@ class PFormancePanel {
         });
 
         const label = document.createElement('span');
-        label.textContent = `${collapsed ? '▶' : '▼'} ${title}`;
+        const sectionLabel =
+            title === 'Feature Init'
+                ? i18n.tDefault('misc.pformance.featureInit', 'Feature Init')
+                : i18n.tDefault('misc.pformance.domObservers', 'DOM Observers');
+        label.textContent = `${collapsed ? '▶' : '▼'} ${sectionLabel}`;
         label.style.fontWeight = 'bold';
         label.style.fontSize = '12px';
         label.style.color = COLORS.accent;
@@ -288,7 +293,7 @@ class PFormancePanel {
 
         if (entries.length === 0) {
             const empty = document.createElement('div');
-            empty.textContent = 'No data';
+            i18n.bindDefault(empty, 'misc.pformance.noData', 'No data');
             empty.style.padding = '4px 6px';
             empty.style.color = COLORS.textDim;
             empty.style.fontSize = '11px';
@@ -305,14 +310,23 @@ class PFormancePanel {
 
         const thead = document.createElement('thead');
         const headRow = document.createElement('tr');
-        const columns = title === 'Feature Init' ? ['Name', 'Time (ms)'] : ['Name', 'Calls/s', 'Total ms', 'CPU %'];
+        const colName = { label: i18n.tDefault('misc.pformance.colName', 'Name'), align: 'left' };
+        const columns =
+            title === 'Feature Init'
+                ? [colName, { label: i18n.tDefault('misc.pformance.colTimeMs', 'Time (ms)'), align: 'right' }]
+                : [
+                      colName,
+                      { label: i18n.tDefault('misc.pformance.colCallsPerSec', 'Calls/s'), align: 'right' },
+                      { label: i18n.tDefault('misc.pformance.colTotalMs', 'Total ms'), align: 'right' },
+                      { label: i18n.tDefault('misc.pformance.colCpuPercent', 'CPU %'), align: 'right' },
+                  ];
 
         for (const col of columns) {
             const th = document.createElement('th');
-            th.textContent = col;
+            th.textContent = col.label;
             Object.assign(th.style, {
                 padding: '3px 5px',
-                textAlign: col === 'Name' ? 'left' : 'right',
+                textAlign: col.align,
                 borderBottom: `1px solid ${COLORS.borderDim}`,
                 color: COLORS.textDim,
                 fontWeight: 'normal',

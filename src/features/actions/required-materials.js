@@ -9,6 +9,7 @@ import { numberFormatter } from '../../utils/formatters.js';
 import { calculateMaterialRequirements } from '../../utils/material-calculator.js';
 import { findActionInput, attachInputListeners, performInitialUpdate } from '../../utils/action-panel-helper.js';
 import { getActionHridFromName } from '../../utils/game-lookups.js';
+import i18n from '../../core/i18n/index.js';
 
 class RequiredMaterials {
     constructor() {
@@ -133,16 +134,31 @@ class RequiredMaterials {
                 // Build text with queue info
                 let text;
                 if (isIndeterminate) {
-                    text = `Required: ${placeholderLabel}`;
+                    text = i18n.tDefault('actMisc.requiredMaterials.required', 'Required: {value}', {
+                        value: placeholderLabel,
+                    });
                     displaySpan.style.color = '';
                 } else {
-                    const queuedText = material.queued > 0 ? ` (${numberFormatter(material.queued)} Q'd)` : '';
-                    text = `Required: ${numberFormatter(material.required)}${queuedText}`;
+                    const queuedText =
+                        material.queued > 0
+                            ? i18n.tDefault('actMisc.requiredMaterials.queuedSuffix', " ({count} Q'd)", {
+                                  count: numberFormatter(material.queued),
+                              })
+                            : '';
+                    text = i18n.tDefault('actMisc.requiredMaterials.required', 'Required: {value}', {
+                        value: `${numberFormatter(material.required)}${queuedText}`,
+                    });
 
                     if (material.missing > 0) {
                         const missingQueuedText =
-                            material.queued > 0 ? ` (${numberFormatter(material.queued)} Q'd)` : '';
-                        text += ` || Missing: ${numberFormatter(material.missing)}${missingQueuedText}`;
+                            material.queued > 0
+                                ? i18n.tDefault('actMisc.requiredMaterials.queuedSuffix', " ({count} Q'd)", {
+                                      count: numberFormatter(material.queued),
+                                  })
+                                : '';
+                        text += i18n.tDefault('actMisc.requiredMaterials.missing', ' || Missing: {value}', {
+                            value: `${numberFormatter(material.missing)}${missingQueuedText}`,
+                        });
                         displaySpan.style.color = config.COLOR_LOSS; // Missing materials
                     } else {
                         displaySpan.style.color = config.COLOR_PROFIT; // Sufficient materials
@@ -187,15 +203,31 @@ class RequiredMaterials {
             // Build text with queue info
             let text;
             if (isIndeterminate) {
-                text = `Required: ${placeholderLabel}`;
+                text = i18n.tDefault('actMisc.requiredMaterials.required', 'Required: {value}', {
+                    value: placeholderLabel,
+                });
                 displaySpan.style.color = '';
             } else {
-                const queuedText = material.queued > 0 ? ` (${numberFormatter(material.queued)} Q'd)` : '';
-                text = `Required: ${numberFormatter(material.required)}${queuedText}`;
+                const queuedText =
+                    material.queued > 0
+                        ? i18n.tDefault('actMisc.requiredMaterials.queuedSuffix', " ({count} Q'd)", {
+                              count: numberFormatter(material.queued),
+                          })
+                        : '';
+                text = i18n.tDefault('actMisc.requiredMaterials.required', 'Required: {value}', {
+                    value: `${numberFormatter(material.required)}${queuedText}`,
+                });
 
                 if (material.missing > 0) {
-                    const missingQueuedText = material.queued > 0 ? ` (${numberFormatter(material.queued)} Q'd)` : '';
-                    text += ` || Missing: ${numberFormatter(material.missing)}${missingQueuedText}`;
+                    const missingQueuedText =
+                        material.queued > 0
+                            ? i18n.tDefault('actMisc.requiredMaterials.queuedSuffix', " ({count} Q'd)", {
+                                  count: numberFormatter(material.queued),
+                              })
+                            : '';
+                    text += i18n.tDefault('actMisc.requiredMaterials.missing', ' || Missing: {value}', {
+                        value: `${numberFormatter(material.missing)}${missingQueuedText}`,
+                    });
                     displaySpan.style.color = config.COLOR_LOSS; // Missing materials
                 } else {
                     displaySpan.style.color = config.COLOR_PROFIT; // Sufficient materials

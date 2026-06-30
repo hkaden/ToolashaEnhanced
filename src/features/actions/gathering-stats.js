@@ -14,6 +14,8 @@ import { calculateGatheringProfit } from './gathering-profit.js';
 import { formatKMB } from '../../utils/formatters.js';
 import { calculateExpPerHour } from '../../utils/experience-calculator.js';
 import { getActionHridFromName } from '../../utils/game-lookups.js';
+import { getLocalizedActionName } from '../../utils/localized-game-names.js';
+import i18n from '../../core/i18n/index.js';
 
 class GatheringStats {
     constructor() {
@@ -414,7 +416,10 @@ class GatheringStats {
         };
 
         const bestProfitName = bestProfitHrid
-            ? dataManager.getActionDetails(bestProfitHrid)?.name || bestProfitHrid
+            ? getLocalizedActionName(
+                  bestProfitHrid,
+                  dataManager.getActionDetails(bestProfitHrid)?.name || bestProfitHrid
+              )
             : null;
 
         for (const [actionPanel, data] of this.actionElements.entries()) {
@@ -439,18 +444,29 @@ class GatheringStats {
             const overallSpan = data.displayElement.querySelector('[data-stat="overall"]');
             if (overallSpan) {
                 const effXp = data.effectiveXpPerHour;
-                const label = effXp != null ? `Eff. XP/hr: ${formatKMB(effXp)}` : stripEmoji(overallSpan.textContent);
+                const label =
+                    effXp != null
+                        ? i18n.tDefault('actMisc.stats.effXp', 'Eff. XP/hr: {value}', { value: formatKMB(effXp) })
+                        : stripEmoji(overallSpan.textContent);
                 overallSpan.textContent = label + (isBestOverall ? ' 🏆' : '');
 
                 if (data.profitPerHour < 0 && bestProfit > 0 && effXp != null) {
                     const loss = Math.abs(data.profitPerHour);
                     const ratio = loss / bestProfit;
-                    overallSpan.title =
-                        `Gold-neutral XP rate\n` +
-                        `This action: ${formatKMB(data.expPerHour)} XP/hr, -${formatKMB(loss)}/hr\n` +
-                        `Recovery: ${bestProfitName} (+${formatKMB(bestProfit)}/hr, ${formatKMB(bestProfitExp || 0)} XP/hr)\n` +
-                        `Ratio: ${ratio.toFixed(2)}hr recovery per 1hr action\n` +
-                        `Blended: (${formatKMB(data.expPerHour)} + ${ratio.toFixed(2)} × ${formatKMB(bestProfitExp || 0)}) / ${(1 + ratio).toFixed(2)} = ${formatKMB(effXp)}`;
+                    overallSpan.title = i18n.tDefault(
+                        'actMisc.stats.goldNeutralTooltip',
+                        'Gold-neutral XP rate\nThis action: {expHr} XP/hr, -{loss}/hr\nRecovery: {recoveryName} (+{recoveryProfit}/hr, {recoveryExp} XP/hr)\nRatio: {ratio}hr recovery per 1hr action\nBlended: ({expHr} + {ratio} × {recoveryExp}) / {denom} = {effXp}',
+                        {
+                            expHr: formatKMB(data.expPerHour),
+                            loss: formatKMB(loss),
+                            recoveryName: bestProfitName,
+                            recoveryProfit: formatKMB(bestProfit),
+                            recoveryExp: formatKMB(bestProfitExp || 0),
+                            ratio: ratio.toFixed(2),
+                            denom: (1 + ratio).toFixed(2),
+                            effXp: formatKMB(effXp),
+                        }
+                    );
                 } else {
                     overallSpan.title = '';
                 }
@@ -476,17 +492,17 @@ class GatheringStats {
             const profitColor = profitPerHour >= 0 ? config.COLOR_PROFIT : config.COLOR_LOSS;
             const profitSign = profitPerHour >= 0 ? '' : '-';
             html += `<div class="mwi-action-stat-line" style="white-space: nowrap;">`;
-            html += `<span data-stat="profit" style="color: ${profitColor};">Profit/hr: ${profitSign}${formatKMB(Math.abs(profitPerHour))}</span></div>`;
+            html += `<span data-stat="profit" style="color: ${profitColor};">${i18n.tDefault('actMisc.stats.profit', 'Profit/hr: {value}', { value: `${profitSign}${formatKMB(Math.abs(profitPerHour))}` })}</span></div>`;
         }
 
         if (showExp && expPerHour !== null && expPerHour > 0) {
             html += `<div class="mwi-action-stat-line" style="white-space: nowrap;">`;
-            html += `<span data-stat="exp" style="color: #fff;">Exp/hr: ${formatKMB(expPerHour)}</span></div>`;
+            html += `<span data-stat="exp" style="color: #fff;">${i18n.tDefault('actMisc.stats.exp', 'Exp/hr: {value}', { value: formatKMB(expPerHour) })}</span></div>`;
         }
 
         if (showProfit && showExp && profitPerHour !== null && expPerHour !== null && expPerHour > 0) {
             html += `<div class="mwi-action-stat-line" style="white-space: nowrap;">`;
-            html += `<span data-stat="overall" style="color: #fff;">Eff. XP/hr: ${formatKMB(expPerHour)}</span></div>`;
+            html += `<span data-stat="overall" style="color: #fff;">${i18n.tDefault('actMisc.stats.effXp', 'Eff. XP/hr: {value}', { value: formatKMB(expPerHour) })}</span></div>`;
         }
 
         data.displayElement.innerHTML = html;

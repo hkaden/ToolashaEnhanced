@@ -11,6 +11,7 @@ import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
 import marketAPI from '../../api/marketplace.js';
+import i18n from '../../core/i18n/index.js';
 import estimatedListingAge from './estimated-listing-age.js';
 import { coinFormatter, formatKMB, formatRelativeTime } from '../../utils/formatters.js';
 import { calculatePriceAfterTax } from '../../utils/profit-helpers.js';
@@ -378,28 +379,34 @@ class ListingPriceDisplay {
         // Create "Top Order Price" header
         const topOrderHeader = document.createElement('th');
         topOrderHeader.classList.add('mwi-listing-price-header');
-        topOrderHeader.textContent = 'Top Order Price';
+        i18n.bindDefault(topOrderHeader, 'market.listingPrice.topOrderPrice', 'Top Order Price');
 
         // Create "Top Order Age" header (if setting enabled)
         let topOrderAgeHeader = null;
         if (config.getSetting('market_showTopOrderAge')) {
             topOrderAgeHeader = document.createElement('th');
             topOrderAgeHeader.classList.add('mwi-listing-price-header');
-            topOrderAgeHeader.textContent = 'Top Order Age';
-            topOrderAgeHeader.title = 'Estimated age of the top competing order';
+            i18n.bindDefault(topOrderAgeHeader, 'market.listingPrice.topOrderAge', 'Top Order Age');
+            i18n.bindDefault(
+                topOrderAgeHeader,
+                'market.listingPrice.topOrderAgeTitle',
+                'Estimated age of the top competing order',
+                undefined,
+                'title'
+            );
         }
 
         // Create "Total Price" header
         const totalPriceHeader = document.createElement('th');
         totalPriceHeader.classList.add('mwi-listing-price-header');
-        totalPriceHeader.textContent = 'Total Price';
+        i18n.bindDefault(totalPriceHeader, 'market.listingPrice.totalPrice', 'Total Price');
 
         // Create "Listed" header (if setting enabled)
         let listedHeader = null;
         if (config.getSetting('market_showListingAge')) {
             listedHeader = document.createElement('th');
             listedHeader.classList.add('mwi-listing-price-header');
-            listedHeader.textContent = 'Listed';
+            i18n.bindDefault(listedHeader, 'market.listingPrice.listed', 'Listed');
         }
 
         // Insert headers (order: Top Order Price, Top Order Age, Total Price, Listed)
@@ -419,7 +426,13 @@ class ListingPriceDisplay {
             progressHeader.dataset.mwiSortable = 'true';
             progressHeader.style.cursor = 'pointer';
             progressHeader.style.userSelect = 'none';
-            progressHeader.title = 'Click to sort by item name';
+            i18n.bindDefault(
+                progressHeader,
+                'market.listingPrice.clickToSort',
+                'Click to sort by item name',
+                undefined,
+                'title'
+            );
             this.updateSortIndicator(progressHeader);
             progressHeader.addEventListener('click', () => {
                 this.cycleSortState(tableNode);
@@ -938,7 +951,13 @@ class ListingPriceDisplay {
      * @param {HTMLElement} header - The Progress <th> element
      */
     updateSortIndicator(header) {
-        const labels = { none: 'Progress', asc: 'Progress \u25B2', desc: 'Progress \u25BC', sortIndex: 'Progress #' };
+        const progress = i18n.tDefault('market.listingAge.progress', 'Progress');
+        const labels = {
+            none: progress,
+            asc: `${progress} \u25B2`,
+            desc: `${progress} \u25BC`,
+            sortIndex: `${progress} #`,
+        };
         header.textContent = labels[this.sortState];
     }
 

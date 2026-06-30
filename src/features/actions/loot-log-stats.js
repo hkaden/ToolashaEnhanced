@@ -9,10 +9,12 @@ import domObserver from '../../core/dom-observer.js';
 import webSocketHook from '../../core/websocket.js';
 import dataManager from '../../core/data-manager.js';
 import { getItemPrices } from '../../utils/market-data.js';
+import { getLocalizedItemName, getLocalizedActionName, getLocalizedName } from '../../utils/localized-game-names.js';
 import { formatKMB, numberFormatter, formatDateTime } from '../../utils/formatters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import expectedValueCalculator from '../market/expected-value-calculator.js';
 import lootLogHistory from './loot-log-history.js';
+import i18n from '../../core/i18n/index.js';
 
 class LootLogStats {
     constructor() {
@@ -310,13 +312,16 @@ class LootLogStats {
         header.style.cssText = `color: ${config.COLOR_GOLD}; font-weight: bold;`;
 
         if (askTotal === 0 && bidTotal === 0) {
-            header.textContent = 'Total Value: —';
+            header.textContent = i18n.tDefault('actMisc.lootLog.totalValueEmpty', 'Total Value: —');
             wrapper.appendChild(header);
             secondDiv.appendChild(wrapper);
             return;
         }
 
-        header.textContent = `▶ Total Value: ${formatKMB(askTotal)}/${formatKMB(bidTotal)}`;
+        header.textContent = i18n.tDefault('actMisc.lootLog.totalValue', '▶ Total Value: {ask}/{bid}', {
+            ask: formatKMB(askTotal),
+            bid: formatKMB(bidTotal),
+        });
         header.style.cursor = 'pointer';
         wrapper.appendChild(header);
 
@@ -368,7 +373,10 @@ class LootLogStats {
                 bidPerItem = 1;
             } else {
                 const itemDetails = dataManager.getItemDetails(baseHrid);
-                name = itemDetails?.name || baseHrid.split('/').pop().replace(/_/g, ' ');
+                name = getLocalizedItemName(
+                    baseHrid,
+                    itemDetails?.name || baseHrid.split('/').pop().replace(/_/g, ' ')
+                );
 
                 // Check for openable containers — use expected value
                 if (itemDetails?.isOpenable && expectedValueCalculator.isInitialized) {
@@ -541,9 +549,12 @@ class LootLogStats {
         dayValueSpan.className = 'mwi-loot-log-day-value';
 
         if (dayValueAsk === 0 && dayValueBid === 0) {
-            dayValueSpan.textContent = 'Daily Output: —';
+            dayValueSpan.textContent = i18n.tDefault('actMisc.lootLog.dailyOutputEmpty', 'Daily Output: —');
         } else {
-            dayValueSpan.textContent = `Daily Output: ${formatKMB(dayValueAsk)}/${formatKMB(dayValueBid)}`;
+            dayValueSpan.textContent = i18n.tDefault('actMisc.lootLog.dailyOutput', 'Daily Output: {ask}/{bid}', {
+                ask: formatKMB(dayValueAsk),
+                bid: formatKMB(dayValueBid),
+            });
         }
 
         dayValueSpan.style.float = 'right';
@@ -583,7 +594,9 @@ class LootLogStats {
             color: rgba(96, 165, 250, 0.7);
             font-size: 0.85em;
         `;
-        separator.textContent = `— Historical Entries (${historicalEntries.length}) —`;
+        separator.textContent = i18n.tDefault('actMisc.lootLog.historicalEntries', '— Historical Entries ({count}) —', {
+            count: historicalEntries.length,
+        });
 
         // Create wrapper
         const wrapper = document.createElement('div');
@@ -603,7 +616,9 @@ class LootLogStats {
         if (historicalEntries.length > this.historicalBatchSize) {
             const showMoreBtn = document.createElement('button');
             showMoreBtn.className = 'mwi-loot-log-history-more';
-            showMoreBtn.textContent = `Show more (${historicalEntries.length - this.historicalRendered} remaining)`;
+            showMoreBtn.textContent = i18n.tDefault('actMisc.lootLog.showMore', 'Show more ({count} remaining)', {
+                count: historicalEntries.length - this.historicalRendered,
+            });
             showMoreBtn.style.cssText = `
                 display: block;
                 width: 100%;
@@ -630,7 +645,13 @@ class LootLogStats {
                 if (remaining <= 0) {
                     showMoreBtn.remove();
                 } else {
-                    showMoreBtn.textContent = `Show more (${remaining} remaining)`;
+                    showMoreBtn.textContent = i18n.tDefault(
+                        'actMisc.lootLog.showMore',
+                        'Show more ({count} remaining)',
+                        {
+                            count: remaining,
+                        }
+                    );
                 }
             });
             wrapper.appendChild(showMoreBtn);
@@ -695,7 +716,13 @@ class LootLogStats {
                 if (remaining === 0) {
                     wrapper.remove();
                 } else if (sep) {
-                    sep.textContent = `— Historical Entries (${remaining}) —`;
+                    sep.textContent = i18n.tDefault(
+                        'actMisc.lootLog.historicalEntries',
+                        '— Historical Entries ({count}) —',
+                        {
+                            count: remaining,
+                        }
+                    );
                 }
             }
         });
@@ -723,7 +750,9 @@ class LootLogStats {
         timeDiv.style.cssText = 'margin-bottom: 2px;';
 
         const startDate = new Date(entry.startTime);
-        timeDiv.textContent = `Start Time: ${formatDateTime(startDate)}`;
+        timeDiv.textContent = i18n.tDefault('actMisc.lootLog.startTime', 'Start Time: {time}', {
+            time: formatDateTime(startDate),
+        });
         entryEl.appendChild(timeDiv);
 
         this.injectTotalValue(timeDiv, entry);
@@ -734,7 +763,9 @@ class LootLogStats {
 
         if (entry.startTime && entry.endTime) {
             const durationSec = (new Date(entry.endTime) - new Date(entry.startTime)) / 1000;
-            durationDiv.textContent = `Duration: ${this.formatDuration(durationSec)}`;
+            durationDiv.textContent = i18n.tDefault('actMisc.lootLog.duration', 'Duration: {duration}', {
+                duration: this.formatDuration(durationSec),
+            });
         }
         entryEl.appendChild(durationDiv);
 
@@ -804,7 +835,9 @@ class LootLogStats {
         // Format: /actions/category/name
         if (parts.length >= 3) {
             const category = parts[2];
-            return category.charAt(0).toUpperCase() + category.slice(1);
+            const englishName = category.charAt(0).toUpperCase() + category.slice(1);
+            // The path segment maps 1:1 to an action-type HRID (e.g. cooking -> /action_types/cooking).
+            return getLocalizedName('actionTypeNames', `/action_types/${category}`, englishName);
         }
         return null;
     }
@@ -853,9 +886,9 @@ class LootLogStats {
      * @returns {string}
      */
     getActionName(actionHrid) {
-        if (!actionHrid) return 'Unknown';
+        if (!actionHrid) return i18n.tDefault('actMisc.lootLog.unknownAction', 'Unknown');
         const details = dataManager.getActionDetails(actionHrid);
-        if (details?.name) return details.name;
+        if (details?.name) return getLocalizedActionName(actionHrid, details.name);
         return actionHrid.split('/').pop().replace(/_/g, ' ');
     }
 

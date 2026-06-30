@@ -11,6 +11,7 @@ import dataManager from '../../core/data-manager.js';
 import storage from '../../core/storage.js';
 import { GAME, TOOLASHA } from '../../utils/selectors.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
+import i18n from '../../core/i18n/index.js';
 
 class TaskRerollTracker {
     constructor() {
@@ -411,7 +412,9 @@ class TaskRerollTracker {
         }
 
         if (parts.length > 0) {
-            displayElement.textContent = `Reroll spent: ${parts.join(' + ')}`;
+            displayElement.textContent = i18n.tDefault('tasks.rerollSpent', 'Reroll spent: {value}', {
+                value: parts.join(' + '),
+            });
             displayElement.style.display = 'block';
         } else {
             displayElement.style.display = 'none';

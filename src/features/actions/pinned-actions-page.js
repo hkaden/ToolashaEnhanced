@@ -16,8 +16,14 @@ import { calculateExperienceMultiplier } from '../../utils/experience-parser.js'
 import { numberFormatter } from '../../utils/formatters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { calculateMaterialRequirements } from '../../utils/material-calculator.js';
+import {
+    getLocalizedItemName,
+    getLocalizedActionName,
+    getLocalizedSkillName,
+} from '../../utils/localized-game-names.js';
 import assetManifest from '../../utils/asset-manifest.js';
 import alchemyProfitCalculator from '../market/alchemy-profit-calculator.js';
+import i18n from '../../core/i18n/index.js';
 
 const GATHERING_TYPES = ['/action_types/foraging', '/action_types/woodcutting', '/action_types/milking'];
 
@@ -164,7 +170,10 @@ class PinnedActionsPage {
             margin-bottom: 2px;
         `;
 
-        btn.innerHTML = `<span style="font-size: 1.1em;">📌</span><span>Pinned</span>`;
+        btn.innerHTML = `<span style="font-size: 1.1em;">📌</span><span>${i18n.tDefault(
+            'actMisc.pinned.navButton',
+            'Pinned'
+        )}</span>`;
 
         btn.addEventListener('mouseenter', () => {
             if (!this.isActive) {
@@ -249,11 +258,14 @@ class PinnedActionsPage {
             const details = dataManager.getActionDetails(actionHrid);
             if (!details) continue;
 
-            let displayName = details.name;
+            let displayName = getLocalizedActionName(actionHrid, details.name);
             if (pinnedItemHrid) {
                 const itemDetails = dataManager.getItemDetails(pinnedItemHrid);
                 if (itemDetails) {
-                    displayName = `${details.name} ${itemDetails.name}`;
+                    displayName = `${getLocalizedActionName(actionHrid, details.name)} ${getLocalizedItemName(
+                        pinnedItemHrid,
+                        itemDetails.name
+                    )}`;
                 }
             }
 
@@ -345,7 +357,10 @@ class PinnedActionsPage {
         `;
         header.innerHTML = `
             <span style="font-size: 1.3em;">📌</span>
-            <span style="font-size: 1.1em; font-weight: bold;">Pinned Actions</span>
+            <span style="font-size: 1.1em; font-weight: bold;">${i18n.tDefault(
+                'actMisc.pinned.title',
+                'Pinned Actions'
+            )}</span>
             <span style="color: #888; font-size: 0.85em;">(${actions.length})</span>
         `;
         this.pageContainer.appendChild(header);
@@ -360,7 +375,10 @@ class PinnedActionsPage {
         `;
 
         for (const tab of ['overview', 'materials']) {
-            const label = tab === 'overview' ? 'Overview' : 'Materials';
+            const label =
+                tab === 'overview'
+                    ? i18n.tDefault('actMisc.pinned.tabOverview', 'Overview')
+                    : i18n.tDefault('actMisc.pinned.tabMaterials', 'Materials');
             const btn = document.createElement('button');
             btn.dataset.tab = tab;
             btn.textContent = label;
@@ -426,9 +444,12 @@ class PinnedActionsPage {
             empty.style.cssText = 'text-align: center; padding: 40px 20px; color: #999;';
             empty.innerHTML = `
                 <div style="font-size: 2em; margin-bottom: 12px;">📌</div>
-                <div style="font-size: 1.1em; margin-bottom: 8px;">No pinned actions</div>
+                <div style="font-size: 1.1em; margin-bottom: 8px;">${i18n.tDefault(
+                    'actMisc.pinned.empty',
+                    'No pinned actions'
+                )}</div>
                 <div style="font-size: 0.85em; color: #666;">
-                    Pin actions using the 📌 icon on action tiles to see them here.
+                    ${i18n.tDefault('actMisc.pinned.emptyHint', 'Pin actions using the 📌 icon on action tiles to see them here.')}
                 </div>
             `;
             this.contentArea.appendChild(empty);
@@ -466,7 +487,7 @@ class PinnedActionsPage {
             // Sort label
             const label = document.createElement('span');
             label.style.cursor = 'pointer';
-            let labelText = col.label;
+            let labelText = i18n.tDefault(`actMisc.pinned.col.${col.key}`, col.label);
             if (this.sortColumn === col.key) {
                 labelText += this.sortDirection === 'asc' ? ' \u25B2' : ' \u25BC';
             }
@@ -549,7 +570,10 @@ class PinnedActionsPage {
             row.innerHTML = `
                 <span style="display: flex; align-items: center; justify-content: center;">${iconHtml}</span>
                 <span style="font-weight: 500; text-align: left;">${action.name}</span>
-                <span style="color: #aaa; font-size: 0.9em; text-align: left;">${action.skill}</span>
+                <span style="color: #aaa; font-size: 0.9em; text-align: left;">${getLocalizedSkillName(
+                    action.type ? action.type.replace('/action_types/', '/skills/') : '',
+                    action.skill
+                )}</span>
                 <span style="color: #aaa; text-align: left;">${action.level}</span>
                 <span style="text-align: right; color: ${profitColor};">
                     ${profitPrefix}${formatCompact(action.profitPerHour)}
@@ -580,7 +604,10 @@ class PinnedActionsPage {
         if (actions.length === 0 && this.allActions.length > 0) {
             const noResults = document.createElement('div');
             noResults.style.cssText = 'text-align: center; padding: 20px; color: #888;';
-            noResults.textContent = 'No actions match the current filter.';
+            noResults.textContent = i18n.tDefault(
+                'actMisc.pinned.noFilterMatch',
+                'No actions match the current filter.'
+            );
             this.contentArea.appendChild(noResults);
         }
     }
@@ -605,7 +632,7 @@ class PinnedActionsPage {
         if (productionActions.length === 0) {
             const empty = document.createElement('div');
             empty.style.cssText = 'text-align: center; padding: 40px 20px; color: #999;';
-            empty.textContent = 'No production actions pinned';
+            empty.textContent = i18n.tDefault('actMisc.pinned.noProduction', 'No production actions pinned');
             contentArea.appendChild(empty);
             return;
         }
@@ -647,7 +674,9 @@ class PinnedActionsPage {
             // Can produce count
             const canProduceEl = document.createElement('div');
             canProduceEl.style.cssText = `font-size: 0.85em; color: ${canProduce > 0 ? config.COLOR_PROFIT : config.COLOR_LOSS};`;
-            canProduceEl.textContent = `Can produce: ${canProduce.toLocaleString()}`;
+            canProduceEl.textContent = i18n.tDefault('actMisc.stats.canProduce', 'Can produce: {count}', {
+                count: canProduce.toLocaleString(),
+            });
 
             groupHeader.appendChild(iconEl);
             groupHeader.appendChild(nameEl);
@@ -672,7 +701,7 @@ class PinnedActionsPage {
 
                 const matName = document.createElement('div');
                 matName.style.cssText = 'font-size: 0.85em; color: #ccc; text-align: left;';
-                matName.textContent = m.itemName;
+                matName.textContent = getLocalizedItemName(m.itemHrid, m.itemName);
 
                 const haveNeeded = document.createElement('div');
                 const sufficient = m.have >= m.required;
@@ -718,7 +747,7 @@ class PinnedActionsPage {
 
         // Title
         const title = document.createElement('div');
-        title.textContent = 'Filter by Skill';
+        title.textContent = i18n.tDefault('actMisc.pinned.filterBySkill', 'Filter by Skill');
         title.style.cssText = 'color: #fff; font-weight: bold; margin-bottom: 10px; font-size: 0.85em;';
         popup.appendChild(title);
 
@@ -753,7 +782,7 @@ class PinnedActionsPage {
         btnRow.style.cssText = 'display: flex; gap: 8px;';
 
         const applyBtn = document.createElement('button');
-        applyBtn.textContent = 'Apply';
+        applyBtn.textContent = i18n.tDefault('actMisc.pinned.apply', 'Apply');
         applyBtn.style.cssText = `
             flex: 1;
             padding: 6px;
@@ -766,7 +795,7 @@ class PinnedActionsPage {
         `;
 
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = 'Clear';
+        clearBtn.textContent = i18n.tDefault('actMisc.pinned.clear', 'Clear');
         clearBtn.style.cssText = `
             flex: 1;
             padding: 6px;

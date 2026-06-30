@@ -18,6 +18,7 @@
 
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import { getDrinkConcentration } from '../../utils/tea-parser.js';
 import { getItemPrice } from '../../utils/market-data.js';
 import { SECONDS_PER_HOUR } from '../../utils/profit-constants.js';
@@ -478,7 +479,7 @@ class AlchemyProfitCalculator {
                 equipment: speedBonus,
                 tea: teaSpeed,
                 equipmentDetails: relevantSpeeds.map((item) => ({
-                    name: item.itemName,
+                    name: getLocalizedItemName(item.itemHrid, item.itemName),
                     enhancementLevel: item.enhancementLevel,
                     speedBonus: item.scaledBonus,
                 })),
@@ -745,7 +746,7 @@ class AlchemyProfitCalculator {
                 equipment: speedBonus,
                 tea: teaSpeed,
                 equipmentDetails: relevantSpeeds.map((item) => ({
-                    name: item.itemName,
+                    name: getLocalizedItemName(item.itemHrid, item.itemName),
                     enhancementLevel: item.enhancementLevel,
                     speedBonus: item.scaledBonus,
                 })),
@@ -1057,7 +1058,7 @@ class AlchemyProfitCalculator {
                 equipment: speedBonus,
                 tea: teaSpeed,
                 equipmentDetails: relevantSpeeds.map((item) => ({
-                    name: item.itemName,
+                    name: getLocalizedItemName(item.itemHrid, item.itemName),
                     enhancementLevel: item.enhancementLevel,
                     speedBonus: item.scaledBonus,
                 })),

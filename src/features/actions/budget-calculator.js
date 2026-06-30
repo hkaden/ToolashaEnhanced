@@ -13,6 +13,8 @@ import { formatKMB, formatWithSeparator } from '../../utils/formatters.js';
 import { setReactInputValue } from '../../utils/react-input.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { getActionHridFromName } from '../../utils/game-lookups.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
+import i18n from '../../core/i18n/index.js';
 
 const PRODUCTION_TYPES = [
     '/action_types/brewing',
@@ -166,11 +168,18 @@ function showBreakdownModal(budget, result) {
     `;
     header.innerHTML = `
         <div>
-            <span style="font-size:15px; font-weight:600; color:#e0e0e0;">Budget Calculator</span>
+            <span style="font-size:15px; font-weight:600; color:#e0e0e0;">${i18n.tDefault(
+                'actMisc.budget.modalTitle',
+                'Budget Calculator'
+            )}</span>
             <span style="margin-left:10px; color:#aaa;">
-                Budget: <strong style="color:#fff;">${formatKMB(budget)}</strong>
+                ${i18n.tDefault('actMisc.budget.budgetLabel', 'Budget:')} <strong style="color:#fff;">${formatKMB(
+                    budget
+                )}</strong>
                 &nbsp;→&nbsp;
-                <strong style="color:#7ec87e;">${formatWithSeparator(result.n)} units</strong>
+                <strong style="color:#7ec87e;">${i18n.tDefault('actMisc.budget.unitsResult', '{n} units', {
+                    n: formatWithSeparator(result.n),
+                })}</strong>
             </span>
         </div>
         <button id="mwi-budget-modal-close" style="
@@ -207,7 +216,7 @@ function showBreakdownModal(budget, result) {
 
             const askCell = ask
                 ? `<td style="${tdStyle}">${formatKMB(ask)}</td>`
-                : `<td style="${tdDimStyle}">${mat.isTradeable ? 'No data' : '—'}</td>`;
+                : `<td style="${tdDimStyle}">${mat.isTradeable ? i18n.tDefault('actMisc.budget.noData', 'No data') : '—'}</td>`;
 
             const costCell =
                 lineCost > 0
@@ -216,7 +225,7 @@ function showBreakdownModal(budget, result) {
 
             return `
             <tr>
-                <td style="${tdLeftStyle}">${mat.itemName}</td>
+                <td style="${tdLeftStyle}">${getLocalizedItemName(mat.itemHrid, mat.itemName)}</td>
                 <td style="${tdStyle}">${formatWithSeparator(mat.required)}</td>
                 <td style="${tdStyle}; color:${mat.have >= mat.required ? '#7ec87e' : '#e0e0e0'};">${formatWithSeparator(mat.have)}</td>
                 ${toBuyCell}
@@ -233,22 +242,28 @@ function showBreakdownModal(budget, result) {
         <table style="width:100%; border-collapse:collapse;">
             <thead>
                 <tr>
-                    <th style="${thLeftStyle}">Ingredient</th>
-                    <th style="${thStyle}">Required</th>
-                    <th style="${thStyle}">On Hand</th>
-                    <th style="${thStyle}">To Buy</th>
-                    <th style="${thStyle}">Ask Price</th>
-                    <th style="${thStyle}">Total Cost</th>
+                    <th style="${thLeftStyle}">${i18n.tDefault('actMisc.budget.colIngredient', 'Ingredient')}</th>
+                    <th style="${thStyle}">${i18n.tDefault('actMisc.budget.colRequired', 'Required')}</th>
+                    <th style="${thStyle}">${i18n.tDefault('actMisc.budget.colOnHand', 'On Hand')}</th>
+                    <th style="${thStyle}">${i18n.tDefault('actMisc.budget.colToBuy', 'To Buy')}</th>
+                    <th style="${thStyle}">${i18n.tDefault('actMisc.budget.colAskPrice', 'Ask Price')}</th>
+                    <th style="${thStyle}">${i18n.tDefault('actMisc.budget.colTotalCost', 'Total Cost')}</th>
                 </tr>
             </thead>
             <tbody>${rows}</tbody>
             <tfoot>
                 <tr>
-                    <td colspan="5" style="${summaryRowStyle}; text-align:left; color:#aaa;">Per unit cost (ask)</td>
+                    <td colspan="5" style="${summaryRowStyle}; text-align:left; color:#aaa;">${i18n.tDefault(
+                        'actMisc.budget.perUnitCost',
+                        'Per unit cost (ask)'
+                    )}</td>
                     <td style="${summaryRowStyle}">${formatKMB(Math.round(perUnitCost))}</td>
                 </tr>
                 <tr>
-                    <td colspan="5" style="${summaryRowStyle}; text-align:left; color:#aaa;">Total spend</td>
+                    <td colspan="5" style="${summaryRowStyle}; text-align:left; color:#aaa;">${i18n.tDefault(
+                        'actMisc.budget.totalSpend',
+                        'Total spend'
+                    )}</td>
                     <td style="${summaryRowStyle}; color:#7ec87e;">${formatKMB(totalSpend)}</td>
                 </tr>
             </tfoot>
@@ -363,7 +378,7 @@ class BudgetCalculator {
 
         const input = document.createElement('input');
         input.type = 'text';
-        input.placeholder = 'Budget (e.g. 50m)';
+        i18n.bindDefault(input, 'actMisc.budget.inputPlaceholder', 'Budget (e.g. 50m)', undefined, 'placeholder');
         input.style.cssText = `
             flex: 1;
             background: #2a2a2a;
@@ -376,7 +391,7 @@ class BudgetCalculator {
         `;
 
         const calcBtn = document.createElement('button');
-        calcBtn.textContent = 'Calculate';
+        calcBtn.textContent = i18n.tDefault('actMisc.budget.calculate', 'Calculate');
         calcBtn.style.cssText = `
             background: linear-gradient(180deg, rgba(126,200,126,0.2) 0%, rgba(126,200,126,0.1) 100%);
             color: #e0e0e0;
@@ -397,7 +412,7 @@ class BudgetCalculator {
         });
 
         const detailsLink = document.createElement('span');
-        detailsLink.title = 'View last breakdown';
+        i18n.bindDefault(detailsLink, 'actMisc.budget.viewBreakdown', 'View last breakdown', undefined, 'title');
         detailsLink.style.cssText = 'font-size:14px; cursor:pointer; opacity:0.4; user-select:none;';
         detailsLink.textContent = '📋';
         detailsLink.style.display = 'none';
@@ -425,9 +440,9 @@ class BudgetCalculator {
 
             const result = findMaxUnits(actionHrid, budget);
             if (!result) {
-                calcBtn.textContent = 'No data';
+                calcBtn.textContent = i18n.tDefault('actMisc.budget.noData', 'No data');
                 const t = setTimeout(() => {
-                    calcBtn.textContent = 'Calculate';
+                    calcBtn.textContent = i18n.tDefault('actMisc.budget.calculate', 'Calculate');
                 }, 2000);
                 this.timerRegistry.registerTimeout(t);
                 return;

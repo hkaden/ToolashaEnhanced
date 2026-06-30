@@ -15,6 +15,7 @@ import config from '../../core/config.js';
 import { calculateEnhancementBatch } from '../../utils/enhancement-worker-manager.js';
 import { getCheapestProtectionPrice, getRealisticBaseItemPrice } from '../enhancement/tooltip-enhancement.js';
 import { getShopCoinCost } from '../../utils/game-lookups.js';
+import { getLocalizedItemName, getLocalizedAbilityName } from '../../utils/localized-game-names.js';
 
 /**
  * Token-based item data for untradeable back slot items (capes/cloaks/quivers)
@@ -261,12 +262,13 @@ function calculateAbilityScore(profileData) {
         const cost = calculateAbilityCost(ability.abilityHrid, ability.level);
         totalCost += cost;
 
-        // Format ability name for display
-        const abilityName = ability.abilityHrid
+        // Format ability name for display (localized to game language, English fallback)
+        const englishAbilityName = ability.abilityHrid
             .replace('/abilities/', '')
             .split('_')
             .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
+        const abilityName = getLocalizedAbilityName(ability.abilityHrid, englishAbilityName);
 
         breakdown.push({
             name: `${abilityName} ${ability.level}`,
@@ -489,7 +491,10 @@ async function calculateEquipmentScore(profileData, scoreType = 'combat') {
         totalValue += itemCost;
 
         // Format item name for display
-        const itemName = item.itemDetails.name || item.itemHrid.replace('/items/', '');
+        const itemName = getLocalizedItemName(
+            item.itemHrid,
+            item.itemDetails.name || item.itemHrid.replace('/items/', '')
+        );
         const displayName = item.enhancementLevel > 0 ? `${itemName} +${item.enhancementLevel}` : itemName;
 
         // Only add to breakdown if formatted value is not "0.0"

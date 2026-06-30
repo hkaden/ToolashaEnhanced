@@ -8,6 +8,7 @@ import domObserver from '../../core/dom-observer.js';
 import webSocketHook from '../../core/websocket.js';
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import i18n from '../../core/i18n/index.js';
 import { guildXPTracker } from './guild-xp-tracker.js';
 import { formatWithSeparator, formatDateTime } from '../../utils/formatters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
@@ -35,12 +36,12 @@ function formatTimeLeft(ms) {
     const s = (n) => (n === 1 ? '' : 's');
     const parts = [];
 
-    if (w >= 1) parts.push(`${w} week${s(w)}`);
-    if (d >= 1) parts.push(`${d} day${s(d)}`);
-    if (ms < w1 && h >= 1) parts.push(`${h} hour${s(h)}`);
-    if (ms < 6 * h1 && m >= 1) parts.push(`${m} minute${s(m)}`);
+    if (w >= 1) parts.push(i18n.tDefault('misc.skills.timeWeeks', `${w} week${s(w)}`, { count: w }));
+    if (d >= 1) parts.push(i18n.tDefault('misc.skills.timeDays', `${d} day${s(d)}`, { count: d }));
+    if (ms < w1 && h >= 1) parts.push(i18n.tDefault('misc.skills.timeHours', `${h} hour${s(h)}`, { count: h }));
+    if (ms < 6 * h1 && m >= 1) parts.push(i18n.tDefault('misc.skills.timeMinutes', `${m} minute${s(m)}`, { count: m }));
 
-    return parts.join(' ') || '< 1 minute';
+    return parts.join(' ') || i18n.tDefault('misc.skills.lessThanMinute', '< 1 minute');
 }
 
 /**
@@ -72,7 +73,11 @@ function rankBadge(rank) {
  * @returns {string} HTML
  */
 function buildChart(chart) {
-    if (chart.length === 0) return '<div style="color: var(--color-disabled);">Not enough data for chart</div>';
+    if (chart.length === 0)
+        return `<div style="color: var(--color-disabled);">${i18n.tDefault(
+            'misc.guild.notEnoughData',
+            'Not enough data for chart'
+        )}</div>`;
 
     // Truncate outliers at 2x the median
     let maxXPH = 0;
@@ -417,7 +422,10 @@ class GuildXPDisplay {
         const stats = guildXPTracker.getGuildStats(guildName);
 
         // XP/h stats row
-        const rateLabel = stats.lastHourXPH > 0 ? 'Last hour XP/h' : 'Last XP/h';
+        const rateLabel =
+            stats.lastHourXPH > 0
+                ? i18n.tDefault('misc.guild.lastHourXph', 'Last hour XP/h')
+                : i18n.tDefault('misc.guild.lastXph', 'Last XP/h');
         const rateValue = stats.lastHourXPH > 0 ? stats.lastHourXPH : stats.lastXPH;
 
         const statsHTML = `
@@ -427,7 +435,7 @@ class GuildXPDisplay {
                     <div class="GuildPanel_value__Hm2I9">${fNum(rateValue)}</div>
                 </div>
                 <div class="GuildPanel_dataBlock__3qVhK">
-                    <div class="GuildPanel_label__-A63g">Last day XP/h</div>
+                    <div class="GuildPanel_label__-A63g">${i18n.tDefault('misc.guild.lastDayXph', 'Last day XP/h')}</div>
                     <div class="GuildPanel_value__Hm2I9">${fNum(stats.lastDayXPH)}</div>
                 </div>
             </div>`;
@@ -436,7 +444,7 @@ class GuildXPDisplay {
         const chartHTML = `
             <div class="GuildPanel_dataBlockGroup__1d2rR ${CSS_PREFIX}" style="grid-column: 1 / 3; max-width: none;">
                 <div class="GuildPanel_dataBlock__3qVhK" style="height: 240px;">
-                    <div class="GuildPanel_label__-A63g">Last week XP/h</div>
+                    <div class="GuildPanel_label__-A63g">${i18n.tDefault('misc.guild.lastWeekXph', 'Last week XP/h')}</div>
                     ${buildChart(stats.chart)}
                 </div>
             </div>`;
@@ -537,7 +545,7 @@ class GuildXPDisplay {
 
         // Game Mode column
         addColumn(tableEl, {
-            name: 'Game Mode',
+            name: i18n.tDefault('misc.guild.gameMode', 'Game Mode'),
             insertAfter,
             data: allStats.map((s) => s.gameMode),
             format: (v) => gameModes[v] || v || '',
@@ -548,7 +556,7 @@ class GuildXPDisplay {
 
         // Joined column
         addColumn(tableEl, {
-            name: 'Joined',
+            name: i18n.tDefault('misc.guild.joined', 'Joined'),
             insertAfter: insertAfter + 1,
             data: allStats.map((s) => s.joinTime),
             format: (v) =>
@@ -562,7 +570,7 @@ class GuildXPDisplay {
 
         // Last XP/h column
         addColumn(tableEl, {
-            name: 'Last XP/h',
+            name: i18n.tDefault('misc.guild.lastXph', 'Last XP/h'),
             insertAfter: insertAfter + 2,
             data: allStats.map((s) => s.lastXPH),
             format: (v, i) => {
@@ -576,7 +584,7 @@ class GuildXPDisplay {
 
         // Last day XP/h column
         addColumn(tableEl, {
-            name: 'Last day XP/h',
+            name: i18n.tDefault('misc.guild.lastDayXph', 'Last day XP/h'),
             insertAfter: insertAfter + 3,
             data: allStats.map((s) => s.lastDayXPH),
             format: (v, i) => {
@@ -753,7 +761,7 @@ class GuildXPDisplay {
 
         // Last XP/h
         addColumn(tableEl, {
-            name: 'Last XP/h',
+            name: i18n.tDefault('misc.guild.lastXph', 'Last XP/h'),
             insertAfter,
             data: allStats.map((s) => s.lastXPH),
             format: (v, i) => {
@@ -768,7 +776,7 @@ class GuildXPDisplay {
 
         // Last day XP/h
         addColumn(tableEl, {
-            name: 'Last day XP/h',
+            name: i18n.tDefault('misc.guild.lastDayXph', 'Last day XP/h'),
             insertAfter: insertAfter + 1,
             data: allStats.map((s) => s.lastDayXPH),
             format: (v, i) => {
@@ -825,7 +833,7 @@ class GuildXPDisplay {
                         <span>${formatDateTime(new Date(t), { includeSeconds: false })}</span>
                     </div>
                     <div>
-                        <span>${fNum(xpH)} XP/h${truncated ? ' (anomalous)' : ''}</span>
+                        <span>${fNum(xpH)} XP/h${truncated ? i18n.tDefault('misc.guild.anomalous', ' (anomalous)') : ''}</span>
                     </div>
                 </div>
             </div>

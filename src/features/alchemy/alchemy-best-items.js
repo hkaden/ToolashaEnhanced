@@ -6,6 +6,7 @@
 
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import i18n from '../../core/i18n/index.js';
 import alchemyProfitCalculator from '../market/alchemy-profit-calculator.js';
 import { calculateExperienceMultiplier } from '../../utils/experience-parser.js';
 import { formatKMB, formatWithSeparator, formatPercentage } from '../../utils/formatters.js';
@@ -13,6 +14,7 @@ import { getItemPrice } from '../../utils/market-data.js';
 import assetManifest from '../../utils/asset-manifest.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
 import { navigateToMarketplace } from '../../utils/marketplace-tabs.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 
 const ALCHEMY_TYPES = ['coinify', 'decompose', 'transmute'];
 
@@ -21,6 +23,13 @@ const CATALYST_LABELS = {
     '/items/catalyst_of_decomposition': 'Decompose',
     '/items/catalyst_of_transmutation': 'Transmute',
     '/items/prime_catalyst': 'Prime',
+};
+
+const CATALYST_LABEL_KEYS = {
+    '/items/catalyst_of_coinification': 'alcHist.catalystLabel.coinify',
+    '/items/catalyst_of_decomposition': 'alcHist.catalystLabel.decompose',
+    '/items/catalyst_of_transmutation': 'alcHist.catalystLabel.transmute',
+    '/items/prime_catalyst': 'alcHist.catalystLabel.prime',
 };
 
 /**
@@ -129,10 +138,10 @@ class AlchemyBestItems {
             if (badge) {
                 const badgeSpan = badge.querySelector('.MuiBadge-badge');
                 badge.textContent = '';
-                badge.appendChild(document.createTextNode('Best Items'));
+                badge.appendChild(document.createTextNode(i18n.tDefault('alcHist.bestItems.tab', 'Best Items')));
                 if (badgeSpan) badge.appendChild(badgeSpan);
             } else {
-                tab.textContent = 'Best Items';
+                i18n.bindDefault(tab, 'alcHist.bestItems.tab', 'Best Items');
             }
 
             tab.addEventListener('click', (e) => {
@@ -325,7 +334,10 @@ class AlchemyBestItems {
         // Alchemy type tabs
         for (const type of ALCHEMY_TYPES) {
             const tab = document.createElement('button');
-            tab.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+            tab.textContent = i18n.tDefault(
+                `alcHist.alchemyType.${type}`,
+                type.charAt(0).toUpperCase() + type.slice(1)
+            );
             tab.setAttribute('data-mwi-type-tab', type);
             tab.style.cssText = `
                 padding: 4px 12px; border-radius: 4px; cursor: pointer;
@@ -347,12 +359,16 @@ class AlchemyBestItems {
         // Sort toggle
         const sortLabel = document.createElement('span');
         sortLabel.style.cssText = 'color: #aaa; font-size: 0.75rem;';
-        sortLabel.textContent = 'Sort by:';
+        i18n.bindDefault(sortLabel, 'alcHist.bestItems.sortBy', 'Sort by:');
         controls.appendChild(sortLabel);
 
         for (const mode of ['profit', 'xp']) {
             const btn = document.createElement('button');
-            btn.textContent = mode === 'profit' ? 'Profit/hr' : 'XP/hr';
+            if (mode === 'profit') {
+                i18n.bindDefault(btn, 'alcHist.bestItems.profitPerHr', 'Profit/hr');
+            } else {
+                i18n.bindDefault(btn, 'alcHist.bestItems.xpPerHr', 'XP/hr');
+            }
             btn.setAttribute('data-mwi-sort-btn', mode);
             btn.style.cssText = `
                 padding: 3px 8px; border-radius: 4px; cursor: pointer;
@@ -368,7 +384,7 @@ class AlchemyBestItems {
         // Profitable only toggle
         const profitToggle = document.createElement('button');
         profitToggle.setAttribute('data-mwi-profit-toggle', 'true');
-        profitToggle.textContent = 'Profitable only';
+        i18n.bindDefault(profitToggle, 'alcHist.bestItems.profitableOnly', 'Profitable only');
         profitToggle.style.cssText = `
             padding: 3px 8px; border-radius: 4px; cursor: pointer;
             border: 1px solid #555; font-size: 0.75rem; color: #fff;
@@ -387,7 +403,7 @@ class AlchemyBestItems {
         searchRow.style.cssText = 'display: flex; margin-bottom: 8px;';
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = 'Search items...';
+        i18n.bindDefault(searchInput, 'alcHist.filter.searchItems', 'Search items...', undefined, 'placeholder');
         searchInput.setAttribute('data-mwi-best-search', 'true');
         searchInput.style.cssText = `
             flex: 1; padding: 5px 10px; border-radius: 4px;
@@ -415,14 +431,14 @@ class AlchemyBestItems {
         // Profit/hr filter
         const profitFilter = document.createElement('span');
         profitFilter.style.cssText = 'display: flex; align-items: center; gap: 4px;';
-        profitFilter.innerHTML = 'Profit/hr:';
+        profitFilter.innerHTML = i18n.tDefault('alcHist.bestItems.profitFilterLabel', 'Profit/hr:');
         const profitMin = document.createElement('input');
         profitMin.type = 'text';
-        profitMin.placeholder = 'Min';
+        i18n.bindDefault(profitMin, 'alcHist.filter.min', 'Min', undefined, 'placeholder');
         profitMin.style.cssText = filterInputStyle;
         const profitMax = document.createElement('input');
         profitMax.type = 'text';
-        profitMax.placeholder = 'Max';
+        i18n.bindDefault(profitMax, 'alcHist.filter.max', 'Max', undefined, 'placeholder');
         profitMax.style.cssText = filterInputStyle;
 
         const parseFilterValue = (val) => {
@@ -453,14 +469,14 @@ class AlchemyBestItems {
         // Item price filter
         const priceFilter = document.createElement('span');
         priceFilter.style.cssText = 'display: flex; align-items: center; gap: 4px;';
-        priceFilter.innerHTML = 'Item price:';
+        priceFilter.innerHTML = i18n.tDefault('alcHist.bestItems.priceFilterLabel', 'Item price:');
         const priceMin = document.createElement('input');
         priceMin.type = 'text';
-        priceMin.placeholder = 'Min';
+        i18n.bindDefault(priceMin, 'alcHist.filter.min', 'Min', undefined, 'placeholder');
         priceMin.style.cssText = filterInputStyle;
         const priceMax = document.createElement('input');
         priceMax.type = 'text';
-        priceMax.placeholder = 'Max';
+        i18n.bindDefault(priceMax, 'alcHist.filter.max', 'Max', undefined, 'placeholder');
         priceMax.style.cssText = filterInputStyle;
         priceMin.addEventListener('change', onFilterChange);
         priceMax.addEventListener('change', onFilterChange);
@@ -512,8 +528,13 @@ class AlchemyBestItems {
         // Update title
         const title = this.modal.querySelector('[data-mwi-best-title]');
         if (title) {
-            const typeLabel = this.currentType.charAt(0).toUpperCase() + this.currentType.slice(1);
-            title.textContent = `Best Items \u2014 ${typeLabel}`;
+            const typeLabel = i18n.tDefault(
+                `alcHist.alchemyType.${this.currentType}`,
+                this.currentType.charAt(0).toUpperCase() + this.currentType.slice(1)
+            );
+            title.textContent = i18n.tDefault('alcHist.bestItems.title', `Best Items \u2014 ${typeLabel}`, {
+                type: typeLabel,
+            });
         }
 
         // Update tab styling
@@ -546,9 +567,16 @@ class AlchemyBestItems {
         const headerRow = document.createElement('tr');
         headerRow.style.cssText = 'border-bottom: 1px solid #555;';
 
+        const headerKeys = {
+            Item: 'alcHist.bestItems.colItem',
+            Lvl: 'alcHist.bestItems.colLvl',
+            Catalyst: 'alcHist.bestItems.colCatalyst',
+            'Profit/hr': 'alcHist.bestItems.profitPerHr',
+            'XP/hr': 'alcHist.bestItems.xpPerHr',
+        };
         for (const col of ['#', 'Item', 'Lvl', 'Catalyst', 'Profit/hr', 'XP/hr']) {
             const th = document.createElement('th');
-            th.textContent = col;
+            th.textContent = headerKeys[col] ? i18n.tDefault(headerKeys[col], col) : col;
             th.style.cssText = 'padding: 6px 8px; text-align: left; color: #aaa; font-weight: 500;';
             if (col === '#' || col === 'Lvl') th.style.textAlign = 'center';
             if (col === 'Profit/hr' || col === 'XP/hr') th.style.textAlign = 'right';
@@ -576,7 +604,7 @@ class AlchemyBestItems {
             const nameTd = document.createElement('td');
             nameTd.style.cssText = 'padding: 4px 8px;';
             const nameLink = document.createElement('span');
-            nameLink.textContent = item.name;
+            nameLink.textContent = getLocalizedItemName(item.itemHrid, item.name);
             nameLink.style.cssText = 'color: #93c5fd; cursor: pointer; text-decoration: underline;';
             nameLink.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -605,7 +633,10 @@ class AlchemyBestItems {
                 use.setAttribute('href', `${this.itemsSpriteUrl}#${symbolId}`);
                 svg.appendChild(use);
                 catTd.appendChild(svg);
-                catTd.title = CATALYST_LABELS[item.catalyst] || symbolId;
+                catTd.title = i18n.tDefault(
+                    CATALYST_LABEL_KEYS[item.catalyst],
+                    CATALYST_LABELS[item.catalyst] || symbolId
+                );
             } else {
                 catTd.textContent = '\u2014';
                 catTd.style.color = '#555';
@@ -636,14 +667,20 @@ class AlchemyBestItems {
         container.innerHTML = '';
 
         if (sorted.length === 0) {
-            container.innerHTML =
-                '<div style="color: #888; padding: 20px; text-align: center;">No eligible items found</div>';
+            container.innerHTML = `<div style="color: #888; padding: 20px; text-align: center;">${i18n.tDefault(
+                'alcHist.bestItems.noEligible',
+                'No eligible items found'
+            )}</div>`;
         } else {
             container.appendChild(table);
             if (sorted.length > maxRows) {
                 const more = document.createElement('div');
                 more.style.cssText = 'color: #888; text-align: center; padding: 8px; font-size: 0.75rem;';
-                more.textContent = `Showing top ${maxRows} of ${sorted.length} items`;
+                more.textContent = i18n.tDefault(
+                    'alcHist.bestItems.showingTop',
+                    `Showing top ${maxRows} of ${sorted.length} items`,
+                    { max: maxRows, total: sorted.length }
+                );
                 container.appendChild(more);
             }
         }
@@ -677,7 +714,7 @@ class AlchemyBestItems {
      */
     _makeItemLink(name, itemHrid) {
         const link = document.createElement('span');
-        link.textContent = name;
+        link.textContent = getLocalizedItemName(itemHrid, name);
         link.style.cssText = 'color: #93c5fd; cursor: pointer; text-decoration: underline;';
         link.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -694,7 +731,7 @@ class AlchemyBestItems {
         const profitData = item.profitData;
 
         if (!profitData) {
-            container.textContent = 'No breakdown data available';
+            container.textContent = i18n.tDefault('alcHist.breakdown.noData', 'No breakdown data available');
             container.style.color = '#888';
             return container;
         }
@@ -706,7 +743,11 @@ class AlchemyBestItems {
             const totalRevenue = profitData.dropRevenues
                 .filter((d) => !d.isSelfReturn)
                 .reduce((sum, d) => sum + d.revenuePerHour, 0);
-            revenueHeader.textContent = `Revenue: ${formatKMB(Math.round(totalRevenue))}/hr`;
+            revenueHeader.textContent = i18n.tDefault(
+                'alcHist.breakdown.revenue',
+                `Revenue: ${formatKMB(Math.round(totalRevenue))}/hr`,
+                { value: formatKMB(Math.round(totalRevenue)) }
+            );
             container.appendChild(revenueHeader);
 
             for (const drop of profitData.dropRevenues) {
@@ -724,10 +765,23 @@ class AlchemyBestItems {
                     line.style.textDecoration = 'line-through';
                     line.style.opacity = '0.6';
                 }
+                const dropSuccessPct = formatPercentage(profitData.successRate, 1);
+                const dropPrice = formatWithSeparator(Math.round(drop.price));
+                const dropRev = formatKMB(Math.round(drop.revenuePerHour));
                 line.append(
                     `\u2022 `,
                     this._makeItemLink(itemName, drop.itemHrid),
-                    `: ${dropsDisplay}/hr (${dropRatePct} \u00d7 ${formatPercentage(profitData.successRate, 1)} success) @ ${formatWithSeparator(Math.round(drop.price))} \u2192 ${formatKMB(Math.round(drop.revenuePerHour))}/hr`
+                    i18n.tDefault(
+                        'alcHist.breakdown.dropLine',
+                        `: ${dropsDisplay}/hr (${dropRatePct} \u00d7 ${dropSuccessPct} success) @ ${dropPrice} \u2192 ${dropRev}/hr`,
+                        {
+                            drops: dropsDisplay,
+                            rate: dropRatePct,
+                            success: dropSuccessPct,
+                            price: dropPrice,
+                            rev: dropRev,
+                        }
+                    )
                 );
                 container.appendChild(line);
             }
@@ -742,7 +796,11 @@ class AlchemyBestItems {
         if (totalCosts > 0 || profitData.requirementCosts?.length > 0) {
             const costsHeader = document.createElement('div');
             costsHeader.style.cssText = 'color: #fff; font-weight: 500; margin-top: 6px; margin-bottom: 2px;';
-            costsHeader.textContent = `Costs: ${formatKMB(Math.round(totalCosts))}/hr`;
+            costsHeader.textContent = i18n.tDefault(
+                'alcHist.breakdown.costs',
+                `Costs: ${formatKMB(Math.round(totalCosts))}/hr`,
+                { value: formatKMB(Math.round(totalCosts)) }
+            );
             container.appendChild(costsHeader);
 
             // Input materials
@@ -797,8 +855,14 @@ class AlchemyBestItems {
         statsLine.style.cssText = 'color: #888; margin-top: 6px; font-size: 0.7rem;';
         const parts = [];
         if (profitData.actionsPerHour) parts.push(`${Math.round(profitData.actionsPerHour)}/hr`);
-        if (profitData.successRate) parts.push(`${formatPercentage(profitData.successRate, 1)} success`);
-        if (profitData.efficiency != null) parts.push(`${formatPercentage(profitData.efficiency, 1)} efficiency`);
+        if (profitData.successRate) {
+            const successPct = formatPercentage(profitData.successRate, 1);
+            parts.push(i18n.tDefault('alcHist.breakdown.statSuccess', `${successPct} success`, { value: successPct }));
+        }
+        if (profitData.efficiency != null) {
+            const effPct = formatPercentage(profitData.efficiency, 1);
+            parts.push(i18n.tDefault('alcHist.breakdown.statEfficiency', `${effPct} efficiency`, { value: effPct }));
+        }
         statsLine.textContent = parts.join(' | ');
         container.appendChild(statsLine);
 

@@ -4,6 +4,7 @@
  * Manages equipment, abilities, consumables, skill levels, and house rooms.
  */
 
+import i18n from '../../core/i18n/index.js';
 import {
     buildGameDataPayload,
     buildAllPlayerDTOs,
@@ -12,6 +13,7 @@ import {
 } from './combat-sim-adapter.js';
 import loadoutSnapshot from '../combat/loadout-snapshot.js';
 import { getLoadoutSortOrder } from '../combat/loadout-sort.js';
+import { getLocalizedItemName, getLocalizedAbilityName, getLocalizedName } from '../../utils/localized-game-names.js';
 
 const ACCENT = '#4a9eff';
 const ACCENT_BG = 'rgba(74, 158, 255, 0.12)';
@@ -72,8 +74,7 @@ export class SimEditor {
         try {
             const { players, playerInfo, selfHrid, missingMembers } = await buildAllPlayerDTOs();
             if (!players.length) {
-                editorArea.innerHTML =
-                    '<div style="color:#555; font-size:12px; text-align:center; padding:20px 0;">No character data available.</div>';
+                editorArea.innerHTML = `<div style="color:#555; font-size:12px; text-align:center; padding:20px 0;">${i18n.tDefault('combatSim.status.noCharacterData', 'No character data available.')}</div>`;
                 return;
             }
 
@@ -94,8 +95,7 @@ export class SimEditor {
             this.renderEditor();
         } catch (error) {
             console.error('[SimEditor] Failed to init editor:', error);
-            editorArea.innerHTML =
-                '<div style="color:#f66; font-size:12px; text-align:center; padding:20px 0;">Failed to load character data.</div>';
+            editorArea.innerHTML = `<div style="color:#f66; font-size:12px; text-align:center; padding:20px 0;">${i18n.tDefault('combatSim.editor.failedLoad', 'Failed to load character data.')}</div>`;
         }
     }
 
@@ -140,7 +140,10 @@ export class SimEditor {
             dto.hrid = `player${nextSlot}`;
             this._editedDTOs[dto.hrid] = dto;
             this._originalDTOs[dto.hrid] = structuredClone(dto);
-            this._editedPlayerInfo.push({ hrid: dto.hrid, name: names[i] || `Player ${nextSlot}` });
+            this._editedPlayerInfo.push({
+                hrid: dto.hrid,
+                name: names[i] || i18n.tDefault('combatSim.player.name', 'Player {n}', { n: nextSlot }),
+            });
             nextSlot++;
         }
 
@@ -180,13 +183,13 @@ export class SimEditor {
         if (!dto && playerInfo.length === 0) {
             editorArea.innerHTML = `
                 <div style="text-align:center; padding:20px 0;">
-                    <div style="color:#888; font-size:12px; margin-bottom:10px;">No players loaded.</div>
+                    <div style="color:#888; font-size:12px; margin-bottom:10px;">${i18n.tDefault('combatSim.editor.noPlayersLoaded', 'No players loaded.')}</div>
                     <button id="mwi-csim-import-btn" style="
                         background:${ACCENT_BTN_BG}; border:1px solid ${ACCENT_BTN_BORDER}; color:${ACCENT};
                         padding:5px 14px; border-radius:5px; font-size:12px; cursor:pointer;
-                        font-family:inherit; font-weight:600;">+ Import Player</button>
+                        font-family:inherit; font-weight:600;">${i18n.tDefault('combatSim.editor.importPlayer', '+ Import Player')}</button>
                     <div id="mwi-csim-import-area" style="display:none; margin-top:10px; text-align:left;">
-                        <textarea id="mwi-csim-import-text" placeholder="Paste Combat Sim Export JSON here..." style="
+                        <textarea id="mwi-csim-import-text" placeholder="${i18n.tDefault('combatSim.editor.pasteCombatExport', 'Paste Combat Sim Export JSON here...')}" style="
                             width:100%; height:60px; background:#1a1a2e; color:#e0e0e0; border:1px solid #444;
                             border-radius:4px; padding:6px; font-size:11px; font-family:monospace; resize:vertical;
                             box-sizing:border-box;"></textarea>
@@ -194,10 +197,10 @@ export class SimEditor {
                             <button id="mwi-csim-import-go" style="
                                 background:${ACCENT_BTN_BG}; border:1px solid ${ACCENT_BTN_BORDER}; color:${ACCENT};
                                 padding:3px 12px; border-radius:4px; font-size:11px; cursor:pointer; font-family:inherit;
-                                font-weight:600;">Import</button>
+                                font-weight:600;">${i18n.tDefault('combatSim.editor.import', 'Import')}</button>
                             <button id="mwi-csim-import-cancel" style="
                                 background:rgba(255,255,255,0.04); border:1px solid #333; color:#888;
-                                padding:3px 12px; border-radius:4px; font-size:11px; cursor:pointer; font-family:inherit;">Cancel</button>
+                                padding:3px 12px; border-radius:4px; font-size:11px; cursor:pointer; font-family:inherit;">${i18n.tDefault('combatSim.button.cancel', 'Cancel')}</button>
                             <span id="mwi-csim-import-error" style="color:#f44; font-size:11px; align-self:center;"></span>
                         </div>
                     </div>
@@ -217,12 +220,20 @@ export class SimEditor {
                     const text = editorArea.querySelector('#mwi-csim-import-text')?.value?.trim();
                     const errorEl = editorArea.querySelector('#mwi-csim-import-error');
                     if (!text) {
-                        if (errorEl) errorEl.textContent = 'Paste export data first.';
+                        if (errorEl)
+                            errorEl.textContent = i18n.tDefault(
+                                'combatSim.editor.pasteFirst',
+                                'Paste export data first.'
+                            );
                         return;
                     }
                     const result = parseShykaiImport(text);
                     if (!result || !result.players.length) {
-                        if (errorEl) errorEl.textContent = 'Invalid format. Paste a Combat Sim Export JSON.';
+                        if (errorEl)
+                            errorEl.textContent = i18n.tDefault(
+                                'combatSim.editor.invalidFormat',
+                                'Invalid format. Paste a Combat Sim Export JSON.'
+                            );
                         return;
                     }
                     this.importPlayers(result.players, result.names);
@@ -257,7 +268,7 @@ export class SimEditor {
                     ${tabStyle}
                     padding:3px 8px; border-radius:5px; font-size:12px; cursor:pointer;
                     font-family:inherit; transition:all 0.1s; position:relative;
-                ">${name}<span data-remove-player="${hrid}" style="margin-left:4px; color:#f44; cursor:pointer; font-size:14px;" title="Remove player">\u00d7</span></button>`;
+                ">${name}<span data-remove-player="${hrid}" style="margin-left:4px; color:#f44; cursor:pointer; font-size:14px;" title="${i18n.tDefault('combatSim.editor.removePlayer', 'Remove player')}">\u00d7</span></button>`;
             }
         } else if (playerInfo.length === 1) {
             const { hrid, name } = playerInfo[0];
@@ -265,17 +276,17 @@ export class SimEditor {
                 background:${ACCENT_BG}; border:1px solid ${ACCENT_BORDER}; color:${ACCENT}; font-weight:700;
                 padding:3px 8px; border-radius:5px; font-size:12px; cursor:pointer;
                 font-family:inherit; transition:all 0.1s; position:relative;
-            ">${name}<span data-remove-player="${hrid}" style="margin-left:4px; color:#f44; cursor:pointer; font-size:14px;" title="Remove player">\u00d7</span></button>`;
+            ">${name}<span data-remove-player="${hrid}" style="margin-left:4px; color:#f44; cursor:pointer; font-size:14px;" title="${i18n.tDefault('combatSim.editor.removePlayer', 'Remove player')}">\u00d7</span></button>`;
         }
         html += `<button id="mwi-csim-import-btn" style="
             background:rgba(255,255,255,0.04); border:1px solid #333; color:#888;
             padding:3px 8px; border-radius:5px; font-size:11px; cursor:pointer;
-            font-family:inherit;" title="Import players from Shykai export string">+ Import</button>`;
+            font-family:inherit;" title="${i18n.tDefault('combatSim.editor.importShykaiTooltip', 'Import players from Shykai export string')}">${i18n.tDefault('combatSim.editor.importShort', '+ Import')}</button>`;
         html += '</div>';
 
         // Import paste area (hidden by default)
         html += `<div id="mwi-csim-import-area" style="display:none; margin-bottom:10px;">
-            <textarea id="mwi-csim-import-text" placeholder="Paste Shykai export JSON here..." style="
+            <textarea id="mwi-csim-import-text" placeholder="${i18n.tDefault('combatSim.editor.pasteShykaiExport', 'Paste Shykai export JSON here...')}" style="
                 width:100%; height:60px; background:#1a1a2e; color:#e0e0e0; border:1px solid #444;
                 border-radius:4px; padding:6px; font-size:11px; font-family:monospace; resize:vertical;
                 box-sizing:border-box;"></textarea>
@@ -283,10 +294,10 @@ export class SimEditor {
                 <button id="mwi-csim-import-go" style="
                     background:${ACCENT_BTN_BG}; border:1px solid ${ACCENT_BTN_BORDER}; color:${ACCENT};
                     padding:3px 12px; border-radius:4px; font-size:11px; cursor:pointer; font-family:inherit;
-                    font-weight:600;">Import</button>
+                    font-weight:600;">${i18n.tDefault('combatSim.editor.import', 'Import')}</button>
                 <button id="mwi-csim-import-cancel" style="
                     background:rgba(255,255,255,0.04); border:1px solid #333; color:#888;
-                    padding:3px 12px; border-radius:4px; font-size:11px; cursor:pointer; font-family:inherit;">Cancel</button>
+                    padding:3px 12px; border-radius:4px; font-size:11px; cursor:pointer; font-family:inherit;">${i18n.tDefault('combatSim.button.cancel', 'Cancel')}</button>
                 <span id="mwi-csim-import-error" style="color:#f44; font-size:11px; align-self:center;"></span>
             </div>
         </div>`;
@@ -309,13 +320,15 @@ export class SimEditor {
             }
             html += `<div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">`;
             if (filteredSnapshots.length > 0) {
-                html += `<label style="color:#888; font-size:11px; flex-shrink:0;">Loadout</label>`;
+                html += `<label style="color:#888; font-size:11px; flex-shrink:0;">${i18n.tDefault('combatSim.editor.loadout', 'Loadout')}</label>`;
                 html += `<select id="mwi-csim-loadout-select" style="
                     flex:1; min-width:0; background:#1a1a2e; color:#e0e0e0; border:1px solid #444;
                     border-radius:4px; padding:2px 6px; font-size:12px; font-family:inherit;">`;
-                html += `<option value=""${!this._selectedLoadoutName ? ' selected' : ''}>— Current Gear —</option>`;
+                html += `<option value=""${!this._selectedLoadoutName ? ' selected' : ''}>${i18n.tDefault('combatSim.editor.currentGearDash', '— Current Gear —')}</option>`;
                 for (const snap of filteredSnapshots) {
-                    const label = snap.name + (snap.actionTypeHrid ? '' : ' (All Skills)');
+                    const label =
+                        snap.name +
+                        (snap.actionTypeHrid ? '' : i18n.tDefault('combatSim.editor.allSkillsSuffix', ' (All Skills)'));
                     const selected = this._selectedLoadoutName === snap.name ? ' selected' : '';
                     html += `<option value="${snap.name}"${selected}>${label}</option>`;
                 }
@@ -324,7 +337,7 @@ export class SimEditor {
             html += `<button id="mwi-csim-reset" style="
                 margin-left:auto; background:rgba(255,255,255,0.04); border:1px solid #333; color:#aaa;
                 padding:2px 8px; border-radius:4px; font-size:11px; cursor:pointer;
-                font-family:inherit; flex-shrink:0;">Reset to Current</button>`;
+                font-family:inherit; flex-shrink:0;">${i18n.tDefault('combatSim.editor.resetToCurrent', 'Reset to Current')}</button>`;
             html += '</div>';
         }
 
@@ -383,25 +396,29 @@ export class SimEditor {
         const equippedCount = slotOrder.filter((s) => dto.equipment[s]).length;
         let html = `<div style="margin-bottom:10px;">`;
         html += `<div style="color:${ACCENT}; font-weight:700; font-size:12px; margin-bottom:6px; cursor:pointer; user-select:none;" data-toggle="equip-section">`;
-        html += `<span data-arrow="equip-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> Equipment (${equippedCount} items)`;
+        html += `<span data-arrow="equip-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> ${i18n.tDefault('combatSim.editor.equipmentHeader', 'Equipment ({count} items)', { count: equippedCount })}`;
         html += '</div>';
         html += `<div id="mwi-csim-equip-section" style="display:none;">`;
 
         for (const slotType of slotOrder) {
             const equip = dto.equipment[slotType];
-            const label = slotLabels[slotType] || slotType.split('/').pop();
+            const label = getLocalizedName(
+                'equipmentTypeNames',
+                slotType,
+                slotLabels[slotType] || slotType.split('/').pop()
+            );
 
             if (!equip) {
                 html += `<div style="display:flex; align-items:center; gap:6px; padding:2px 0; font-size:12px;">`;
                 html += `<span style="color:#888; width:70px; flex-shrink:0;">${label}</span>`;
-                html += `<span style="color:#555; flex:1; font-style:italic;">Empty</span>`;
-                html += `<button data-equipment-slot="${slotType}" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">add</button>`;
+                html += `<span style="color:#555; flex:1; font-style:italic;">${i18n.tDefault('combatSim.editor.empty', 'Empty')}</span>`;
+                html += `<button data-equipment-slot="${slotType}" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">${i18n.tDefault('combatSim.editor.add', 'add')}</button>`;
                 html += '</div>';
                 continue;
             }
 
             const item = itemDetailMap[equip.hrid];
-            const name = item?.name || equip.hrid.split('/').pop();
+            const name = getLocalizedItemName(equip.hrid, item?.name || equip.hrid.split('/').pop());
 
             html += `<div style="display:flex; align-items:center; gap:6px; padding:2px 0; font-size:12px;">`;
             html += `<span style="color:#888; width:70px; flex-shrink:0;">${label}</span>`;
@@ -411,7 +428,7 @@ export class SimEditor {
                 data-enhance-slot="${slotType}"
                 style="width:36px; background:#1a1a2e; color:#e0e0e0; border:1px solid #444;
                 border-radius:3px; padding:1px 3px; font-size:12px; text-align:center;">`;
-            html += `<button data-equipment-slot="${slotType}" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">change</button>`;
+            html += `<button data-equipment-slot="${slotType}" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">${i18n.tDefault('combatSim.editor.change', 'change')}</button>`;
             html += '</div>';
         }
 
@@ -426,7 +443,7 @@ export class SimEditor {
 
         let html = `<div style="margin-bottom:10px;">`;
         html += `<div style="color:${ACCENT}; font-weight:700; font-size:12px; margin-bottom:6px; cursor:pointer; user-select:none;" data-toggle="ability-section">`;
-        html += `<span data-arrow="ability-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> Abilities (${abilityCount} equipped)`;
+        html += `<span data-arrow="ability-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> ${i18n.tDefault('combatSim.editor.abilitiesHeader', 'Abilities ({count} equipped)', { count: abilityCount })}`;
         html += '</div>';
         html += `<div id="mwi-csim-ability-section" style="display:none;">`;
 
@@ -435,13 +452,16 @@ export class SimEditor {
 
         for (let i = 0; i < slotCount; i++) {
             const ability = dto.abilities[i];
-            const slotLabel = i === 0 ? 'Special' : `Slot ${i}`;
+            const slotLabel =
+                i === 0
+                    ? i18n.tDefault('combatSim.editor.slotSpecial', 'Special')
+                    : i18n.tDefault('combatSim.editor.slotN', 'Slot {n}', { n: i });
 
             if (!ability) {
                 html += `<div style="display:flex; align-items:center; gap:6px; padding:2px 0; font-size:12px;">`;
                 html += `<span style="color:#888; width:50px; flex-shrink:0;">${slotLabel}</span>`;
-                html += `<span style="color:#555; flex:1; font-style:italic;">Empty</span>`;
-                html += `<button data-ability-slot="${i}" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">add</button>`;
+                html += `<span style="color:#555; flex:1; font-style:italic;">${i18n.tDefault('combatSim.editor.empty', 'Empty')}</span>`;
+                html += `<button data-ability-slot="${i}" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">${i18n.tDefault('combatSim.editor.add', 'add')}</button>`;
                 html += '</div>';
                 continue;
             }
@@ -457,7 +477,7 @@ export class SimEditor {
                 data-ability-idx="${i}"
                 style="width:42px; background:#1a1a2e; color:#e0e0e0; border:1px solid #444;
                 border-radius:3px; padding:1px 3px; font-size:12px; text-align:center;">`;
-            html += `<button data-ability-slot="${i}" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">change</button>`;
+            html += `<button data-ability-slot="${i}" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">${i18n.tDefault('combatSim.editor.change', 'change')}</button>`;
             html += '</div>';
         }
 
@@ -477,18 +497,23 @@ export class SimEditor {
             ACCENT +
             '; font-weight:700; font-size:12px; margin-bottom:6px; cursor:pointer; user-select:none;" data-toggle="consumable-section">';
         html +=
-            '<span data-arrow="consumable-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> Consumables (' +
-            foodCount +
-            ' food, ' +
-            drinkCount +
-            ' drinks)';
+            '<span data-arrow="consumable-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> ' +
+            i18n.tDefault('combatSim.editor.consumablesHeader', 'Consumables ({food} food, {drink} drinks)', {
+                food: foodCount,
+                drink: drinkCount,
+            });
         html += '</div>';
         html += '<div id="mwi-csim-consumable-section" style="display:none;">';
 
-        html += '<div style="color:#888; font-size:11px; margin-bottom:3px;">Food</div>';
+        html +=
+            '<div style="color:#888; font-size:11px; margin-bottom:3px;">' +
+            i18n.tDefault('combatSim.editor.food', 'Food') +
+            '</div>';
         for (let i = 0; i < 3; i++) {
             const item = dto.food[i];
-            const name = item ? itemDetailMap[item.hrid]?.name || item.hrid.split('/').pop() : 'Empty';
+            const name = item
+                ? getLocalizedItemName(item.hrid, itemDetailMap[item.hrid]?.name || item.hrid.split('/').pop())
+                : i18n.tDefault('combatSim.editor.empty', 'Empty');
             const nameColor = item ? '#e0e0e0' : '#555';
             html += '<div style="display:flex; align-items:center; gap:6px; padding:2px 0; font-size:12px;">';
             html += '<span style="color:#666; width:16px; flex-shrink:0;">' + (i + 1) + '</span>';
@@ -501,14 +526,21 @@ export class SimEditor {
             html +=
                 '<button data-consumable-slot="food-' +
                 i +
-                '" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">change</button>';
+                '" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">' +
+                i18n.tDefault('combatSim.editor.change', 'change') +
+                '</button>';
             html += '</div>';
         }
 
-        html += '<div style="color:#888; font-size:11px; margin-bottom:3px; margin-top:6px;">Drinks</div>';
+        html +=
+            '<div style="color:#888; font-size:11px; margin-bottom:3px; margin-top:6px;">' +
+            i18n.tDefault('combatSim.editor.drinks', 'Drinks') +
+            '</div>';
         for (let i = 0; i < 3; i++) {
             const item = dto.drinks[i];
-            const name = item ? itemDetailMap[item.hrid]?.name || item.hrid.split('/').pop() : 'Empty';
+            const name = item
+                ? getLocalizedItemName(item.hrid, itemDetailMap[item.hrid]?.name || item.hrid.split('/').pop())
+                : i18n.tDefault('combatSim.editor.empty', 'Empty');
             const nameColor = item ? '#e0e0e0' : '#555';
             html += '<div style="display:flex; align-items:center; gap:6px; padding:2px 0; font-size:12px;">';
             html += '<span style="color:#666; width:16px; flex-shrink:0;">' + (i + 1) + '</span>';
@@ -521,7 +553,9 @@ export class SimEditor {
             html +=
                 '<button data-consumable-slot="drinks-' +
                 i +
-                '" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">change</button>';
+                '" style="background:rgba(255,255,255,0.06); border:1px solid #444; color:#aaa; padding:1px 6px; border-radius:3px; font-size:11px; cursor:pointer; font-family:inherit;">' +
+                i18n.tDefault('combatSim.editor.change', 'change') +
+                '</button>';
             html += '</div>';
         }
 
@@ -579,20 +613,28 @@ export class SimEditor {
                     const hp = item.consumableDetail.hitpointRestore || 0;
                     const mp = item.consumableDetail.manapointRestore || 0;
                     const dur = item.consumableDetail.recoveryDuration || 0;
-                    if (hp > 0 && dur > 0) categoryLabel = 'HP Over Time';
-                    else if (hp > 0) categoryLabel = 'HP Instant';
-                    else if (mp > 0 && dur > 0) categoryLabel = 'MP Over Time';
-                    else if (mp > 0) categoryLabel = 'MP Instant';
-                    else categoryLabel = 'Other';
+                    if (hp > 0 && dur > 0)
+                        categoryLabel = i18n.tDefault('combatSim.editor.catHpOverTime', 'HP Over Time');
+                    else if (hp > 0) categoryLabel = i18n.tDefault('combatSim.editor.catHpInstant', 'HP Instant');
+                    else if (mp > 0 && dur > 0)
+                        categoryLabel = i18n.tDefault('combatSim.editor.catMpOverTime', 'MP Over Time');
+                    else if (mp > 0) categoryLabel = i18n.tDefault('combatSim.editor.catMpInstant', 'MP Instant');
+                    else categoryLabel = i18n.tDefault('combatSim.editor.catOther', 'Other');
                 } else {
                     const buffs = item.consumableDetail.buffs || [];
                     if (buffs.length > 0) {
                         const buffName = buffs[0].uniqueHrid?.split('/').pop()?.replace(/_/g, ' ') || 'buff';
                         categoryLabel = buffName.charAt(0).toUpperCase() + buffName.slice(1);
-                    } else categoryLabel = 'Other';
+                    } else categoryLabel = i18n.tDefault('combatSim.editor.catOther', 'Other');
                 }
 
-                items.push({ hrid, name: item.name || hrid.split('/').pop(), conflict, itemLevel, categoryLabel });
+                items.push({
+                    hrid,
+                    name: getLocalizedItemName(hrid, item.name || hrid.split('/').pop()),
+                    conflict,
+                    itemLevel,
+                    categoryLabel,
+                });
             }
         }
 
@@ -614,8 +656,10 @@ export class SimEditor {
         header.style.cssText =
             'display:flex; justify-content:space-between; align-items:center; padding:8px 14px; border-bottom:1px solid rgba(74,158,255,0.3); flex-shrink:0;';
         header.innerHTML =
-            '<span style="font-weight:700; font-size:13px; color:#4a9eff;">Select ' +
-            (isFood ? 'Food' : 'Drink') +
+            '<span style="font-weight:700; font-size:13px; color:#4a9eff;">' +
+            (isFood
+                ? i18n.tDefault('combatSim.editor.selectFood', 'Select Food')
+                : i18n.tDefault('combatSim.editor.selectDrink', 'Select Drink')) +
             '</span>' +
             '<button id="mwi-csim-picker-close" style="background:none; border:none; color:#aaa; font-size:20px; cursor:pointer; padding:0; line-height:1;">\u00d7</button>';
         popup.appendChild(header);
@@ -624,7 +668,7 @@ export class SimEditor {
         searchDiv.style.cssText = 'padding:6px 14px; flex-shrink:0;';
         const searchInput = document.createElement('input');
         searchInput.type = 'search';
-        searchInput.placeholder = 'Search...';
+        searchInput.placeholder = i18n.tDefault('combatSim.editor.search', 'Search...');
         searchInput.style.cssText =
             'width:100%; padding:5px 8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);' +
             'border-radius:6px; color:#e0e0e0; font-size:12px; font-family:inherit; outline:none;';
@@ -647,7 +691,9 @@ export class SimEditor {
 
             let html =
                 '<div data-pick-hrid="" style="display:flex; align-items:center; gap:8px; padding:4px; cursor:pointer; border-bottom:1px solid #1a1a2e; color:#888; font-style:italic;"' +
-                ' onmouseover="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseout="this.style.background=\'\'">Empty (clear slot)</div>';
+                ' onmouseover="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseout="this.style.background=\'\'">' +
+                i18n.tDefault('combatSim.editor.emptyClearSlot', 'Empty (clear slot)') +
+                '</div>';
 
             let lastCategory = '';
             for (const item of filtered.slice(0, 80)) {
@@ -756,11 +802,11 @@ export class SimEditor {
             else if (reqSkill === 'defense') categoryLabel = 'Defense';
             else if (reqSkill === 'ranged') categoryLabel = 'Ranged';
             else if (reqSkill === 'magic') categoryLabel = 'Magic';
-            else categoryLabel = 'General';
+            else categoryLabel = i18n.tDefault('combatSim.editor.catGeneral', 'General');
 
             items.push({
                 hrid,
-                name: item.name || hrid.split('/').pop(),
+                name: getLocalizedItemName(hrid, item.name || hrid.split('/').pop()),
                 itemLevel: item.itemLevel || 0,
                 reqLevel,
                 categoryLabel,
@@ -785,7 +831,7 @@ export class SimEditor {
         header.style.cssText =
             'display:flex; justify-content:space-between; align-items:center; padding:8px 14px; border-bottom:1px solid rgba(74,158,255,0.3); flex-shrink:0;';
         header.innerHTML =
-            `<span style="font-weight:700; font-size:13px; color:${ACCENT};">Select ${slotName}</span>` +
+            `<span style="font-weight:700; font-size:13px; color:${ACCENT};">${i18n.tDefault('combatSim.editor.selectSlot', 'Select {slot}', { slot: slotName })}</span>` +
             '<button id="mwi-csim-equip-picker-close" style="background:none; border:none; color:#aaa; font-size:20px; cursor:pointer; padding:0; line-height:1;">\u00d7</button>';
         popup.appendChild(header);
 
@@ -793,7 +839,7 @@ export class SimEditor {
         searchDiv.style.cssText = 'padding:6px 14px; flex-shrink:0;';
         const searchInput = document.createElement('input');
         searchInput.type = 'search';
-        searchInput.placeholder = 'Search...';
+        searchInput.placeholder = i18n.tDefault('combatSim.editor.search', 'Search...');
         searchInput.style.cssText =
             'width:100%; padding:5px 8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);' +
             'border-radius:6px; color:#e0e0e0; font-size:12px; font-family:inherit; outline:none;';
@@ -812,7 +858,9 @@ export class SimEditor {
 
             let html =
                 '<div data-pick-hrid="" style="display:flex; align-items:center; gap:8px; padding:4px; cursor:pointer; border-bottom:1px solid #1a1a2e; color:#888; font-style:italic;"' +
-                ' onmouseover="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseout="this.style.background=\'\'">Empty (remove slot)</div>';
+                ' onmouseover="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseout="this.style.background=\'\'">' +
+                i18n.tDefault('combatSim.editor.emptyRemoveSlot', 'Empty (remove slot)') +
+                '</div>';
 
             let lastCategory = '';
             for (const item of filtered.slice(0, 100)) {
@@ -902,11 +950,11 @@ export class SimEditor {
             if (combatStyle === 'stab' || combatStyle === 'slash' || combatStyle === 'smash') categoryLabel = 'Melee';
             else if (combatStyle === 'ranged') categoryLabel = 'Ranged';
             else if (combatStyle === 'magic') categoryLabel = 'Magic';
-            else categoryLabel = 'Other';
+            else categoryLabel = i18n.tDefault('combatSim.editor.catOther', 'Other');
 
             items.push({
                 hrid,
-                name: ability.name || hrid.split('/').pop(),
+                name: getLocalizedAbilityName(hrid, ability.name || hrid.split('/').pop()),
                 categoryLabel,
                 conflict: usedHrids.has(hrid),
             });
@@ -926,12 +974,14 @@ export class SimEditor {
             'width:350px; max-height:400px; display:flex; flex-direction:column;' +
             "font-family:'Segoe UI',sans-serif; color:#e0e0e0; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,0.6);";
 
-        const slotLabel = isSpecialSlot ? 'Special Ability' : `Ability Slot ${slotIndex}`;
+        const slotLabel = isSpecialSlot
+            ? i18n.tDefault('combatSim.editor.specialAbility', 'Special Ability')
+            : i18n.tDefault('combatSim.editor.abilitySlotN', 'Ability Slot {n}', { n: slotIndex });
         const header = document.createElement('div');
         header.style.cssText =
             'display:flex; justify-content:space-between; align-items:center; padding:8px 14px; border-bottom:1px solid rgba(74,158,255,0.3); flex-shrink:0;';
         header.innerHTML =
-            `<span style="font-weight:700; font-size:13px; color:${ACCENT};">Select ${slotLabel}</span>` +
+            `<span style="font-weight:700; font-size:13px; color:${ACCENT};">${i18n.tDefault('combatSim.editor.selectSlot', 'Select {slot}', { slot: slotLabel })}</span>` +
             '<button id="mwi-csim-ability-picker-close" style="background:none; border:none; color:#aaa; font-size:20px; cursor:pointer; padding:0; line-height:1;">\u00d7</button>';
         popup.appendChild(header);
 
@@ -939,7 +989,7 @@ export class SimEditor {
         searchDiv.style.cssText = 'padding:6px 14px; flex-shrink:0;';
         const searchInput = document.createElement('input');
         searchInput.type = 'search';
-        searchInput.placeholder = 'Search...';
+        searchInput.placeholder = i18n.tDefault('combatSim.editor.search', 'Search...');
         searchInput.style.cssText =
             'width:100%; padding:5px 8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);' +
             'border-radius:6px; color:#e0e0e0; font-size:12px; font-family:inherit; outline:none;';
@@ -958,7 +1008,9 @@ export class SimEditor {
 
             let html =
                 '<div data-pick-hrid="" style="display:flex; align-items:center; gap:8px; padding:4px; cursor:pointer; border-bottom:1px solid #1a1a2e; color:#888; font-style:italic;"' +
-                ' onmouseover="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseout="this.style.background=\'\'">Empty (clear slot)</div>';
+                ' onmouseover="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseout="this.style.background=\'\'">' +
+                i18n.tDefault('combatSim.editor.emptyClearSlot', 'Empty (clear slot)') +
+                '</div>';
 
             let lastCategory = '';
             for (const item of filtered) {
@@ -971,7 +1023,7 @@ export class SimEditor {
                     html +=
                         '<div style="display:flex; align-items:center; gap:8px; padding:3px 4px; border-bottom:1px solid #1a1a2e; color:#555; cursor:default;">' +
                         item.name +
-                        ' <span style="font-size:10px; color:#664;">(in use)</span></div>';
+                        ` <span style="font-size:10px; color:#664;">${i18n.tDefault('combatSim.editor.inUse', '(in use)')}</span></div>`;
                 } else {
                     const isCurrent = item.hrid === currentHrid;
                     const color = isCurrent ? ACCENT : '#ccc';
@@ -1055,7 +1107,7 @@ export class SimEditor {
 
         let html = `<div style="margin-bottom:10px;">`;
         html += `<div style="color:${ACCENT}; font-weight:700; font-size:12px; margin-bottom:6px; cursor:pointer; user-select:none;" data-toggle="skill-section">`;
-        html += `<span data-arrow="skill-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> Skill Levels`;
+        html += `<span data-arrow="skill-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> ${i18n.tDefault('combatSim.editor.skillLevels', 'Skill Levels')}`;
         html += `<span style="color:#888; font-weight:400; font-size:11px; margin-left:6px;">${summary}</span>`;
         html += '</div>';
         html += `<div id="mwi-csim-skill-section" style="display:none;">`;
@@ -1083,15 +1135,15 @@ export class SimEditor {
 
         let html = `<div style="margin-bottom:10px;">`;
         html += `<div style="color:${ACCENT}; font-weight:700; font-size:12px; margin-bottom:6px; cursor:pointer; user-select:none;" data-toggle="house-section">`;
-        html += `<span data-arrow="house-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> House Rooms`;
-        html += `<span style="color:#888; font-weight:400; font-size:11px; margin-left:6px;">${activeCount} active</span>`;
+        html += `<span data-arrow="house-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> ${i18n.tDefault('combatSim.editor.houseRooms', 'House Rooms')}`;
+        html += `<span style="color:#888; font-weight:400; font-size:11px; margin-left:6px;">${i18n.tDefault('combatSim.editor.activeCount', '{count} active', { count: activeCount })}</span>`;
         html += '</div>';
         html += `<div id="mwi-csim-house-section" style="display:none;">`;
         html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px;">`;
 
         for (const hrid of roomHrids) {
             const room = houseRoomDetailMap[hrid];
-            const name = room.name || hrid.split('/').pop();
+            const name = getLocalizedName('houseRoomNames', hrid, room.name || hrid.split('/').pop());
             const level = dto.houseRooms[hrid] || 0;
             html += `<div style="display:flex; align-items:center; gap:6px; font-size:12px;">`;
             html += `<span style="color:#888; width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${name}">${name}</span>`;
@@ -1109,18 +1161,18 @@ export class SimEditor {
     /** @private */
     _renderTokenUpgradesSection(dto) {
         const upgrades = [
-            { key: 'speed', label: 'Speed' },
-            { key: 'efficiency', label: 'Efficiency' },
-            { key: 'success', label: 'Success Rate' },
-            { key: 'doubleProgress', label: 'Double Progress' },
+            { key: 'speed', label: i18n.tDefault('combatSim.labBuffShort.speed', 'Speed') },
+            { key: 'efficiency', label: i18n.tDefault('combatSim.labBuffShort.efficiency', 'Efficiency') },
+            { key: 'success', label: i18n.tDefault('combatSim.labBuff.successRate', 'Success Rate') },
+            { key: 'doubleProgress', label: i18n.tDefault('combatSim.labBuff.doubleProgress', 'Double Progress') },
         ];
         const tokens = dto.tokenUpgrades || {};
         const activeCount = upgrades.filter((u) => (tokens[u.key] || 0) > 0).length;
 
         let html = `<div style="margin-bottom:10px;">`;
         html += `<div style="color:${ACCENT}; font-weight:700; font-size:12px; margin-bottom:6px; cursor:pointer; user-select:none;" data-toggle="token-section">`;
-        html += `<span data-arrow="token-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> Token Upgrades`;
-        html += `<span style="color:#888; font-weight:400; font-size:11px; margin-left:6px;">${activeCount} active</span>`;
+        html += `<span data-arrow="token-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> ${i18n.tDefault('combatSim.lab.tokenUpgrades', 'Token Upgrades')}`;
+        html += `<span style="color:#888; font-weight:400; font-size:11px; margin-left:6px;">${i18n.tDefault('combatSim.editor.activeCount', '{count} active', { count: activeCount })}</span>`;
         html += '</div>';
         html += `<div id="mwi-csim-token-section" style="display:none;">`;
         html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px;">`;
@@ -1143,18 +1195,21 @@ export class SimEditor {
     /** @private */
     _renderCommunityBuffsSection(dto) {
         const buffs = [
-            { key: 'productionEfficiency', label: 'Prod. Efficiency' },
-            { key: 'enhancingSpeed', label: 'Enhancing Speed' },
-            { key: 'gatheringQuantity', label: 'Gathering Qty' },
-            { key: 'experience', label: 'Experience' },
+            {
+                key: 'productionEfficiency',
+                label: i18n.tDefault('combatSim.community.prodEfficiency', 'Prod. Efficiency'),
+            },
+            { key: 'enhancingSpeed', label: i18n.tDefault('combatSim.community.enhancingSpeed', 'Enhancing Speed') },
+            { key: 'gatheringQuantity', label: i18n.tDefault('combatSim.community.gatheringQty', 'Gathering Qty') },
+            { key: 'experience', label: i18n.tDefault('combatSim.labBuff.experience', 'Experience') },
         ];
         const levels = dto.communityBuffLevels || {};
         const activeCount = buffs.filter((b) => (levels[b.key] || 0) > 0).length;
 
         let html = `<div style="margin-bottom:10px;">`;
         html += `<div style="color:${ACCENT}; font-weight:700; font-size:12px; margin-bottom:6px; cursor:pointer; user-select:none;" data-toggle="community-section">`;
-        html += `<span data-arrow="community-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> Community Buffs`;
-        html += `<span style="color:#888; font-weight:400; font-size:11px; margin-left:6px;">${activeCount} active</span>`;
+        html += `<span data-arrow="community-section" style="display:inline-block; width:14px; font-size:10px;">&#9654;</span> ${i18n.tDefault('combatSim.editor.communityBuffs', 'Community Buffs')}`;
+        html += `<span style="color:#888; font-weight:400; font-size:11px; margin-left:6px;">${i18n.tDefault('combatSim.editor.activeCount', '{count} active', { count: activeCount })}</span>`;
         html += '</div>';
         html += `<div id="mwi-csim-community-section" style="display:none;">`;
         html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px;">`;
@@ -1348,12 +1403,17 @@ export class SimEditor {
                 const text = editorArea.querySelector('#mwi-csim-import-text')?.value?.trim();
                 const errorEl = editorArea.querySelector('#mwi-csim-import-error');
                 if (!text) {
-                    if (errorEl) errorEl.textContent = 'Paste export data first.';
+                    if (errorEl)
+                        errorEl.textContent = i18n.tDefault('combatSim.editor.pasteFirst', 'Paste export data first.');
                     return;
                 }
                 const result = parseShykaiImport(text);
                 if (!result || !result.players.length) {
-                    if (errorEl) errorEl.textContent = 'Invalid format. Paste a Shykai export JSON.';
+                    if (errorEl)
+                        errorEl.textContent = i18n.tDefault(
+                            'combatSim.editor.invalidFormat',
+                            'Invalid format. Paste a Shykai export JSON.'
+                        );
                     return;
                 }
                 this.importPlayers(result.players, result.names);
@@ -1396,7 +1456,8 @@ export class SimEditor {
         const selfHrid = this._selfHrid || this._activeEditPlayer;
         const original = this._originalDTOs?.[selfHrid];
         const edited = this._editedDTOs?.[selfHrid];
-        if (!original || !edited) return this._selectedLoadoutName || 'Current Gear';
+        if (!original || !edited)
+            return this._selectedLoadoutName || i18n.tDefault('combatSim.label.currentGear', 'Current Gear');
 
         const gameData = buildGameDataPayload();
         const itemDetailMap = gameData?.itemDetailMap || {};
@@ -1427,11 +1488,18 @@ export class SimEditor {
             if (!origEquip && !editEquip) continue;
 
             if (origEquip?.hrid !== editEquip?.hrid) {
-                const origName = itemDetailMap[origEquip?.hrid]?.name || origEquip?.hrid?.split('/').pop() || 'Empty';
-                const editName = itemDetailMap[editEquip?.hrid]?.name || editEquip?.hrid?.split('/').pop() || 'Empty';
+                const emptyLabel = i18n.tDefault('combatSim.editor.empty', 'Empty');
+                const origName = getLocalizedItemName(
+                    origEquip?.hrid,
+                    itemDetailMap[origEquip?.hrid]?.name || origEquip?.hrid?.split('/').pop() || emptyLabel
+                );
+                const editName = getLocalizedItemName(
+                    editEquip?.hrid,
+                    itemDetailMap[editEquip?.hrid]?.name || editEquip?.hrid?.split('/').pop() || emptyLabel
+                );
                 changes.push(`${origName} \u2192 ${editName}`);
             } else if (origEquip?.enhancementLevel !== editEquip?.enhancementLevel) {
-                const label = slotNames[slot];
+                const label = getLocalizedName('equipmentTypeNames', slot, slotNames[slot]);
                 changes.push(`${label} +${origEquip.enhancementLevel}\u2192+${editEquip.enhancementLevel}`);
             }
         }
@@ -1442,11 +1510,21 @@ export class SimEditor {
             if (!origAb && !editAb) continue;
 
             if (origAb?.hrid !== editAb?.hrid) {
-                const origName = abilityDetailMap[origAb?.hrid]?.name || origAb?.hrid?.split('/').pop() || 'None';
-                const editName = abilityDetailMap[editAb?.hrid]?.name || editAb?.hrid?.split('/').pop() || 'None';
+                const noneLabel = i18n.tDefault('combatSim.editor.none', 'None');
+                const origName = getLocalizedAbilityName(
+                    origAb?.hrid,
+                    abilityDetailMap[origAb?.hrid]?.name || origAb?.hrid?.split('/').pop() || noneLabel
+                );
+                const editName = getLocalizedAbilityName(
+                    editAb?.hrid,
+                    abilityDetailMap[editAb?.hrid]?.name || editAb?.hrid?.split('/').pop() || noneLabel
+                );
                 changes.push(`${origName} \u2192 ${editName}`);
             } else if (origAb && editAb && origAb.level !== editAb.level) {
-                const name = abilityDetailMap[editAb.hrid]?.name || editAb.hrid.split('/').pop();
+                const name = getLocalizedAbilityName(
+                    editAb.hrid,
+                    abilityDetailMap[editAb.hrid]?.name || editAb.hrid.split('/').pop()
+                );
                 changes.push(`${name} Lv ${origAb.level}\u2192${editAb.level}`);
             }
         }
@@ -1476,44 +1554,69 @@ export class SimEditor {
             }
         }
 
-        const slotLabels = { food: 'Food', drinks: 'Drink' };
+        const slotLabels = {
+            food: i18n.tDefault('combatSim.editor.food', 'Food'),
+            drinks: i18n.tDefault('combatSim.editor.drink', 'Drink'),
+        };
         for (const [slotType, prefix] of Object.entries(slotLabels)) {
             for (let i = 0; i < 3; i++) {
                 const origHrid = original[slotType]?.[i]?.hrid;
                 const editHrid = edited[slotType]?.[i]?.hrid;
                 if (origHrid !== editHrid) {
-                    const origName = origHrid ? itemDetailMap[origHrid]?.name || origHrid.split('/').pop() : 'Empty';
-                    const editName = editHrid ? itemDetailMap[editHrid]?.name || editHrid.split('/').pop() : 'Empty';
+                    const emptyLabel = i18n.tDefault('combatSim.editor.empty', 'Empty');
+                    const origName = origHrid
+                        ? getLocalizedItemName(origHrid, itemDetailMap[origHrid]?.name || origHrid.split('/').pop())
+                        : emptyLabel;
+                    const editName = editHrid
+                        ? getLocalizedItemName(editHrid, itemDetailMap[editHrid]?.name || editHrid.split('/').pop())
+                        : emptyLabel;
                     changes.push(`${prefix} ${i + 1}: ${origName}\u2192${editName}`);
                 }
             }
         }
 
-        const tokenLabels = { speed: 'Speed', efficiency: 'Efficiency', success: 'Success', doubleProgress: 'DblProg' };
+        const tokenLabels = {
+            speed: i18n.tDefault('combatSim.labBuffShort.speed', 'Speed'),
+            efficiency: i18n.tDefault('combatSim.labBuffShort.efficiency', 'Efficiency'),
+            success: i18n.tDefault('combatSim.labBuffShort.success', 'Success'),
+            doubleProgress: i18n.tDefault('combatSim.editor.dblProg', 'DblProg'),
+        };
         for (const [key, label] of Object.entries(tokenLabels)) {
             const origVal = original.tokenUpgrades?.[key] || 0;
             const editVal = edited.tokenUpgrades?.[key] || 0;
             if (origVal !== editVal) {
-                changes.push(`Token ${label} ${origVal}\u2192${editVal}`);
+                changes.push(
+                    i18n.tDefault('combatSim.editor.tokenChange', 'Token {label} {from}\u2192{to}', {
+                        label,
+                        from: origVal,
+                        to: editVal,
+                    })
+                );
             }
         }
 
         const cbLabels = {
-            productionEfficiency: 'ProdEff',
-            enhancingSpeed: 'EnhSpd',
-            gatheringQuantity: 'GathQty',
-            experience: 'Exp',
+            productionEfficiency: i18n.tDefault('combatSim.editor.cbProdEff', 'ProdEff'),
+            enhancingSpeed: i18n.tDefault('combatSim.editor.cbEnhSpd', 'EnhSpd'),
+            gatheringQuantity: i18n.tDefault('combatSim.editor.cbGathQty', 'GathQty'),
+            experience: i18n.tDefault('combatSim.editor.cbExp', 'Exp'),
         };
         for (const [key, label] of Object.entries(cbLabels)) {
             const origVal = original.communityBuffLevels?.[key] || 0;
             const editVal = edited.communityBuffLevels?.[key] || 0;
             if (origVal !== editVal) {
-                changes.push(`CB ${label} ${origVal}\u2192${editVal}`);
+                changes.push(
+                    i18n.tDefault('combatSim.editor.cbChange', 'CB {label} {from}\u2192{to}', {
+                        label,
+                        from: origVal,
+                        to: editVal,
+                    })
+                );
             }
         }
 
         const loadoutPrefix = this._selectedLoadoutName || '';
-        if (changes.length === 0) return loadoutPrefix || 'Current Gear';
+        if (changes.length === 0) return loadoutPrefix || i18n.tDefault('combatSim.label.currentGear', 'Current Gear');
         const changesStr = changes.join(', ');
         return loadoutPrefix ? loadoutPrefix + ': ' + changesStr : changesStr;
     }

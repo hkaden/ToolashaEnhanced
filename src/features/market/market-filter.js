@@ -6,6 +6,7 @@
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
+import i18n from '../../core/i18n/index.js';
 
 class MarketFilter {
     constructor() {
@@ -121,7 +122,10 @@ class MarketFilter {
         container.style.cssText = 'display: flex; align-items: center; gap: 4px;';
 
         const label = document.createElement('label');
-        label.textContent = type === 'min' ? 'Level >= ' : 'Level < ';
+        label.textContent =
+            type === 'min'
+                ? i18n.tDefault('market.filter.levelMin', 'Level >= ')
+                : i18n.tDefault('market.filter.levelMax', 'Level < ');
         label.style.cssText = 'font-size: 12px; color: rgba(255, 255, 255, 0.7);';
 
         const select = document.createElement('select');
@@ -138,7 +142,7 @@ class MarketFilter {
         levels.forEach((level) => {
             const option = document.createElement('option');
             option.value = level;
-            option.textContent = level === 1000 ? 'All' : level;
+            option.textContent = level === 1000 ? i18n.tDefault('market.filter.all', 'All') : level;
             if ((type === 'min' && level === 1) || (type === 'max' && level === 1000)) {
                 option.selected = true;
             }
@@ -169,7 +173,7 @@ class MarketFilter {
         container.style.cssText = 'display: flex; align-items: center; gap: 4px;';
 
         const label = document.createElement('label');
-        label.textContent = 'Class: ';
+        i18n.bindDefault(label, 'market.filter.classLabel', 'Class: ');
         label.style.cssText = 'font-size: 12px; color: rgba(255, 255, 255, 0.7);';
 
         const select = document.createElement('select');
@@ -178,13 +182,13 @@ class MarketFilter {
             'padding: 4px 8px; border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: #fff; border: 1px solid rgba(91, 141, 239, 0.3);';
 
         const classes = [
-            { value: 'all', label: 'All' },
-            { value: 'attack', label: 'Attack' },
-            { value: 'melee', label: 'Melee' },
-            { value: 'defense', label: 'Defense' },
-            { value: 'ranged', label: 'Ranged' },
-            { value: 'magic', label: 'Magic' },
-            { value: 'others', label: 'Others' },
+            { value: 'all', label: i18n.tDefault('market.filter.all', 'All') },
+            { value: 'attack', label: i18n.tDefault('market.filter.class_attack', 'Attack') },
+            { value: 'melee', label: i18n.tDefault('market.filter.class_melee', 'Melee') },
+            { value: 'defense', label: i18n.tDefault('market.filter.class_defense', 'Defense') },
+            { value: 'ranged', label: i18n.tDefault('market.filter.class_ranged', 'Ranged') },
+            { value: 'magic', label: i18n.tDefault('market.filter.class_magic', 'Magic') },
+            { value: 'others', label: i18n.tDefault('market.filter.class_others', 'Others') },
         ];
 
         classes.forEach((cls) => {
@@ -213,7 +217,7 @@ class MarketFilter {
         container.style.cssText = 'display: flex; align-items: center; gap: 4px;';
 
         const label = document.createElement('label');
-        label.textContent = 'Slot: ';
+        i18n.bindDefault(label, 'market.filter.slotLabel', 'Slot: ');
         label.style.cssText = 'font-size: 12px; color: rgba(255, 255, 255, 0.7);';
 
         const select = document.createElement('select');
@@ -222,20 +226,20 @@ class MarketFilter {
             'padding: 4px 8px; border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: #fff; border: 1px solid rgba(91, 141, 239, 0.3);';
 
         const slots = [
-            { value: 'all', label: 'All' },
-            { value: 'main_hand', label: 'Main Hand' },
-            { value: 'off_hand', label: 'Off Hand' },
-            { value: 'two_hand', label: 'Two Hand' },
-            { value: 'head', label: 'Head' },
-            { value: 'body', label: 'Body' },
-            { value: 'hands', label: 'Hands' },
-            { value: 'legs', label: 'Legs' },
-            { value: 'feet', label: 'Feet' },
-            { value: 'neck', label: 'Neck' },
-            { value: 'earrings', label: 'Earrings' },
-            { value: 'ring', label: 'Ring' },
-            { value: 'pouch', label: 'Pouch' },
-            { value: 'back', label: 'Back' },
+            { value: 'all', label: i18n.tDefault('market.filter.all', 'All') },
+            { value: 'main_hand', label: i18n.tDefault('market.filter.slot_main_hand', 'Main Hand') },
+            { value: 'off_hand', label: i18n.tDefault('market.filter.slot_off_hand', 'Off Hand') },
+            { value: 'two_hand', label: i18n.tDefault('market.filter.slot_two_hand', 'Two Hand') },
+            { value: 'head', label: i18n.tDefault('market.filter.slot_head', 'Head') },
+            { value: 'body', label: i18n.tDefault('market.filter.slot_body', 'Body') },
+            { value: 'hands', label: i18n.tDefault('market.filter.slot_hands', 'Hands') },
+            { value: 'legs', label: i18n.tDefault('market.filter.slot_legs', 'Legs') },
+            { value: 'feet', label: i18n.tDefault('market.filter.slot_feet', 'Feet') },
+            { value: 'neck', label: i18n.tDefault('market.filter.slot_neck', 'Neck') },
+            { value: 'earrings', label: i18n.tDefault('market.filter.slot_earrings', 'Earrings') },
+            { value: 'ring', label: i18n.tDefault('market.filter.slot_ring', 'Ring') },
+            { value: 'pouch', label: i18n.tDefault('market.filter.slot_pouch', 'Pouch') },
+            { value: 'back', label: i18n.tDefault('market.filter.slot_back', 'Back') },
         ];
 
         slots.forEach((slot) => {

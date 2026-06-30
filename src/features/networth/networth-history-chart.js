@@ -8,7 +8,9 @@ import networthHistory, { GAP_THRESHOLD_MS } from './networth-history.js';
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import storage from '../../core/storage.js';
+import i18n from '../../core/i18n/index.js';
 import { networthFormatter, formatDateTime } from '../../utils/formatters.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 
 const RANGE_MS = {
     '24h': 24 * 60 * 60 * 1000,
@@ -145,7 +147,7 @@ class NetworthHistoryChart {
         `;
 
         const title = document.createElement('h3');
-        title.textContent = 'Net Worth History';
+        i18n.bindDefault(title, 'networth.chart.title', 'Net Worth History');
         title.style.cssText = 'color: #ccc; margin: 0; font-size: 18px;';
 
         const closeBtn = document.createElement('button');
@@ -177,7 +179,7 @@ class NetworthHistoryChart {
         const ranges = ['24h', '7d', '30d', 'all'];
         for (const range of ranges) {
             const btn = document.createElement('button');
-            btn.textContent = range === 'all' ? 'All' : range.toUpperCase();
+            btn.textContent = range === 'all' ? i18n.tDefault('networth.chart.rangeAll', 'All') : range.toUpperCase();
             btn.dataset.range = range;
             btn.className = 'mwi-nw-range-btn';
             btn.style.cssText = `
@@ -197,7 +199,7 @@ class NetworthHistoryChart {
 
         // Connect Gaps toggle
         const gapToggle = document.createElement('button');
-        gapToggle.textContent = 'Connect Gaps';
+        i18n.bindDefault(gapToggle, 'networth.chart.connectGaps', 'Connect Gaps');
         gapToggle.className = 'mwi-nw-gap-toggle';
         const updateGapToggleStyle = () => {
             gapToggle.style.cssText = `
@@ -222,7 +224,7 @@ class NetworthHistoryChart {
 
         // Show Bars toggle
         const barToggle = document.createElement('button');
-        barToggle.textContent = 'Show Bars';
+        i18n.bindDefault(barToggle, 'networth.chart.showBars', 'Show Bars');
         barToggle.className = 'mwi-nw-bar-toggle';
         const updateBarToggleStyle = () => {
             barToggle.style.cssText = `
@@ -247,7 +249,7 @@ class NetworthHistoryChart {
 
         // Moving Average dropdown
         const maLabel = document.createElement('span');
-        maLabel.textContent = 'Avg:';
+        i18n.bindDefault(maLabel, 'networth.chart.avg', 'Avg:');
         maLabel.style.cssText = 'color: #999; font-size: 12px; margin-left: 8px;';
         rangeRow.appendChild(maLabel);
 
@@ -264,7 +266,7 @@ class NetworthHistoryChart {
             color-scheme: dark;
         `;
         const maOptions = [
-            { value: 0, label: 'Off' },
+            { value: 0, label: i18n.tDefault('networth.chart.maOff', 'Off') },
             { value: 3, label: '3h' },
             { value: 6, label: '6h' },
             { value: 12, label: '12h' },
@@ -277,7 +279,7 @@ class NetworthHistoryChart {
         if (isCustomValue) {
             maOptions.push({ value: this.movingAvgWindow, label: `${this.movingAvgWindow}h` });
         }
-        maOptions.push({ value: -1, label: 'Custom...' });
+        maOptions.push({ value: -1, label: i18n.tDefault('networth.chart.maCustom', 'Custom...') });
         for (const opt of maOptions) {
             const option = document.createElement('option');
             option.value = opt.value;
@@ -288,7 +290,7 @@ class NetworthHistoryChart {
         maSelect.addEventListener('change', () => {
             const val = parseInt(maSelect.value, 10);
             if (val === -1) {
-                const input = prompt('Enter moving average window in hours:');
+                const input = prompt(i18n.tDefault('networth.chart.maPrompt', 'Enter moving average window in hours:'));
                 const parsed = parseInt(input, 10);
                 if (parsed > 0) {
                     this.movingAvgWindow = parsed;
@@ -332,7 +334,7 @@ class NetworthHistoryChart {
 
         // From label + input
         const fromLabel = document.createElement('span');
-        fromLabel.textContent = 'From:';
+        i18n.bindDefault(fromLabel, 'networth.chart.from', 'From:');
         fromLabel.style.cssText = 'color: #999; font-size: 12px;';
         rangeRow.appendChild(fromLabel);
 
@@ -347,7 +349,7 @@ class NetworthHistoryChart {
 
         // To label + input
         const toLabel = document.createElement('span');
-        toLabel.textContent = 'To:';
+        i18n.bindDefault(toLabel, 'networth.chart.to', 'To:');
         toLabel.style.cssText = 'color: #999; font-size: 12px;';
         rangeRow.appendChild(toLabel);
 
@@ -399,7 +401,7 @@ class NetworthHistoryChart {
             flex-shrink: 0;
         `;
         totalBtn.appendChild(totalDot);
-        totalBtn.appendChild(document.createTextNode('Total'));
+        totalBtn.appendChild(document.createTextNode(i18n.tDefault('networth.chart.total', 'Total')));
         updateTotalBtnStyle();
         totalBtn.addEventListener('click', () => {
             this.categoryVisibility.showTotal = !this.categoryVisibility.showTotal;
@@ -441,7 +443,7 @@ class NetworthHistoryChart {
             flex-shrink: 0;
         `;
         nonExclBtn.appendChild(nonExclDot);
-        nonExclBtn.appendChild(document.createTextNode('Non-Excluded'));
+        nonExclBtn.appendChild(document.createTextNode(i18n.tDefault('networth.chart.nonExcluded', 'Non-Excluded')));
         updateNonExclBtnStyle();
         nonExclBtn.addEventListener('click', () => {
             this.categoryVisibility.showNonExcluded = !this.categoryVisibility.showNonExcluded;
@@ -482,7 +484,7 @@ class NetworthHistoryChart {
                 flex-shrink: 0;
             `;
             btn.appendChild(dot);
-            btn.appendChild(document.createTextNode(cat.label));
+            btn.appendChild(document.createTextNode(i18n.tDefault(`networth.chart.cat_${cat.key}`, cat.label)));
             updateCatBtnStyle();
             btn.addEventListener('click', () => {
                 this.categoryVisibility[cat.key] = !this.categoryVisibility[cat.key];
@@ -712,7 +714,7 @@ class NetworthHistoryChart {
             const barData = chartData.filter((p) => !isNaN(p.y));
             datasets.push({
                 type: 'bar',
-                label: 'Net Worth (bars)',
+                label: i18n.tDefault('networth.chart.dsNetWorthBars', 'Net Worth (bars)'),
                 data: barData,
                 backgroundColor: 'rgba(34, 197, 94, 0.3)',
                 borderColor: 'transparent',
@@ -727,7 +729,7 @@ class NetworthHistoryChart {
         if (this.categoryVisibility.showTotal) {
             datasets.push({
                 type: 'line',
-                label: 'Total Net Worth',
+                label: i18n.tDefault('networth.chart.dsTotalNetWorth', 'Total Net Worth'),
                 data: chartData,
                 borderColor: config.COLOR_ACCENT || '#22c55e',
                 backgroundColor: 'rgba(34, 197, 94, 0.1)',
@@ -749,7 +751,7 @@ class NetworthHistoryChart {
             }));
             datasets.push({
                 type: 'line',
-                label: 'Non-Excluded',
+                label: i18n.tDefault('networth.chart.nonExcluded', 'Non-Excluded'),
                 data: neData,
                 borderColor: '#a78bfa',
                 backgroundColor: 'transparent',
@@ -775,7 +777,7 @@ class NetworthHistoryChart {
             });
             datasets.push({
                 type: 'line',
-                label: cat.label,
+                label: i18n.tDefault(`networth.chart.cat_${cat.key}`, cat.label),
                 data: catData,
                 borderColor: cat.color,
                 backgroundColor: 'transparent',
@@ -806,7 +808,12 @@ class NetworthHistoryChart {
             }
             datasets.push({
                 type: 'line',
-                label: `${this.movingAvgWindow >= 24 && this.movingAvgWindow % 24 === 0 ? `${this.movingAvgWindow / 24}d` : `${this.movingAvgWindow}h`} Moving Avg`,
+                label: i18n.tDefault('networth.chart.movingAvgLabel', '{window} Moving Avg', {
+                    window:
+                        this.movingAvgWindow >= 24 && this.movingAvgWindow % 24 === 0
+                            ? `${this.movingAvgWindow / 24}d`
+                            : `${this.movingAvgWindow}h`,
+                }),
                 data: maData,
                 borderColor: '#f59e0b',
                 backgroundColor: 'transparent',
@@ -903,7 +910,10 @@ class NetworthHistoryChart {
         if (!statsRow) return;
 
         if (filtered.length === 0) {
-            statsRow.innerHTML = '<span style="color: #666;">No data available for this range</span>';
+            statsRow.innerHTML = `<span style="color: #666;">${i18n.tDefault(
+                'networth.chart.noData',
+                'No data available for this range'
+            )}</span>`;
             return;
         }
 
@@ -913,7 +923,13 @@ class NetworthHistoryChart {
         const hoursElapsed = (last.t - first.t) / 3_600_000;
 
         // Range label for the change stat
-        const rangeLabelMap = { '24h': '24H', '7d': '7D', '30d': '30D', all: 'All', custom: 'Range' };
+        const rangeLabelMap = {
+            '24h': '24H',
+            '7d': '7D',
+            '30d': '30D',
+            all: i18n.tDefault('networth.chart.rangeAll', 'All'),
+            custom: i18n.tDefault('networth.chart.rangeCustom', 'Range'),
+        };
         const rangeLabel = rangeLabelMap[this.currentRange] || '24H';
         const is24hRange = this.currentRange === '24h';
 
@@ -930,18 +946,23 @@ class NetworthHistoryChart {
             const ratePerHour = hoursElapsed > 0 ? (currentTotal - first.total) / hoursElapsed : 0;
 
             parts.push(
-                `<span>Current: <strong style="color: ${config.COLOR_ACCENT};">${networthFormatter(Math.round(currentTotal))}</strong></span>`
+                `<span>${i18n.tDefault('networth.chart.current', 'Current:')} <strong style="color: ${config.COLOR_ACCENT};">${networthFormatter(Math.round(currentTotal))}</strong></span>`
             );
 
             if (filtered.length >= 2) {
                 const color = rangeChange >= 0 ? config.COLOR_PROFIT : config.COLOR_LOSS;
                 const sign = rangeChange >= 0 ? '+' : '';
                 const breakdownAttr = is24hRange
-                    ? ' id="mwi-nw-24h-toggle" style="cursor: pointer;" title="Click for item breakdown"'
+                    ? ` id="mwi-nw-24h-toggle" style="cursor: pointer;" title="${i18n.tDefault(
+                          'networth.chart.clickBreakdown',
+                          'Click for item breakdown'
+                      )}"`
                     : '';
                 const breakdownArrow = is24hRange ? ' <span style="font-size: 10px; color: #666;">▼</span>' : '';
                 parts.push(
-                    `<span${breakdownAttr}>Last ${rangeLabel}: <strong style="color: ${color};">${sign}${networthFormatter(Math.round(rangeChange))} (${sign}${rangePercent.toFixed(1)}%)</strong>${breakdownArrow}</span>`
+                    `<span${breakdownAttr}>${i18n.tDefault('networth.chart.lastRange', 'Last {range}:', {
+                        range: rangeLabel,
+                    })} <strong style="color: ${color};">${sign}${networthFormatter(Math.round(rangeChange))} (${sign}${rangePercent.toFixed(1)}%)</strong>${breakdownArrow}</span>`
                 );
             }
 
@@ -949,7 +970,7 @@ class NetworthHistoryChart {
                 const color = ratePerHour >= 0 ? config.COLOR_PROFIT : config.COLOR_LOSS;
                 const sign = ratePerHour >= 0 ? '+' : '';
                 parts.push(
-                    `<span>Rate: <strong style="color: ${color};">${sign}${networthFormatter(Math.round(ratePerHour))}/hr</strong></span>`
+                    `<span>${i18n.tDefault('networth.chart.rate', 'Rate:')} <strong style="color: ${color};">${sign}${networthFormatter(Math.round(ratePerHour))}/hr</strong></span>`
                 );
             }
         }
@@ -961,7 +982,10 @@ class NetworthHistoryChart {
             const firstNE = first.nonExcluded ?? first.total;
             const neRate = hoursElapsed > 0 ? (currentNE - firstNE) / hoursElapsed : 0;
 
-            let neStatHtml = `<span style="color: #a78bfa;">Non-Excl</span>: <strong style="color: #a78bfa;">${networthFormatter(Math.round(currentNE))}</strong>`;
+            let neStatHtml = `<span style="color: #a78bfa;">${i18n.tDefault(
+                'networth.chart.nonExcl',
+                'Non-Excl'
+            )}</span>: <strong style="color: #a78bfa;">${networthFormatter(Math.round(currentNE))}</strong>`;
 
             if (filtered.length >= 2) {
                 const neChange = currentNE - firstNE;
@@ -995,7 +1019,11 @@ class NetworthHistoryChart {
             const catChangeColor = catChange >= 0 ? config.COLOR_PROFIT : config.COLOR_LOSS;
             const catChangeSign = catChange >= 0 ? '+' : '';
 
-            let statHtml = `${cat.label}: <strong style="color: ${catChangeColor};">Last ${rangeLabel}: ${catChangeSign}${networthFormatter(Math.round(catChange))}</strong>`;
+            let statHtml = `${i18n.tDefault(`networth.chart.cat_${cat.key}`, cat.label)}: <strong style="color: ${catChangeColor};">${i18n.tDefault(
+                'networth.chart.lastRange',
+                'Last {range}:',
+                { range: rangeLabel }
+            )} ${catChangeSign}${networthFormatter(Math.round(catChange))}</strong>`;
 
             if (hoursElapsed >= 1) {
                 statHtml += ` <span style="font-size: 11px; color: #aaa;">${rateSign}<span style="color: ${rateColor};">${networthFormatter(Math.round(rate))}/hr</span></span>`;
@@ -1005,7 +1033,10 @@ class NetworthHistoryChart {
         }
 
         if (parts.length === 0) {
-            statsRow.innerHTML = '<span style="color: #666;">No data available for this range</span>';
+            statsRow.innerHTML = `<span style="color: #666;">${i18n.tDefault(
+                'networth.chart.noData',
+                'No data available for this range'
+            )}</span>`;
             return;
         }
 
@@ -1082,15 +1113,20 @@ class NetworthHistoryChart {
     render24hBreakdown(container) {
         const currentData = this.networthFeature?.currentData;
         if (!currentData) {
-            container.innerHTML = '<span style="color: #666;">No live data available</span>';
+            container.innerHTML = `<span style="color: #666;">${i18n.tDefault(
+                'networth.chart.noLiveData',
+                'No live data available'
+            )}</span>`;
             return;
         }
 
         const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
         const oldSnapshot = networthHistory.getDetailSnapshot(oneDayAgo);
         if (!oldSnapshot) {
-            container.innerHTML =
-                '<span style="color: #666;">No detail snapshot available yet (data collected hourly)</span>';
+            container.innerHTML = `<span style="color: #666;">${i18n.tDefault(
+                'networth.chart.noSnapshot',
+                'No detail snapshot available yet (data collected hourly)'
+            )}</span>`;
             return;
         }
 
@@ -1102,7 +1138,7 @@ class NetworthHistoryChart {
         currentItems['/items/coin:0'] = {
             count: Math.round(currentData.coins),
             value: Math.round(currentData.coins),
-            name: 'Gold',
+            name: i18n.tDefault('networth.chart.cat_gold', 'Gold'),
         };
 
         // Inventory items
@@ -1214,10 +1250,12 @@ class NetworthHistoryChart {
                     const itemHrid = parts[2];
                     const enhLevel = parts[3];
                     const details = gameData?.itemDetailMap?.[itemHrid];
-                    const baseName = details?.name || itemHrid.replace('/items/', '');
+                    const baseName = getLocalizedItemName(itemHrid, details?.name || itemHrid.replace('/items/', ''));
                     name = Number(enhLevel) > 0 ? `${baseName} +${enhLevel}` : baseName;
                 }
-                const prefix = key.startsWith('listing:sell:') ? 'Sell Listing' : 'Buy Listing';
+                const prefix = key.startsWith('listing:sell:')
+                    ? i18n.tDefault('networth.chart.sellListing', 'Sell Listing')
+                    : i18n.tDefault('networth.chart.buyListing', 'Buy Listing');
                 otherTotal += totalDiff;
                 otherItems.push({ name: `${prefix}: ${name}`, key, value: totalDiff });
                 continue;
@@ -1228,7 +1266,7 @@ class NetworthHistoryChart {
             if (!name) {
                 const [itemHrid, enhLevel] = key.split(':');
                 const details = gameData?.itemDetailMap?.[itemHrid];
-                const baseName = details?.name || itemHrid.replace('/items/', '');
+                const baseName = getLocalizedItemName(itemHrid, details?.name || itemHrid.replace('/items/', ''));
                 name = Number(enhLevel) > 0 ? `${baseName} +${enhLevel}` : baseName;
             }
 
@@ -1275,7 +1313,10 @@ class NetworthHistoryChart {
         }
 
         if (activityItems.length === 0 && marketItems.length === 0 && otherItems.length === 0) {
-            container.innerHTML = '<span style="color: #666;">No item-level changes in the last 24h</span>';
+            container.innerHTML = `<span style="color: #666;">${i18n.tDefault(
+                'networth.chart.noItemChanges',
+                'No item-level changes in the last 24h'
+            )}</span>`;
             return;
         }
 
@@ -1291,7 +1332,7 @@ class NetworthHistoryChart {
             const actColor = activityTotal >= 0 ? config.COLOR_PROFIT : config.COLOR_LOSS;
             const actSign = activityTotal >= 0 ? '+' : '';
             html += `<div style="font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between;">`;
-            html += `<span>Activity</span>`;
+            html += `<span>${i18n.tDefault('networth.chart.activity', 'Activity')}</span>`;
             html += `<span style="color: ${actColor};">${actSign}${networthFormatter(activityTotal)}</span>`;
             html += `</div>`;
 
@@ -1318,7 +1359,7 @@ class NetworthHistoryChart {
             const mktColor = marketTotal >= 0 ? config.COLOR_PROFIT : config.COLOR_LOSS;
             const mktSign = marketTotal >= 0 ? '+' : '';
             html += `<div style="font-weight: bold; margin-top: 8px; margin-bottom: 4px; display: flex; justify-content: space-between;${activityItems.length > 0 ? ' padding-top: 6px; border-top: 1px solid #333;' : ''}">`;
-            html += `<span>Market Movement</span>`;
+            html += `<span>${i18n.tDefault('networth.chart.marketMovement', 'Market Movement')}</span>`;
             html += `<span style="color: ${mktColor};">${mktSign}${networthFormatter(marketTotal)}</span>`;
             html += `</div>`;
 
@@ -1349,7 +1390,11 @@ class NetworthHistoryChart {
             const residual = last24hChange - activityTotal - marketTotal - otherTotal;
             if (Math.abs(residual) > 0) {
                 otherTotal += residual;
-                otherItems.push({ name: 'Rounding', key: '_rounding', value: residual });
+                otherItems.push({
+                    name: i18n.tDefault('networth.chart.rounding', 'Rounding'),
+                    key: '_rounding',
+                    value: residual,
+                });
             }
         }
 
@@ -1358,7 +1403,7 @@ class NetworthHistoryChart {
             const otherColor = otherTotal >= 0 ? config.COLOR_PROFIT : config.COLOR_LOSS;
             const otherSign = otherTotal >= 0 ? '+' : '';
             html += `<div style="font-weight: bold; margin-top: 8px; margin-bottom: 4px; display: flex; justify-content: space-between;${hasPrevSections ? ' padding-top: 6px; border-top: 1px solid #333;' : ''}">`;
-            html += `<span>Other</span>`;
+            html += `<span>${i18n.tDefault('networth.chart.other', 'Other')}</span>`;
             html += `<span style="color: ${otherColor};">${otherSign}${networthFormatter(otherTotal)}</span>`;
             html += `</div>`;
 
@@ -1376,7 +1421,11 @@ class NetworthHistoryChart {
 
         // Snapshot age note
         const ageHours = Math.round((Date.now() - oldSnapshot.t) / 3_600_000);
-        html += `<div style="color: #555; font-size: 10px; margin-top: 6px; text-align: right;">Compared to snapshot from ${ageHours}h ago</div>`;
+        html += `<div style="color: #555; font-size: 10px; margin-top: 6px; text-align: right;">${i18n.tDefault(
+            'networth.chart.comparedSnapshot',
+            'Compared to snapshot from {hours}h ago',
+            { hours: ageHours }
+        )}</div>`;
 
         container.innerHTML = html;
     }
@@ -1460,24 +1509,54 @@ class NetworthHistoryChart {
 
         // Total
         const totalDelta = this._formatDelta(raw.total, prevRaw?.total);
-        html += `<div style="color:#4ade80;">&#9632; Total: ${networthFormatter(raw.total)}${totalDelta}</div>`;
+        html += `<div style="color:#4ade80;">&#9632; ${i18n.tDefault('networth.chart.tooltipTotal', 'Total: {value}', {
+            value: networthFormatter(raw.total),
+        })}${totalDelta}</div>`;
 
         // Category breakdown
         const categories = [];
-        categories.push({ label: 'Gold', value: raw.gold || 0, prev: prevRaw?.gold });
+        categories.push({
+            label: i18n.tDefault('networth.chart.cat_gold', 'Gold'),
+            value: raw.gold || 0,
+            prev: prevRaw?.gold,
+        });
 
         const inventoryExGold = (raw.inventory || 0) - (raw.gold || 0);
         const prevInventoryExGold = prevRaw ? (prevRaw.inventory || 0) - (prevRaw.gold || 0) : null;
-        categories.push({ label: 'Inventory', value: inventoryExGold, prev: prevInventoryExGold });
+        categories.push({
+            label: i18n.tDefault('networth.chart.cat_inventory', 'Inventory'),
+            value: inventoryExGold,
+            prev: prevInventoryExGold,
+        });
 
-        categories.push({ label: 'Equipment', value: raw.equipment || 0, prev: prevRaw?.equipment });
-        categories.push({ label: 'Listings', value: raw.listings || 0, prev: prevRaw?.listings });
-        categories.push({ label: 'House', value: raw.house || 0, prev: prevRaw?.house });
-        categories.push({ label: 'Abilities', value: raw.abilities || 0, prev: prevRaw?.abilities });
+        categories.push({
+            label: i18n.tDefault('networth.chart.cat_equipment', 'Equipment'),
+            value: raw.equipment || 0,
+            prev: prevRaw?.equipment,
+        });
+        categories.push({
+            label: i18n.tDefault('networth.chart.cat_listings', 'Listings'),
+            value: raw.listings || 0,
+            prev: prevRaw?.listings,
+        });
+        categories.push({
+            label: i18n.tDefault('networth.chart.cat_house', 'House'),
+            value: raw.house || 0,
+            prev: prevRaw?.house,
+        });
+        categories.push({
+            label: i18n.tDefault('networth.chart.cat_abilities', 'Abilities'),
+            value: raw.abilities || 0,
+            prev: prevRaw?.abilities,
+        });
         if (raw.nonExcluded != null && raw.nonExcluded !== raw.total) {
             const excluded = raw.total - raw.nonExcluded;
             const prevExcluded = prevRaw?.nonExcluded != null ? prevRaw.total - prevRaw.nonExcluded : null;
-            categories.push({ label: 'Excluded', value: excluded, prev: prevExcluded });
+            categories.push({
+                label: i18n.tDefault('networth.chart.cat_excluded', 'Excluded'),
+                value: excluded,
+                prev: prevExcluded,
+            });
         }
 
         for (const cat of categories) {
@@ -1563,8 +1642,14 @@ class NetworthHistoryChart {
         popup.innerHTML = `
             <div style="margin-bottom:4px;font-weight:500;color:#fff;">${date}</div>
             <div style="margin-bottom:10px;color:${config.COLOR_ACCENT};">${networthFormatter(snapshot.total)}</div>
-            <button id="mwi-nw-delete-confirm" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;margin-right:6px;">Delete point</button>
-            <button id="mwi-nw-delete-cancel" style="background:#2a2a2a;color:#999;border:1px solid #444;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;">Cancel</button>
+            <button id="mwi-nw-delete-confirm" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;margin-right:6px;">${i18n.tDefault(
+                'networth.chart.deletePoint',
+                'Delete point'
+            )}</button>
+            <button id="mwi-nw-delete-cancel" style="background:#2a2a2a;color:#999;border:1px solid #444;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;">${i18n.tDefault(
+                'networth.chart.cancel',
+                'Cancel'
+            )}</button>
         `;
 
         document.body.appendChild(popup);

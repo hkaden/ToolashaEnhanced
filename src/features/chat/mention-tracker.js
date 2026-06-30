@@ -7,6 +7,7 @@ import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import webSocketHook from '../../core/websocket.js';
 import domObserver from '../../core/dom-observer.js';
+import i18n from '../../core/i18n/index.js';
 import mentionPopup from './mention-popup.js';
 
 class MentionTracker {
@@ -108,11 +109,11 @@ class MentionTracker {
      */
     getChannelDisplayName(channel) {
         const channelMap = {
-            '/chat_channel_types/party': 'Party',
-            '/chat_channel_types/guild': 'Guild',
-            '/chat_channel_types/local': 'Local',
-            '/chat_channel_types/whisper': 'Whisper',
-            '/chat_channel_types/global': 'Global',
+            '/chat_channel_types/party': i18n.tDefault('misc.chat.channel.party', 'Party'),
+            '/chat_channel_types/guild': i18n.tDefault('misc.chat.channel.guild', 'Guild'),
+            '/chat_channel_types/local': i18n.tDefault('misc.chat.channel.local', 'Local'),
+            '/chat_channel_types/whisper': i18n.tDefault('misc.chat.channel.whisper', 'Whisper'),
+            '/chat_channel_types/global': i18n.tDefault('misc.chat.channel.global', 'Global'),
         };
         return channelMap[channel] || channel;
     }

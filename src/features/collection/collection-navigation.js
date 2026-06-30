@@ -8,6 +8,8 @@
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
+import i18n from '../../core/i18n/index.js';
+import { getLocalizedItemName, resolveItemHridFromLocalizedName } from '../../utils/localized-game-names.js';
 import { navigateToItem } from '../../utils/item-navigation.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
 
@@ -166,7 +168,10 @@ class CollectionNavigation {
         this.dismissPopover();
 
         const itemDetails = dataManager.getItemDetails(itemHrid);
-        const itemName = itemDetails?.name || itemHrid.split('/').pop().replace(/_/g, ' ');
+        const itemName = getLocalizedItemName(
+            itemHrid,
+            itemDetails?.name || itemHrid.split('/').pop().replace(/_/g, ' ')
+        );
 
         const rect = tile.getBoundingClientRect();
 
@@ -196,14 +201,14 @@ class CollectionNavigation {
         popover.appendChild(nameDiv);
 
         // View Action button
-        const viewActionBtn = this.createNavButton('View Action', () => {
+        const viewActionBtn = this.createNavButton(i18n.tDefault('misc.dictionary.viewAction', 'View Action'), () => {
             this.dismissPopover();
             navigateToItem(itemHrid);
         });
         popover.appendChild(viewActionBtn);
 
         // Item Dictionary button
-        const dictBtn = this.createNavButton('Item Dictionary', () => {
+        const dictBtn = this.createNavButton(i18n.tDefault('misc.collection.itemDictionary', 'Item Dictionary'), () => {
             this.dismissPopover();
             const game = getGameObject();
             const itemDetails = dataManager.getItemDetails(itemHrid);
@@ -302,12 +307,12 @@ class CollectionNavigation {
             return;
         }
 
-        const viewActionBtn = this.createNavButton('View Action', () => {
+        const viewActionBtn = this.createNavButton(i18n.tDefault('misc.dictionary.viewAction', 'View Action'), () => {
             navigateToItem(itemHrid);
         });
         actionMenu.appendChild(viewActionBtn);
 
-        const dictBtn = this.createNavButton('Item Dictionary', () => {
+        const dictBtn = this.createNavButton(i18n.tDefault('misc.collection.itemDictionary', 'Item Dictionary'), () => {
             const game = getGameObject();
             const itemDetails = dataManager.getItemDetails(itemHrid);
             if (game?.handleOpenItemDictionary && itemDetails) {
@@ -353,7 +358,7 @@ class CollectionNavigation {
         }
 
         if (this.itemNameToHridCache && this.itemNameToHridCacheSource === initData.itemDetailMap) {
-            return this.itemNameToHridCache.get(itemName) || null;
+            return this.itemNameToHridCache.get(itemName) || resolveItemHridFromLocalizedName(itemName);
         }
 
         const map = new Map();

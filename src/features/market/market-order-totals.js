@@ -10,6 +10,7 @@
 import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import { formatKMB } from '../../utils/formatters.js';
 
 class MarketOrderTotals {
@@ -192,12 +193,13 @@ class MarketOrderTotals {
 
         if (hasNoData) {
             const marketplaceIcon = this.getMarketplaceIcon();
+            const noOrdersLabel = i18n.tDefault('market.orderTotals.noOrders', 'No market orders');
             this.displayElement.innerHTML = `
                 <button
                     type="button"
                     class="mwi-market-order-totals-link"
-                    title="No market orders"
-                    aria-label="No market orders"
+                    title="${noOrdersLabel}"
+                    aria-label="${noOrdersLabel}"
                     style="background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center;"
                 >
                     ${marketplaceIcon}
@@ -219,15 +221,24 @@ class MarketOrderTotals {
 
         // Update display
         this.displayElement.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 4px;" title="Buy Orders (coins locked in buy orders)">
-                <span style="color: #888; font-weight: 500;">BO:</span>
+            <div style="display: flex; align-items: center; gap: 4px;" title="${i18n.tDefault(
+                'market.orderTotals.buyOrdersTitle',
+                'Buy Orders (coins locked in buy orders)'
+            )}">
+                <span style="color: #888; font-weight: 500;">${i18n.tDefault('market.orderTotals.bo', 'BO:')}</span>
                 ${boDisplay}
             </div>
-            <div style="display: flex; align-items: center; gap: 4px;" title="Sell Orders (expected proceeds after tax)">
-                <span style="color: #888; font-weight: 500;">SO:</span>
+            <div style="display: flex; align-items: center; gap: 4px;" title="${i18n.tDefault(
+                'market.orderTotals.sellOrdersTitle',
+                'Sell Orders (expected proceeds after tax)'
+            )}">
+                <span style="color: #888; font-weight: 500;">${i18n.tDefault('market.orderTotals.so', 'SO:')}</span>
                 ${soDisplay}
             </div>
-            <div style="display: flex; align-items: center; gap: 4px;" title="Unclaimed coins (waiting to be collected)">
+            <div style="display: flex; align-items: center; gap: 4px;" title="${i18n.tDefault(
+                'market.orderTotals.unclaimedTitle',
+                'Unclaimed coins (waiting to be collected)'
+            )}">
                 <span style="font-weight: 500;">💰:</span>
                 ${unclaimedDisplay}
             </div>

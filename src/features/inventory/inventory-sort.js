@@ -5,6 +5,7 @@
 
 import config from '../../core/config.js';
 import domObserver from '../../core/dom-observer.js';
+import i18n from '../../core/i18n/index.js';
 import marketAPI from '../../api/marketplace.js';
 import storage from '../../core/storage.js';
 import { formatKMB } from '../../utils/formatters.js';
@@ -229,7 +230,7 @@ class InventorySort {
 
         // Sort label and buttons
         const sortLabel = document.createElement('span');
-        sortLabel.textContent = 'Sort:';
+        i18n.bindDefault(sortLabel, 'inventory.sort.label', 'Sort:');
 
         const askButton = this.createSortButton('Ask', 'ask');
         const bidButton = this.createSortButton('Bid', 'bid');
@@ -256,7 +257,7 @@ class InventorySort {
      */
     createSortButton(label, mode) {
         const button = document.createElement('button');
-        button.textContent = label;
+        i18n.bindDefault(button, `inventory.sort.${mode}`, label);
         button.dataset.mode = mode;
         button.style.cssText = `
             border-radius: 4px;

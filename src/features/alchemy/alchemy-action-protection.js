@@ -6,6 +6,7 @@
  */
 
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
 import storage from '../../core/storage.js';
@@ -102,7 +103,12 @@ class AlchemyActionProtection {
             alchemyPanel.dataset.mwiAlchemyLocked = '1';
 
             const categoryName = this._getCategoryDisplayName(categoryHrid);
-            this._showWarning(alchemyPanel, `Protected category (${categoryName})! Unlocks in 3s...`);
+            this._showWarning(
+                alchemyPanel,
+                i18n.tDefault('alcProfit.protectedCategory', 'Protected category ({category})! Unlocks in 3s...', {
+                    category: categoryName,
+                })
+            );
 
             if (this.lockdownTimer) clearTimeout(this.lockdownTimer);
             if (this.confirmTimer) clearTimeout(this.confirmTimer);
@@ -110,7 +116,7 @@ class AlchemyActionProtection {
             this.lockdownTimer = setTimeout(() => {
                 alchemyPanel.dataset.mwiAlchemyLocked = '';
                 alchemyPanel.dataset.mwiAlchemyConfirmed = '1';
-                this._showWarning(alchemyPanel, 'Click again to confirm.');
+                this._showWarning(alchemyPanel, i18n.tDefault('alcProfit.clickAgain', 'Click again to confirm.'));
 
                 this.confirmTimer = setTimeout(() => {
                     alchemyPanel.dataset.mwiAlchemyConfirmed = '';
@@ -170,7 +176,7 @@ class AlchemyActionProtection {
         pinIcon.innerHTML = '\u{1F4CC}';
         pinIcon.style.cssText =
             'cursor:pointer; font-size:16px; transition:all 0.2s; text-align:center; filter: grayscale(100%) brightness(0.7); display:none;';
-        pinIcon.title = 'Pin this action';
+        pinIcon.title = i18n.tDefault('alcProfit.pinAction', 'Pin this action');
 
         const updatePinIcon = () => {
             const alchemyType = this._getAlchemyType();
@@ -185,11 +191,11 @@ class AlchemyActionProtection {
             if (isPinned) {
                 pinIcon.style.filter = 'grayscale(0%) brightness(1.2) drop-shadow(0 0 3px rgba(255, 100, 0, 0.8))';
                 pinIcon.style.transform = 'scale(1.1)';
-                pinIcon.title = 'Unpin this action';
+                pinIcon.title = i18n.tDefault('alcProfit.unpinAction', 'Unpin this action');
             } else {
                 pinIcon.style.filter = 'grayscale(100%) brightness(0.7)';
                 pinIcon.style.transform = 'scale(1)';
-                pinIcon.title = 'Pin this action';
+                pinIcon.title = i18n.tDefault('alcProfit.pinAction', 'Pin this action');
             }
         };
 
@@ -351,7 +357,7 @@ class AlchemyActionProtection {
         const activeAction = actions?.find((a) => a.actionHrid === actionHrid && a.primaryItemHash?.includes(itemHrid));
 
         let totalActions;
-        let label = 'all';
+        let label = i18n.tDefault('alcProfit.allActions', 'all');
 
         const countInput = alchemyComponent.querySelector('[class*="maxActionCountInput"] input');
         const inputValue = countInput ? parseInt(countInput.value, 10) : NaN;
@@ -384,7 +390,11 @@ class AlchemyActionProtection {
         }
 
         const color = hasEnough ? '#4caf50' : '#ff6b6b';
-        const text = `Gold for ${label}: ${formatLargeNumber(goldNeeded)} / ${formatLargeNumber(goldBalance)}`;
+        const text = i18n.tDefault('alcProfit.goldFor', 'Gold for {label}: {needed} / {balance}', {
+            label,
+            needed: formatLargeNumber(goldNeeded),
+            balance: formatLargeNumber(goldBalance),
+        });
         if (summaryDiv.textContent === text && summaryDiv.style.display === 'block') return;
         summaryDiv.style.display = 'block';
         summaryDiv.style.color = color;
@@ -455,7 +465,10 @@ class AlchemyActionProtection {
 
         const header = document.createElement('div');
         header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;';
-        header.innerHTML = `<h3 style="margin:0; font-size:16px; color:#eee;">Alchemy Action Protection</h3>`;
+        header.innerHTML = `<h3 style="margin:0; font-size:16px; color:#eee;">${i18n.tDefault(
+            'alcProfit.protectionTitle',
+            'Alchemy Action Protection'
+        )}</h3>`;
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '\u2715';
@@ -467,8 +480,11 @@ class AlchemyActionProtection {
 
         const desc = document.createElement('p');
         desc.style.cssText = 'color:#999; margin:0 0 10px 0; font-size:12px;';
-        desc.textContent =
-            'Select which item categories to protect from each alchemy action. Protected items require a 3-second confirmation before the action proceeds.';
+        i18n.bindDefault(
+            desc,
+            'alcProfit.protectionDesc',
+            'Select which item categories to protect from each alchemy action. Protected items require a 3-second confirmation before the action proceeds.'
+        );
         popup.appendChild(desc);
 
         const alchemyTypes = ['coinify', 'decompose', 'transmute'];
@@ -483,7 +499,7 @@ class AlchemyActionProtection {
 
             const typeHeader = document.createElement('div');
             typeHeader.style.cssText = 'font-weight:bold; margin-bottom:6px; text-transform:capitalize; color:#ddd;';
-            typeHeader.textContent = type;
+            typeHeader.textContent = i18n.tDefault(`alcProfit.type_${type}`, type);
             section.appendChild(typeHeader);
 
             const protectedSet = this.protectedMap.get(type) || new Set();
@@ -507,7 +523,10 @@ class AlchemyActionProtection {
                 });
 
                 const label = document.createElement('span');
-                label.textContent = `${cat.name} (${cat.count} items)`;
+                label.textContent = i18n.tDefault('alcProfit.categoryItems', '{name} ({count} items)', {
+                    name: cat.name,
+                    count: cat.count,
+                });
 
                 row.appendChild(checkbox);
                 row.appendChild(label);

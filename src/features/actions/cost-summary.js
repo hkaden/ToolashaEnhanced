@@ -13,6 +13,7 @@ import { calculateMaterialRequirements } from '../../utils/material-calculator.j
 import { getItemPrice, formatPrice } from '../../utils/market-data.js';
 import { computeBestCraftingPlan } from '../../features/crafting-plan/crafting-plan-calculator.js';
 import { getActionHridFromName } from '../../utils/game-lookups.js';
+import i18n from '../../core/i18n/index.js';
 
 const UI_ID = 'mwi-cost-summary';
 
@@ -157,7 +158,10 @@ function buildBlock(actionHrid, numActions, outputHrid, outputCount) {
     }
 
     const pricingMode = config.getSetting('profitCalc_pricingMode') || 'hybrid';
-    const pricingLabel = PRICING_MODE_LABELS[pricingMode] || pricingMode;
+    const pricingLabel = i18n.tDefault(
+        `actMisc.costSummary.pricingMode.${pricingMode}`,
+        PRICING_MODE_LABELS[pricingMode] || pricingMode
+    );
 
     return renderBlock({
         directCost,
@@ -185,7 +189,7 @@ function renderBlock({ directCost, directComplete, missingCost, missingComplete,
     `;
 
     const header = document.createElement('div');
-    header.textContent = 'Cost Summary';
+    header.textContent = i18n.tDefault('actMisc.costSummary.title', 'Cost Summary');
     header.style.cssText = `
         font-size: 13px;
         font-weight: 600;
@@ -195,13 +199,25 @@ function renderBlock({ directCost, directComplete, missingCost, missingComplete,
     `;
     container.appendChild(header);
 
-    container.appendChild(renderLine('Direct recipe cost', directCost, !directComplete));
-    container.appendChild(renderLine('Missing direct mats', missingCost, !missingComplete));
-    container.appendChild(renderLine('Best crafting plan', planCost));
-    container.appendChild(renderLine('Finished item market', marketCost));
+    container.appendChild(
+        renderLine(i18n.tDefault('actMisc.costSummary.directCost', 'Direct recipe cost'), directCost, !directComplete)
+    );
+    container.appendChild(
+        renderLine(
+            i18n.tDefault('actMisc.costSummary.missingMats', 'Missing direct mats'),
+            missingCost,
+            !missingComplete
+        )
+    );
+    container.appendChild(renderLine(i18n.tDefault('actMisc.costSummary.bestPlan', 'Best crafting plan'), planCost));
+    container.appendChild(
+        renderLine(i18n.tDefault('actMisc.costSummary.finishedMarket', 'Finished item market'), marketCost)
+    );
 
     const footer = document.createElement('div');
-    footer.textContent = `Pricing: ${pricingLabel}`;
+    footer.textContent = i18n.tDefault('actMisc.costSummary.pricingFooter', 'Pricing: {label}', {
+        label: pricingLabel,
+    });
     footer.style.cssText = `
         margin-top: 6px;
         padding-top: 6px;
@@ -234,7 +250,10 @@ function renderLine(label, value, partial = false) {
         valueEl.style.color = '#e2e8f0';
         valueEl.style.fontVariantNumeric = 'tabular-nums';
         if (partial) {
-            valueEl.title = 'Partial — some materials have no market data';
+            valueEl.title = i18n.tDefault(
+                'actMisc.costSummary.partial',
+                'Partial — some materials have no market data'
+            );
         }
     }
     row.appendChild(labelEl);

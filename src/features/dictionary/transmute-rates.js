@@ -6,6 +6,7 @@
 import config from '../../core/config.js';
 import domObserver from '../../core/dom-observer.js';
 import dataManager from '../../core/data-manager.js';
+import { resolveItemHridFromLocalizedName } from '../../utils/localized-game-names.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 
 /**
@@ -114,7 +115,8 @@ class TransmuteRates {
         }
 
         // Find current item HRID by name (O(1) lookup)
-        const currentItemHrid = this.nameToHridCache.get(currentItemName);
+        const currentItemHrid =
+            this.nameToHridCache.get(currentItemName) || resolveItemHridFromLocalizedName(currentItemName);
 
         if (!currentItemHrid) {
             return;
@@ -139,7 +141,8 @@ class TransmuteRates {
             const sourceItemName = nameElem.textContent.trim();
 
             // Find source item HRID by name (O(1) lookup)
-            const sourceItemHrid = this.nameToHridCache.get(sourceItemName);
+            const sourceItemHrid =
+                this.nameToHridCache.get(sourceItemName) || resolveItemHridFromLocalizedName(sourceItemName);
 
             if (!sourceItemHrid) {
                 continue;

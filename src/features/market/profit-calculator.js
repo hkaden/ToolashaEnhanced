@@ -6,6 +6,8 @@
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
 import marketAPI from '../../api/marketplace.js';
+import i18n from '../../core/i18n/index.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import { calculateHouseEfficiency } from '../../utils/house-efficiency.js';
 import { getActionEfficiencyContext } from '../../utils/efficiency.js';
 import { calculateBonusRevenue } from '../../utils/bonus-revenue-calculator.js';
@@ -251,7 +253,7 @@ class ProfitCalculator {
         const pricingMode = config.getSettingValue('profitCalc_pricingMode', 'hybrid');
 
         return {
-            itemName: itemDetails.name,
+            itemName: getLocalizedItemName(itemHrid, itemDetails.name),
             itemHrid,
             actionTime: effectiveActionTime,
             actionsPerHour,
@@ -391,7 +393,7 @@ class ProfitCalculator {
 
                 costs.push({
                     itemHrid: actionDetails.upgradeItemHrid,
-                    itemName: itemDetails.name,
+                    itemName: getLocalizedItemName(actionDetails.upgradeItemHrid, itemDetails.name),
                     baseAmount: 1,
                     amount: reducedAmount,
                     askPrice: resolved.price,
@@ -428,7 +430,7 @@ class ProfitCalculator {
 
                 costs.push({
                     itemHrid: input.itemHrid,
-                    itemName: itemDetails.name,
+                    itemName: getLocalizedItemName(input.itemHrid, itemDetails.name),
                     baseAmount: baseAmount,
                     amount: reducedAmount,
                     askPrice: resolved.price,
@@ -495,7 +497,7 @@ class ProfitCalculator {
             const reduction = baseTime - finalTime;
 
             steps.push({
-                name: 'Equipment Speed',
+                name: i18n.tDefault('market.profitCalc.equipmentSpeed', 'Equipment Speed'),
                 bonus: equipmentSpeedBonus * 100, // convert to percentage
                 reduction: reduction, // seconds saved
                 timeAfter: finalTime, // final time

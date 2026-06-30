@@ -6,6 +6,8 @@
 import config from '../../core/config.js';
 import marketAPI from '../../api/marketplace.js';
 import dataManager from '../../core/data-manager.js';
+import { resolveItemHridFromLocalizedName } from '../../utils/localized-game-names.js';
+import i18n from '../../core/i18n/index.js';
 import { numberFormatter } from '../../utils/formatters.js';
 import dom from '../../utils/dom.js';
 import domObserver from '../../core/dom-observer.js';
@@ -174,7 +176,7 @@ class TooltipConsumables {
 
         // Return cached map if source data hasn't changed (handles character switch)
         if (this.itemNameToHridCache && this.itemNameToHridCacheSource === initData.itemDetailMap) {
-            return this.itemNameToHridCache.get(itemName) || null;
+            return this.itemNameToHridCache.get(itemName) || resolveItemHridFromLocalizedName(itemName);
         }
 
         // Build itemName -> HRID map
@@ -283,36 +285,59 @@ class TooltipConsumables {
         let html = '<div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 8px;">';
 
         // CONSUMABLE STATS section
-        html += '<div style="font-weight: bold; margin-bottom: 4px;">CONSUMABLE STATS</div>';
+        html += `<div style="font-weight: bold; margin-bottom: 4px;">${i18n.tDefault(
+            'market.consumable.statsHeader',
+            'CONSUMABLE STATS'
+        )}</div>`;
         html += '<div style="font-size: 0.9em; margin-left: 8px;">';
 
         // Restores line
         if (stats.recoveryDuration > 0) {
-            html += `<div>Restores: ${numberFormatter(stats.restorePerSecond, 1)} ${stats.restoreType}/s</div>`;
+            html += `<div>${i18n.tDefault('market.consumable.restoresPerSec', 'Restores: {rate} {type}/s', {
+                rate: numberFormatter(stats.restorePerSecond, 1),
+                type: stats.restoreType,
+            })}</div>`;
         } else {
-            html += `<div>Restores: ${numberFormatter(stats.restoreAmount)} ${stats.restoreType} (instant)</div>`;
+            html += `<div>${i18n.tDefault('market.consumable.restoresInstant', 'Restores: {amount} {type} (instant)', {
+                amount: numberFormatter(stats.restoreAmount),
+                type: stats.restoreType,
+            })}</div>`;
         }
 
         // Cost efficiency line
         if (stats.costPerPoint > 0) {
-            html += `<div>Cost: ${numberFormatter(stats.costPerPoint, 1)} per ${stats.restoreType}</div>`;
+            html += `<div>${i18n.tDefault('market.consumable.costPer', 'Cost: {cost} per {type}', {
+                cost: numberFormatter(stats.costPerPoint, 1),
+                type: stats.restoreType,
+            })}</div>`;
         } else if (stats.askPrice === 0) {
-            html += `<div style="color: gray; font-style: italic;">Cost: No market data</div>`;
+            html += `<div style="color: gray; font-style: italic;">${i18n.tDefault(
+                'market.consumable.costNoData',
+                'Cost: No market data'
+            )}</div>`;
         }
 
         // Daily maximum line - ALWAYS show (based on cooldown)
         if (stats.dailyMax > 0) {
-            html += `<div>Daily Max: ${numberFormatter(stats.dailyMax)} ${stats.restoreType}</div>`;
+            html += `<div>${i18n.tDefault('market.consumable.dailyMax', 'Daily Max: {max} {type}', {
+                max: numberFormatter(stats.dailyMax),
+                type: stats.restoreType,
+            })}</div>`;
         }
 
         // Recovery duration line - ONLY for over-time items
         if (stats.recoveryDuration > 0) {
-            html += `<div>Recovery Time: ${stats.recoveryDuration}s</div>`;
+            html += `<div>${i18n.tDefault('market.consumable.recoveryTime', 'Recovery Time: {time}s', {
+                time: stats.recoveryDuration,
+            })}</div>`;
         }
 
         // Cooldown line - ALWAYS show
         if (stats.cooldownDuration > 0) {
-            html += `<div>Cooldown: ${stats.cooldownDuration}s (${numberFormatter(stats.usesPerDay)} uses/day)</div>`;
+            html += `<div>${i18n.tDefault('market.consumable.cooldown', 'Cooldown: {time}s ({uses} uses/day)', {
+                time: stats.cooldownDuration,
+                uses: numberFormatter(stats.usesPerDay),
+            })}</div>`;
         }
 
         html += '</div>';

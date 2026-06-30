@@ -4,6 +4,7 @@
  */
 
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import marketAPI from '../../api/marketplace.js';
 import combatStatsDataCollector from './combat-stats-data-collector.js';
 import { calculateAllPlayerStats } from './combat-stats-calculator.js';
@@ -14,6 +15,7 @@ import {
     formatPercentage,
     isAbbreviationEnabled,
 } from '../../utils/formatters.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import expectedValueCalculator from '../market/expected-value-calculator.js';
 
 class CombatStatsUI {
@@ -113,7 +115,7 @@ class CombatStatsUI {
         const button = document.createElement('div');
         button.className =
             'MuiButtonBase-root MuiTab-root MuiTab-textColorPrimary css-1q2h7u5 toolasha-combat-stats-btn';
-        button.textContent = 'Statistics';
+        i18n.bindDefault(button, 'combat.stats.statisticsTab', 'Statistics');
         button.style.cursor = 'pointer';
 
         button.onclick = () => this.showPopup();
@@ -242,7 +244,9 @@ class CombatStatsUI {
             const marketData = await marketAPI.fetch();
             if (!marketData) {
                 console.error('[Combat Stats] Market data not available');
-                alert('Market data not available. Please try again.');
+                alert(
+                    i18n.tDefault('combat.stats.alertMarketUnavailable', 'Market data not available. Please try again.')
+                );
                 return;
             }
         }
@@ -257,7 +261,7 @@ class CombatStatsUI {
         }
 
         if (!combatData || !combatData.players || combatData.players.length === 0) {
-            alert('No combat data available. Start a combat run first.');
+            alert(i18n.tDefault('combat.stats.alertNoData', 'No combat data available. Start a combat run first.'));
             return;
         }
 
@@ -336,7 +340,7 @@ class CombatStatsUI {
         `;
 
         const title = document.createElement('h2');
-        title.textContent = 'Combat Statistics';
+        i18n.bindDefault(title, 'combat.stats.title', 'Combat Statistics');
         title.style.cssText = `
             margin: 0;
             color: ${textColor};
@@ -352,7 +356,7 @@ class CombatStatsUI {
         `;
 
         const resetButton = document.createElement('button');
-        resetButton.textContent = 'Reset Consumable Tracking';
+        i18n.bindDefault(resetButton, 'combat.stats.resetConsumable', 'Reset Consumable Tracking');
         resetButton.style.cssText = `
             background: #4a4a4a;
             border: 1px solid #5a5a5a;
@@ -369,7 +373,14 @@ class CombatStatsUI {
             resetButton.style.background = '#4a4a4a';
         };
         resetButton.onclick = async () => {
-            if (confirm('Reset consumable tracking? This will clear all tracked consumption data and start fresh.')) {
+            if (
+                confirm(
+                    i18n.tDefault(
+                        'combat.stats.confirmReset',
+                        'Reset consumable tracking? This will clear all tracked consumption data and start fresh.'
+                    )
+                )
+            ) {
                 await combatStatsDataCollector.resetConsumableTracking();
 
                 // Clear stale consumable data from the in-memory snapshot so the
@@ -540,25 +551,31 @@ class CombatStatsUI {
         const priceKey = config.getSettingValue('profitCalc_keyPricingMode') || 'ask';
 
         const statsRows = [
-            { label: 'Duration', value: stats.durationFormatted || '0s' },
-            { label: 'Encounters/Hour', value: formatNum(stats.encountersPerHour) },
+            { label: i18n.tDefault('combat.stats.row.duration', 'Duration'), value: stats.durationFormatted || '0s' },
             {
-                label: 'Income',
+                label: i18n.tDefault('combat.stats.row.encountersPerHour', 'Encounters/Hour'),
+                value: formatNum(stats.encountersPerHour),
+            },
+            {
+                label: i18n.tDefault('combat.stats.row.income', 'Income'),
                 value: formatNum(stats.income[priceKey]),
                 ...(stats.isDungeonRun && stats.incomeBreakdown?.length > 0
                     ? { expandable: true, incomeBreakdown: stats.incomeBreakdown }
                     : {}),
             },
-            { label: 'Daily Income', value: `${formatNum(stats.dailyIncome[priceKey])}/d` },
             {
-                label: 'Consumable Costs',
+                label: i18n.tDefault('combat.stats.row.dailyIncome', 'Daily Income'),
+                value: `${formatNum(stats.dailyIncome[priceKey])}/d`,
+            },
+            {
+                label: i18n.tDefault('combat.stats.row.consumableCosts', 'Consumable Costs'),
                 value: formatNumDecimals(stats.consumableCosts),
                 color: '#ff6b6b',
                 expandable: true,
                 breakdown: stats.consumableBreakdown,
             },
             {
-                label: 'Daily Consumable Costs',
+                label: i18n.tDefault('combat.stats.row.dailyConsumableCosts', 'Daily Consumable Costs'),
                 value: `${formatNumDecimals(stats.dailyConsumableCosts)}/d`,
                 color: '#ff6b6b',
                 expandable: true,
@@ -568,7 +585,7 @@ class CombatStatsUI {
             ...(stats.keyBreakdown && stats.keyBreakdown.length > 0
                 ? [
                       {
-                          label: 'Key Costs',
+                          label: i18n.tDefault('combat.stats.row.keyCosts', 'Key Costs'),
                           value: formatNum(stats.keyCosts[priceKey]),
                           color: '#ff6b6b',
                           expandable: true,
@@ -577,7 +594,7 @@ class CombatStatsUI {
                           showKeyPricingNote: true,
                       },
                       {
-                          label: 'Daily Key Costs',
+                          label: i18n.tDefault('combat.stats.row.dailyKeyCosts', 'Daily Key Costs'),
                           value: `${formatNum(stats.dailyKeyCosts)}/d`,
                           color: '#ff6b6b',
                           expandable: true,
@@ -589,14 +606,20 @@ class CombatStatsUI {
                   ]
                 : []),
             {
-                label: 'Daily Profit',
+                label: i18n.tDefault('combat.stats.row.dailyProfit', 'Daily Profit'),
                 value: `${formatNum(stats.dailyProfit[priceKey])}/d`,
                 color: stats.dailyProfit[priceKey] >= 0 ? '#51cf66' : '#ff6b6b',
             },
-            { label: 'Total EXP', value: formatNum(stats.totalExp) },
-            { label: 'EXP/hour', value: `${formatNum(stats.expPerHour)}/h` },
-            { label: 'Death Count', value: `${stats.deathCount}` },
-            { label: 'Deaths/hr', value: `${stats.deathsPerHour.toFixed(2)}/h` },
+            { label: i18n.tDefault('combat.stats.row.totalExp', 'Total EXP'), value: formatNum(stats.totalExp) },
+            {
+                label: i18n.tDefault('combat.stats.row.expPerHour', 'EXP/hour'),
+                value: `${formatNum(stats.expPerHour)}/h`,
+            },
+            { label: i18n.tDefault('combat.stats.row.deathCount', 'Death Count'), value: `${stats.deathCount}` },
+            {
+                label: i18n.tDefault('combat.stats.row.deathsPerHour', 'Deaths/hr'),
+                value: `${stats.deathsPerHour.toFixed(2)}/h`,
+            },
         ];
 
         const statsContainer = document.createElement('div');
@@ -654,7 +677,9 @@ class CombatStatsUI {
                                 font-size: 12px;
                                 color: #aaa;
                             `;
-                            pricingNote.textContent = `Pricing: ${config.getPricingModeLabel(pricingMode)}`;
+                            pricingNote.textContent = i18n.tDefault('combat.stats.pricing', 'Pricing: {mode}', {
+                                mode: config.getPricingModeLabel(pricingMode),
+                            });
                             breakdownDiv.appendChild(pricingNote);
 
                             // Column header
@@ -670,10 +695,10 @@ class CombatStatsUI {
                                 color: ${textColor};
                             `;
                             incomeHeader.innerHTML = `
-                                <span>Chest</span>
-                                <span style="text-align: right;">Received</span>
-                                <span style="text-align: right;">EV Each</span>
-                                <span style="text-align: right;">Total EV</span>
+                                <span>${i18n.tDefault('combat.stats.col.chest', 'Chest')}</span>
+                                <span style="text-align: right;">${i18n.tDefault('combat.stats.col.received', 'Received')}</span>
+                                <span style="text-align: right;">${i18n.tDefault('combat.stats.col.evEach', 'EV Each')}</span>
+                                <span style="text-align: right;">${i18n.tDefault('combat.stats.col.totalEv', 'Total EV')}</span>
                             `;
                             breakdownDiv.appendChild(incomeHeader);
 
@@ -691,9 +716,10 @@ class CombatStatsUI {
                                 `;
                                 let chestExpanded = false;
                                 let chestBreakdownDiv = null;
+                                const chestDisplayName = getLocalizedItemName(chest.itemHrid, chest.itemName);
 
                                 const nameCell = document.createElement('span');
-                                nameCell.textContent = `▶ ${chest.itemName}`;
+                                nameCell.textContent = `▶ ${chestDisplayName}`;
                                 const countCell = document.createElement('span');
                                 countCell.style.textAlign = 'right';
                                 countCell.textContent = formatNum(chest.count);
@@ -712,7 +738,7 @@ class CombatStatsUI {
                                 chestRow.onclick = (e) => {
                                     e.stopPropagation();
                                     chestExpanded = !chestExpanded;
-                                    nameCell.textContent = `${chestExpanded ? '▼' : '▶'} ${chest.itemName}`;
+                                    nameCell.textContent = `${chestExpanded ? '▼' : '▶'} ${chestDisplayName}`;
                                     if (chestExpanded) {
                                         chestBreakdownDiv = document.createElement('div');
                                         chestBreakdownDiv.style.cssText = `
@@ -736,11 +762,11 @@ class CombatStatsUI {
                                             border-bottom: 1px solid #3a3a3a;
                                         `;
                                         subHeader.innerHTML = `
-                                            <span>Item</span>
-                                            <span style="text-align: right;">Rate</span>
-                                            <span style="text-align: right;">Avg Qty</span>
+                                            <span>${i18n.tDefault('combat.stats.col.item', 'Item')}</span>
+                                            <span style="text-align: right;">${i18n.tDefault('combat.stats.col.rate', 'Rate')}</span>
+                                            <span style="text-align: right;">${i18n.tDefault('combat.stats.col.avgQty', 'Avg Qty')}</span>
                                             <span style="text-align: right;">@</span>
-                                            <span style="text-align: right;">EV</span>
+                                            <span style="text-align: right;">${i18n.tDefault('combat.stats.col.ev', 'EV')}</span>
                                         `;
                                         chestBreakdownDiv.appendChild(subHeader);
                                         for (const drop of chest.drops) {
@@ -752,7 +778,7 @@ class CombatStatsUI {
                                                 margin-bottom: 2px;
                                             `;
                                             dropRow.innerHTML = `
-                                                <span>${drop.itemName}</span>
+                                                <span>${getLocalizedItemName(drop.itemHrid, drop.itemName)}</span>
                                                 <span style="text-align: right;">${formatPercentage(drop.dropRate, 1)}</span>
                                                 <span style="text-align: right;">${drop.avgCount.toFixed(2)}</span>
                                                 <span style="text-align: right;">${drop.hasPriceData ? formatNum(drop.priceEach) : '—'}</span>
@@ -771,7 +797,7 @@ class CombatStatsUI {
                                             gap: 8px;
                                         `;
                                         evTotalRow.innerHTML = `
-                                            <span>Total</span>
+                                            <span>${i18n.tDefault('combat.stats.col.total', 'Total')}</span>
                                             <span></span>
                                             <span></span>
                                             <span></span>
@@ -801,7 +827,7 @@ class CombatStatsUI {
                                 color: ${textColor};
                             `;
                             incomeTotalRow.innerHTML = `
-                                <span>Total</span>
+                                <span>${i18n.tDefault('combat.stats.col.total', 'Total')}</span>
                                 <span></span>
                                 <span></span>
                                 <span style="text-align: right;">${row.value}</span>
@@ -817,7 +843,12 @@ class CombatStatsUI {
                                     color: #aaa;
                                     margin-bottom: 6px;
                                 `;
-                                keyPricingNote.textContent = `Pricing: ${keyPricing === 'bid' ? 'Bid (patient buy)' : 'Ask (instant buy)'}`;
+                                keyPricingNote.textContent = i18n.tDefault('combat.stats.pricing', 'Pricing: {mode}', {
+                                    mode:
+                                        keyPricing === 'bid'
+                                            ? i18n.tDefault('combat.stats.bidPatient', 'Bid (patient buy)')
+                                            : i18n.tDefault('combat.stats.askInstant', 'Ask (instant buy)'),
+                                });
                                 breakdownDiv.appendChild(keyPricingNote);
                             }
 
@@ -834,10 +865,10 @@ class CombatStatsUI {
                                 color: ${textColor};
                             `;
                             header.innerHTML = `
-                                <span>Item</span>
-                                <span style="text-align: right;">Consumed</span>
-                                <span style="text-align: right;">Price</span>
-                                <span style="text-align: right;">Cost</span>
+                                <span>${i18n.tDefault('combat.stats.col.item', 'Item')}</span>
+                                <span style="text-align: right;">${i18n.tDefault('combat.stats.col.consumed', 'Consumed')}</span>
+                                <span style="text-align: right;">${i18n.tDefault('combat.stats.col.price', 'Price')}</span>
+                                <span style="text-align: right;">${i18n.tDefault('combat.stats.col.cost', 'Cost')}</span>
                             `;
                             breakdownDiv.appendChild(header);
 
@@ -863,7 +894,7 @@ class CombatStatsUI {
                                     : item.totalCost;
 
                                 itemRow.innerHTML = `
-                                    <span>${item.itemName}</span>
+                                    <span>${getLocalizedItemName(item.itemHrid, item.itemName)}</span>
                                     <span style="text-align: right;">${formatNum(displayQty)}</span>
                                     <span style="text-align: right;">${formatNum(displayPrice)}</span>
                                     <span style="text-align: right; color: #ff6b6b;">${formatNum(displayCost)}</span>
@@ -884,7 +915,7 @@ class CombatStatsUI {
                                 color: ${textColor};
                             `;
                             totalRow.innerHTML = `
-                                <span>Total</span>
+                                <span>${i18n.tDefault('combat.stats.col.total', 'Total')}</span>
                                 <span></span>
                                 <span></span>
                                 <span style="text-align: right; color: #ff6b6b;">${row.value}</span>
@@ -929,15 +960,26 @@ class CombatStatsUI {
                                 const hasActualData = firstItem.actualConsumed > 0;
 
                                 if (!hasActualData) {
-                                    trackingNote.textContent = `📊 Tracked ${formatTrackingDuration(trackingDuration)} - No consumption yet (rate decreases over time)`;
+                                    trackingNote.textContent = i18n.tDefault(
+                                        'combat.stats.trackingNoConsumption',
+                                        '📊 Tracked {duration} - No consumption yet (rate decreases over time)',
+                                        { duration: formatTrackingDuration(trackingDuration) }
+                                    );
                                 } else {
-                                    trackingNote.textContent = `📊 Tracked ${formatTrackingDuration(trackingDuration)} - 90% actual + 10% baseline blend`;
+                                    trackingNote.textContent = i18n.tDefault(
+                                        'combat.stats.trackingBlend',
+                                        '📊 Tracked {duration} - 90% actual + 10% baseline blend',
+                                        { duration: formatTrackingDuration(trackingDuration) }
+                                    );
                                 }
 
                                 breakdownDiv.appendChild(trackingNote);
                             }
                         } else if (breakdownDiv) {
-                            breakdownDiv.textContent = 'No consumables used';
+                            breakdownDiv.textContent = i18n.tDefault(
+                                'combat.stats.noConsumables',
+                                'No consumables used'
+                            );
                             breakdownDiv.style.color = '#888';
                         }
 
@@ -958,7 +1000,7 @@ class CombatStatsUI {
         // Drop list
         if (stats.lootList && stats.lootList.length > 0) {
             const dropHeader = document.createElement('div');
-            dropHeader.textContent = 'Drops';
+            i18n.bindDefault(dropHeader, 'combat.stats.drops', 'Drops');
             dropHeader.style.cssText = `
                 font-weight: bold;
                 margin-top: 10px;
@@ -1022,7 +1064,7 @@ class CombatStatsUI {
                 // Create text content with KMB formatting
                 const textSpan = document.createElement('span');
                 const rarityColor = this.getRarityColor(item.rarity);
-                textSpan.innerHTML = `<span style="color: ${textColor};">${formatNum(item.count)}</span> <span style="color: ${rarityColor};">× ${item.itemName}</span>`;
+                textSpan.innerHTML = `<span style="color: ${textColor};">${formatNum(item.count)}</span> <span style="color: ${rarityColor};">× ${getLocalizedItemName(item.itemHrid, item.itemName)}</span>`;
                 itemDiv.appendChild(textSpan);
 
                 // Attach EV tooltip for openable containers (chests, crates, etc.)
@@ -1087,39 +1129,39 @@ class CombatStatsUI {
         const formatPrice = (val) => formatKMB(Math.round(val));
         const showDropsSetting = config.getSettingValue('expectedValue_showDrops', 'All');
 
-        let html = `<div style="font-weight:bold;margin-bottom:4px;">EXPECTED VALUE</div>`;
+        let html = `<div style="font-weight:bold;margin-bottom:4px;">${i18n.tDefault('combat.stats.expectedValue', 'EXPECTED VALUE')}</div>`;
         html += `<div style="font-size:0.9em;margin-left:8px;">`;
-        html += `<div style="color:${config.COLOR_TOOLTIP_PROFIT};font-weight:bold;">Expected Return: ${formatPrice(evData.expectedValue)}</div>`;
+        html += `<div style="color:${config.COLOR_TOOLTIP_PROFIT};font-weight:bold;">${i18n.tDefault('combat.stats.expectedReturn', 'Expected Return: {value}', { value: formatPrice(evData.expectedValue) })}</div>`;
         html += `</div>`;
 
         if (showDropsSetting !== 'None' && evData.drops.length > 0) {
             html += `<div style="border-top:1px solid rgba(255,255,255,0.2);margin:8px 0;"></div>`;
 
             let dropsToShow = evData.drops;
-            let headerLabel = 'All Drops';
+            let headerLabel = i18n.tDefault('combat.stats.allDrops', 'All Drops');
             if (showDropsSetting === 'Top 5') {
                 dropsToShow = evData.drops.slice(0, 5);
-                headerLabel = 'Top 5 Drops';
+                headerLabel = i18n.tDefault('combat.stats.top5Drops', 'Top 5 Drops');
             } else if (showDropsSetting === 'Top 10') {
                 dropsToShow = evData.drops.slice(0, 10);
-                headerLabel = 'Top 10 Drops';
+                headerLabel = i18n.tDefault('combat.stats.top10Drops', 'Top 10 Drops');
             }
 
-            html += `<div style="font-weight:bold;margin-bottom:4px;">${headerLabel} (${evData.drops.length} total):</div>`;
+            html += `<div style="font-weight:bold;margin-bottom:4px;">${i18n.tDefault('combat.stats.dropsHeader', '{label} ({count} total):', { label: headerLabel, count: evData.drops.length })}</div>`;
             html += `<div style="font-size:0.9em;margin-left:8px;">`;
 
             for (const drop of dropsToShow) {
                 if (!drop.hasPriceData) {
-                    html += `<div style="color:${config.COLOR_TEXT_SECONDARY};">• ${drop.itemName} (${formatPercentage(drop.dropRate, 2)}): ${drop.avgCount.toFixed(2)} avg → No price data</div>`;
+                    html += `<div style="color:${config.COLOR_TEXT_SECONDARY};">${i18n.tDefault('combat.stats.dropNoPrice', '• {name} ({rate}): {avg} avg → No price data', { name: getLocalizedItemName(drop.itemHrid, drop.itemName), rate: formatPercentage(drop.dropRate, 2), avg: drop.avgCount.toFixed(2) })}</div>`;
                 } else {
                     const dropRatePercent = formatPercentage(drop.dropRate, 2);
-                    html += `<div>• ${drop.itemName} (${dropRatePercent}): ${drop.avgCount.toFixed(2)} avg → ${formatPrice(drop.expectedValue)}</div>`;
+                    html += `<div>${i18n.tDefault('combat.stats.dropRow', '• {name} ({rate}): {avg} avg → {value}', { name: getLocalizedItemName(drop.itemHrid, drop.itemName), rate: dropRatePercent, avg: drop.avgCount.toFixed(2), value: formatPrice(drop.expectedValue) })}</div>`;
                 }
             }
 
             html += `</div>`;
             html += `<div style="border-top:1px solid rgba(255,255,255,0.2);margin:4px 0;"></div>`;
-            html += `<div style="font-size:0.9em;margin-left:8px;font-weight:bold;">Total from ${evData.drops.length} drops: ${formatPrice(evData.expectedValue)}</div>`;
+            html += `<div style="font-size:0.9em;margin-left:8px;font-weight:bold;">${i18n.tDefault('combat.stats.totalFromDrops', 'Total from {count} drops: {value}', { count: evData.drops.length, value: formatPrice(evData.expectedValue) })}</div>`;
         }
 
         return html;

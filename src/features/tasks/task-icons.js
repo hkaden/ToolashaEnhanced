@@ -12,6 +12,7 @@ import taskIconFilters from './task-icon-filters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import assetManifest from '../../utils/asset-manifest.js';
 import { getActionHridFromName } from '../../utils/game-lookups.js';
+import i18n from '../../core/i18n/index.js';
 
 class TaskIcons {
     constructor() {
@@ -233,8 +234,14 @@ class TaskIcons {
             font-weight: 500;
             margin-top: 4px;
         `;
-        warning.textContent = '⚠ Combat icons unavailable - visit Combat to load sprites';
-        warning.title = 'Combat monster sprites need to be loaded. Visit the Combat panel to load them.';
+        i18n.bindDefault(warning, 'tasks.spriteWarning', '⚠ Combat icons unavailable - visit Combat to load sprites');
+        i18n.bindDefault(
+            warning,
+            'tasks.spriteWarningTooltip',
+            'Combat monster sprites need to be loaded. Visit the Combat panel to load them.',
+            undefined,
+            'title'
+        );
 
         titleElement.appendChild(warning);
         this.spriteWarningShown = true;

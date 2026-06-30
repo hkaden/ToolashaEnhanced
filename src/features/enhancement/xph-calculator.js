@@ -13,7 +13,9 @@ import { getEnhancingParams } from '../../utils/enhancement-config.js';
 import { formatKMB, formatWithSeparator } from '../../utils/formatters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { registerFloatingPanel, unregisterFloatingPanel, bringPanelToFront } from '../../utils/panel-z-index.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import { getCheapestProtectionPrice } from './tooltip-enhancement.js';
+import i18n from '../../core/i18n/index.js';
 
 const PANEL_ID = 'mwi-xph-calc-panel';
 const BTN_CLASS = 'mwi-xph-calc-btn';
@@ -99,7 +101,11 @@ function calculateItemXPH(itemHrid, itemDetails, maxLevel, protectFrom, params) 
             const totalCost = (materialCost || 0) + protCost;
             goldPerXP = totalCost / totalXP;
             costPerHour = goldPerXP * xph;
-            protectionItemName = dataManager.getInitClientData()?.itemDetailMap[protectionInfo.itemHrid]?.name || null;
+            protectionItemName =
+                getLocalizedItemName(
+                    protectionInfo.itemHrid,
+                    dataManager.getInitClientData()?.itemDetailMap[protectionInfo.itemHrid]?.name
+                ) || null;
         } else {
             costPartial = true;
         }
@@ -107,7 +113,7 @@ function calculateItemXPH(itemHrid, itemDetails, maxLevel, protectFrom, params) 
 
     return {
         itemHrid,
-        name: itemDetails.name,
+        name: getLocalizedItemName(itemHrid, itemDetails.name),
         protectionItemName,
         xph,
         goldPerXP,
@@ -152,7 +158,7 @@ class XPHCalculator {
 
         const btn = document.createElement('button');
         btn.className = BTN_CLASS;
-        btn.textContent = 'XPH Calc';
+        i18n.bindDefault(btn, 'enhancement.xph.button', 'XPH Calc');
         btn.style.cssText = `
             background: linear-gradient(180deg, rgba(0,200,150,0.2) 0%, rgba(0,200,150,0.1) 100%);
             color: #e0e0e0;
@@ -211,7 +217,10 @@ class XPHCalculator {
             flex-shrink: 0;
         `;
         header.innerHTML = `
-            <span style="font-weight:700; font-size:14px; color:#00c896;">Enhancement XPH Calculator</span>
+            <span style="font-weight:700; font-size:14px; color:#00c896;">${i18n.tDefault(
+                'enhancement.xph.title',
+                'Enhancement XPH Calculator'
+            )}</span>
             <button id="mwi-xph-close" style="
                 background:none; border:none; color:#aaa; font-size:22px;
                 cursor:pointer; padding:0; line-height:1;">×</button>
@@ -236,9 +245,12 @@ class XPHCalculator {
             'width:46px; background:#1a1a2e; color:#e0e0e0; border:1px solid #444; border-radius:4px; padding:3px 6px; font-size:12px; text-align:center;';
 
         controls.innerHTML = `
-            <label style="color:#888; font-size:12px;">Max level</label>
+            <label style="color:#888; font-size:12px;">${i18n.tDefault('enhancement.xph.maxLevel', 'Max level')}</label>
             <input id="mwi-xph-maxlevel" type="number" min="1" max="20" value="${defaultMax}" style="${inputStyle}">
-            <label style="color:#888; font-size:12px; margin-left:6px;">Protect from</label>
+            <label style="color:#888; font-size:12px; margin-left:6px;">${i18n.tDefault(
+                'enhancement.xph.protectFrom',
+                'Protect from'
+            )}</label>
             <input id="mwi-xph-protect" type="number" min="0" max="19" value="${defaultProtect}" style="${inputStyle}">
             <button id="mwi-xph-run" style="
                 margin-left: auto;
@@ -249,7 +261,7 @@ class XPHCalculator {
                 padding: 5px 14px;
                 font-size: 12px;
                 font-weight: 600;
-                cursor: pointer;">Calculate</button>
+                cursor: pointer;">${i18n.tDefault('enhancement.xph.calculate', 'Calculate')}</button>
         `;
 
         // Table container
@@ -262,10 +274,22 @@ class XPHCalculator {
             <table style="width:100%; border-collapse:collapse;">
                 <thead style="position:sticky; top:0; background:#0a0a14; z-index:1;">
                     <tr>
-                        <th id="mwi-xph-th-name" style="${thBase} text-align:left;"># Item</th>
-                        <th id="mwi-xph-th-xph"  style="${thBase} text-align:right;">XP/hr ▼</th>
-                        <th id="mwi-xph-th-gpx"  style="${thBase} text-align:right;">Gold/XP</th>
-                        <th id="mwi-xph-th-cphr" style="${thBase} text-align:right;">Cost/hr</th>
+                        <th id="mwi-xph-th-name" style="${thBase} text-align:left;">${i18n.tDefault(
+                            'enhancement.xph.colItem',
+                            '# Item'
+                        )}</th>
+                        <th id="mwi-xph-th-xph"  style="${thBase} text-align:right;">${i18n.tDefault(
+                            'enhancement.xph.colXph',
+                            'XP/hr'
+                        )} ▼</th>
+                        <th id="mwi-xph-th-gpx"  style="${thBase} text-align:right;">${i18n.tDefault(
+                            'enhancement.xph.colGpx',
+                            'Gold/XP'
+                        )}</th>
+                        <th id="mwi-xph-th-cphr" style="${thBase} text-align:right;">${i18n.tDefault(
+                            'enhancement.xph.colCphr',
+                            'Cost/hr'
+                        )}</th>
                     </tr>
                 </thead>
                 <tbody id="mwi-xph-tbody"></tbody>
@@ -277,7 +301,7 @@ class XPHCalculator {
         status.id = 'mwi-xph-status';
         status.style.cssText =
             'padding:6px 14px; color:#555; font-size:11px; border-top:1px solid #1a1a1a; flex-shrink:0; text-align:center;';
-        status.textContent = 'Enter parameters and click Calculate.';
+        status.textContent = i18n.tDefault('enhancement.xph.statusReady', 'Enter parameters and click Calculate.');
 
         this.panel.appendChild(header);
         this.panel.appendChild(controls);
@@ -333,7 +357,7 @@ class XPHCalculator {
         );
 
         const status = this.panel.querySelector('#mwi-xph-status');
-        status.textContent = 'Calculating…';
+        status.textContent = i18n.tDefault('enhancement.xph.statusCalculating', 'Calculating…');
         this.tableBody.innerHTML = '';
 
         const t = setTimeout(() => {
@@ -341,7 +365,7 @@ class XPHCalculator {
                 this._compute(maxLevel, protectFrom);
             } catch (err) {
                 console.error('[XPHCalculator] Error:', err);
-                status.textContent = 'Error during calculation.';
+                status.textContent = i18n.tDefault('enhancement.xph.statusError', 'Error during calculation.');
             }
         }, 10);
         this.timerRegistry.registerTimeout(t);
@@ -351,7 +375,7 @@ class XPHCalculator {
         const gameData = dataManager.getInitClientData();
         const status = this.panel.querySelector('#mwi-xph-status');
         if (!gameData) {
-            status.textContent = 'No game data available.';
+            status.textContent = i18n.tDefault('enhancement.xph.statusNoData', 'No game data available.');
             return;
         }
 
@@ -371,8 +395,14 @@ class XPHCalculator {
         this._updateSortIndicators();
 
         const withCost = results.filter((r) => r.costPerHour !== null).length;
-        const partialNote = results.some((r) => r.costPartial) ? ' * = partial price data.' : '';
-        status.textContent = `${results.length} items · ${withCost} with cost data.${partialNote}`;
+        const partialNote = results.some((r) => r.costPartial)
+            ? i18n.tDefault('enhancement.xph.partialNote', ' * = partial price data.')
+            : '';
+        status.textContent = i18n.tDefault(
+            'enhancement.xph.statusResult',
+            '{count} items · {withCost} with cost data.{note}',
+            { count: results.length, withCost, note: partialNote }
+        );
     }
 
     _sort(col) {

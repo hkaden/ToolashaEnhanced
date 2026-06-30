@@ -7,6 +7,7 @@
 import dungeonTrackerStorage from './dungeon-tracker-storage.js';
 import dungeonTracker from './dungeon-tracker.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import dataManager from '../../core/data-manager.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
@@ -387,15 +388,15 @@ class DungeonTrackerChatAnnotations {
                     dungeonName,
                 });
             } else if (next?.type === 'fail') {
-                label = 'FAILED';
+                label = i18n.tDefault('combat.dungeon.annotation.failed', 'FAILED');
                 color = '#ff4c4c'; // Red
             } else if (next?.type === 'cancel') {
-                label = 'canceled';
+                label = i18n.tDefault('combat.dungeon.annotation.canceled', 'canceled');
                 color = '#ffd700'; // Gold
             } else if (hitBattleStart) {
                 // No key/fail/cancel before the next battle_start — player left the party,
                 // ending the run without a completion key count.
-                label = 'canceled';
+                label = i18n.tDefault('combat.dungeon.annotation.canceled', 'canceled');
                 color = '#ffd700'; // Gold
             }
 
@@ -451,7 +452,10 @@ class DungeonTrackerChatAnnotations {
                         this.storedRunNumbers[statsKey][msgTs] = runNumber;
                     }
 
-                    label = `Run #${runNumber}: ${label}`;
+                    label = i18n.tDefault('combat.dungeon.annotation.runLabel', 'Run #{number}: {time}', {
+                        number: runNumber,
+                        time: label,
+                    });
                 }
 
                 // Mark as processed BEFORE inserting (matches working DRT script)
@@ -467,7 +471,9 @@ class DungeonTrackerChatAnnotations {
                     const cumulativeAvg = Math.floor(dungeonStats.totalTime / dungeonStats.runCount);
 
                     // Show cumulative average
-                    const avgLabel = `Average: ${this.formatTime(cumulativeAvg)}`;
+                    const avgLabel = i18n.tDefault('combat.dungeon.annotation.average', 'Average: {time}', {
+                        time: this.formatTime(cumulativeAvg),
+                    });
                     this.insertAnnotation(avgLabel, '#deb887', e.msg, true); // Tan color
                 }
             }

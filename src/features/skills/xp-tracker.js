@@ -7,6 +7,7 @@ import dataManager from '../../core/data-manager.js';
 import storage from '../../core/storage.js';
 import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import { formatKMB } from '../../utils/formatters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 
@@ -169,12 +170,12 @@ function formatTimeLeft(ms) {
     const s = (n) => (n === 1 ? '' : 's');
     const parts = [];
 
-    if (w >= 1) parts.push(`${w} week${s(w)}`);
-    if (d >= 1) parts.push(`${d} day${s(d)}`);
-    if (ms < w1 && h >= 1) parts.push(`${h} hour${s(h)}`);
-    if (ms < 6 * h1 && m >= 1) parts.push(`${m} minute${s(m)}`);
+    if (w >= 1) parts.push(i18n.tDefault('misc.skills.timeWeeks', `${w} week${s(w)}`, { count: w }));
+    if (d >= 1) parts.push(i18n.tDefault('misc.skills.timeDays', `${d} day${s(d)}`, { count: d }));
+    if (ms < w1 && h >= 1) parts.push(i18n.tDefault('misc.skills.timeHours', `${h} hour${s(h)}`, { count: h }));
+    if (ms < 6 * h1 && m >= 1) parts.push(i18n.tDefault('misc.skills.timeMinutes', `${m} minute${s(m)}`, { count: m }));
 
-    return parts.join(' ') || '< 1 minute';
+    return parts.join(' ') || i18n.tDefault('misc.skills.lessThanMinute', '< 1 minute');
 }
 
 class XPTracker {
@@ -420,7 +421,9 @@ class XPTracker {
         const div = document.createElement('div');
         div.className = 'mwi-xp-time-left';
         div.style.cssText = `font-size: 12px; color: ${config.COLOR_HOURS_TO_LEVEL}; margin-top: 4px;`;
-        div.innerHTML = `<span style="font-weight:700">${timeStr}</span> till next level`;
+        div.innerHTML = i18n.tDefault('misc.skills.tillNextLevel', '{time} till next level', {
+            time: `<span style="font-weight:700">${timeStr}</span>`,
+        });
 
         divs[3].insertAdjacentElement('afterend', div);
     }

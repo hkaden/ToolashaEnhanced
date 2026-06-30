@@ -12,6 +12,7 @@ import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
 import storage from '../../core/storage.js';
 import marketAPI from '../../api/marketplace.js';
+import i18n from '../../core/i18n/index.js';
 import { formatRelativeTime, formatDateTime } from '../../utils/formatters.js';
 
 class EstimatedListingAge {
@@ -633,8 +634,14 @@ class EstimatedListingAge {
         // Add header
         const header = document.createElement('th');
         header.classList.add('mwi-estimated-age-header');
-        header.textContent = '~Age';
-        header.title = 'Estimated listing age (based on listing ID)';
+        i18n.bindDefault(header, 'market.estAge.header', '~Age');
+        i18n.bindDefault(
+            header,
+            'market.estAge.headerTitle',
+            'Estimated listing age (based on listing ID)',
+            undefined,
+            'title'
+        );
         thead.appendChild(header);
 
         // Track which of user's listings have been matched to prevent duplicates
@@ -719,7 +726,7 @@ class EstimatedListingAge {
                         cell.style.color = '#00FF00'; // Green for YOUR listing
                         cell.style.fontSize = '0.9em';
                     } else {
-                        cell.textContent = '~Unknown';
+                        cell.textContent = `~${i18n.tDefault('market.estAge.unknown', 'Unknown')}`;
                         cell.style.color = '#666666';
                         cell.style.fontSize = '0.9em';
                     }

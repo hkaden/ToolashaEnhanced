@@ -18,6 +18,8 @@ import storage from '../../core/storage.js';
 import { GAME } from '../../utils/selectors.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
 import assetManifest from '../../utils/asset-manifest.js';
+import { getLocalizedActionName } from '../../utils/localized-game-names.js';
+import i18n from '../../core/i18n/index.js';
 
 const STORAGE_KEYS = {
     migration: 'taskIconsFiltersMigratedV1',
@@ -232,7 +234,7 @@ class TaskIconFilters {
         // Create battle icon (combat icon is in misc_sprite)
         const battleIcon = this.createFilterIcon(
             'battle',
-            'Battle',
+            i18n.tDefault('tasks.battleFilter', 'Battle'),
             'combat',
             () => this.getBattleFilterEnabled(),
             'misc'
@@ -244,7 +246,7 @@ class TaskIconFilters {
         Object.entries(this.dungeonConfig).forEach(([hrid, dungeon]) => {
             const dungeonIcon = this.createFilterIcon(
                 dungeon.id,
-                dungeon.name,
+                getLocalizedActionName(hrid, dungeon.name),
                 dungeon.spriteId,
                 () => this.getDungeonFilterEnabled(hrid),
                 'actions'

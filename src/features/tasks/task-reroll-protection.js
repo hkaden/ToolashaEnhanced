@@ -12,6 +12,7 @@ import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
 import storage from '../../core/storage.js';
 import webSocketHook from '../../core/websocket.js';
+import i18n from '../../core/i18n/index.js';
 
 const STORAGE_KEY_PREFIX = 'taskProtectedHrids';
 
@@ -92,7 +93,7 @@ class TaskRerollProtection {
         const btn = document.createElement('span');
         btn.className = 'mwi-task-protection-btn';
         btn.textContent = '🛡️';
-        btn.title = 'Configure task reroll protection';
+        i18n.bindDefault(btn, 'tasks.protection.configBtn', 'Configure task reroll protection', undefined, 'title');
         btn.style.cssText = 'cursor:pointer; font-size:16px; margin-left:6px; opacity:0.7; transition:opacity 0.1s;';
         btn.addEventListener('mouseover', () => {
             btn.style.opacity = '1';
@@ -239,7 +240,10 @@ class TaskRerollProtection {
 
                     // Initial click — start 3s lockdown
                     card.dataset.mwiRerollLocked = '1';
-                    this._showWarning(card, 'Protected task! Unlocks in 3s...');
+                    this._showWarning(
+                        card,
+                        i18n.tDefault('tasks.protection.unlockWarning', 'Protected task! Unlocks in 3s...')
+                    );
 
                     // Clear any existing timers for this card
                     const existingTimer = this.confirmTimers.get(card);
@@ -249,7 +253,10 @@ class TaskRerollProtection {
                     const lockdownTimer = setTimeout(() => {
                         card.dataset.mwiRerollLocked = '';
                         card.dataset.mwiRerollConfirmed = '1';
-                        this._showWarning(card, 'Click reroll now to confirm.');
+                        this._showWarning(
+                            card,
+                            i18n.tDefault('tasks.protection.confirmWarning', 'Click reroll now to confirm.')
+                        );
 
                         // Auto-clear confirmation after another 3s
                         const confirmTimer = setTimeout(() => {
@@ -271,7 +278,10 @@ class TaskRerollProtection {
      * @param {string} [message='Protected task! Unlocks in 3s...']
      * @private
      */
-    _showWarning(taskCard, message = 'Protected task! Unlocks in 3s...') {
+    _showWarning(
+        taskCard,
+        message = i18n.tDefault('tasks.protection.unlockWarning', 'Protected task! Unlocks in 3s...')
+    ) {
         this._clearWarning(taskCard);
 
         const warning = document.createElement('div');
@@ -459,7 +469,7 @@ class TaskRerollProtection {
             flex-shrink: 0;
         `;
         header.innerHTML = `
-            <span style="font-weight:700; font-size:14px; color:#4a9eff;">Protected Tasks</span>
+            <span style="font-weight:700; font-size:14px; color:#4a9eff;">${i18n.tDefault('tasks.protection.listTitle', 'Protected Tasks')}</span>
             <button id="mwi-task-protection-close" style="
                 background:none; border:none; color:#aaa; font-size:22px;
                 cursor:pointer; padding:0; line-height:1;">×</button>
@@ -470,7 +480,13 @@ class TaskRerollProtection {
         searchDiv.style.cssText = 'padding: 8px 14px; flex-shrink: 0;';
         const searchInput = document.createElement('input');
         searchInput.type = 'search';
-        searchInput.placeholder = 'Search actions, monsters, zones...';
+        i18n.bindDefault(
+            searchInput,
+            'tasks.searchActionsMonstersZones',
+            'Search actions, monsters, zones...',
+            undefined,
+            'placeholder'
+        );
         searchInput.style.cssText = `
             width: 100%;
             padding: 6px 10px;
@@ -502,8 +518,10 @@ class TaskRerollProtection {
 
             let html = '';
             if (!query && filtered.length === 0) {
-                html =
-                    '<div style="color:#666; text-align:center; padding:20px 0;">No protected tasks yet. Search to add.</div>';
+                html = `<div style="color:#666; text-align:center; padding:20px 0;">${i18n.tDefault(
+                    'tasks.protection.empty',
+                    'No protected tasks yet. Search to add.'
+                )}</div>`;
             }
 
             for (const item of filtered.slice(0, 50)) {
@@ -516,7 +534,7 @@ class TaskRerollProtection {
                     checkmark = allProtected ? '✓' : protectedCount > 0 ? '~' : '';
                     checkColor = protectedCount > 0 ? '#4a9eff' : '#444';
                     nameColor = protectedCount > 0 ? '#e0e0e0' : '#aaa';
-                    typeLabel = 'Zone (' + monsters.length + ')';
+                    typeLabel = i18n.tDefault('tasks.zoneCount', 'Zone ({count})', { count: monsters.length });
                 } else {
                     const isProtected = this.protectedHrids.has(item.hrid);
                     checkmark = isProtected ? '✓' : '';
@@ -539,7 +557,11 @@ class TaskRerollProtection {
             }
 
             if (filtered.length > 50) {
-                html += `<div style="color:#666; text-align:center; padding:8px;">...${filtered.length - 50} more (refine search)</div>`;
+                html += `<div style="color:#666; text-align:center; padding:8px;">${i18n.tDefault(
+                    'tasks.moreRefineSearch',
+                    '...{count} more (refine search)',
+                    { count: filtered.length - 50 }
+                )}</div>`;
             }
 
             listContainer.innerHTML = html;

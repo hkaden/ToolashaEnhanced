@@ -7,10 +7,12 @@
 
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import i18n from '../../core/i18n/index.js';
 import { getEnhancingParams } from '../../utils/enhancement-config.js';
 import { calculateEnhancement, BASE_SUCCESS_RATES } from '../../utils/enhancement-calculator.js';
 import { MIN_ACTION_TIME_SECONDS } from '../../utils/profit-constants.js';
 import { timeReadable, formatLargeNumber } from '../../utils/formatters.js';
+import { getLocalizedItemName } from '../../utils/localized-game-names.js';
 import marketAPI from '../../api/marketplace.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
 
@@ -190,9 +192,11 @@ function generateCostsByLevelTable(
 
     lines.push('<div style="margin-top: 12px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">');
     lines.push('<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">');
-    lines.push('<div style="color: #ffa500; font-weight: bold; font-size: 0.95em;">Costs by Enhancement Level:</div>');
     lines.push(
-        '<button id="mwi-expand-costs-table-btn" style="background: rgba(0, 255, 234, 0.1); border: 1px solid #00ffe7; color: #00ffe7; cursor: pointer; font-size: 18px; font-weight: bold; padding: 4px 10px; border-radius: 4px; transition: all 0.15s ease;" title="View full table">⤢</button>'
+        `<div style="color: #ffa500; font-weight: bold; font-size: 0.95em;">${i18n.tDefault('actProfit.enhCostsByLevel', 'Costs by Enhancement Level:')}</div>`
+    );
+    lines.push(
+        `<button id="mwi-expand-costs-table-btn" style="background: rgba(0, 255, 234, 0.1); border: 1px solid #00ffe7; color: #00ffe7; cursor: pointer; font-size: 18px; font-weight: bold; padding: 4px 10px; border-radius: 4px; transition: all 0.15s ease;" title="${i18n.tDefault('actProfit.enhViewFullTable', 'View full table')}">⤢</button>`
     );
     lines.push('</div>');
 
@@ -239,7 +243,7 @@ function generateCostsByLevelTable(
                 materialCost += itemCost;
 
                 // Store breakdown by item name with quantity and unit price
-                const itemName = itemDetail?.name || cost.itemHrid;
+                const itemName = getLocalizedItemName(cost.itemHrid, itemDetail?.name || cost.itemHrid);
                 materialBreakdown[itemName] = {
                     cost: itemCost,
                     quantity: quantity,
@@ -262,7 +266,10 @@ function generateCostsByLevelTable(
             }
 
             protectionCost = calc.protectionCount * protectionPrice;
-            const protectionName = protectionItemDetail?.name || protectionItemHrid;
+            const protectionName = getLocalizedItemName(
+                protectionItemHrid,
+                protectionItemDetail?.name || protectionItemHrid
+            );
             materialBreakdown[protectionName] = {
                 cost: protectionCost,
                 quantity: calc.protectionCount,
@@ -336,16 +343,16 @@ function generateCostsByLevelTable(
             '<div style="background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05)); border: 1px solid #FFD700; border-radius: 4px; padding: 8px; margin-bottom: 8px;">'
         );
         lines.push(
-            '<div style="color: #FFD700; font-weight: bold; font-size: 0.95em;">💎 Philosopher\'s Mirror Strategy:</div>'
+            `<div style="color: #FFD700; font-weight: bold; font-size: 0.95em;">💎 ${i18n.tDefault('actProfit.enhMirrorStrategy', "Philosopher's Mirror Strategy:")}</div>`
         );
         lines.push(
-            `<div style="color: #fff; font-size: 0.85em; margin-top: 4px;">• Use mirrors starting at <strong>+${mirrorStartLevel}</strong></div>`
+            `<div style="color: #fff; font-size: 0.85em; margin-top: 4px;">${i18n.tDefault('actProfit.enhUseMirrors', '• Use mirrors starting at <strong>+{level}</strong>', { level: mirrorStartLevel })}</div>`
         );
         lines.push(
-            `<div style="color: #88ff88; font-size: 0.85em;">• Total savings to +20: <strong>${formatLargeNumber(Math.round(totalSavings))}</strong> coins</div>`
+            `<div style="color: #88ff88; font-size: 0.85em;">${i18n.tDefault('actProfit.enhTotalSavings', '• Total savings to +20: <strong>{value}</strong> coins', { value: formatLargeNumber(Math.round(totalSavings)) })}</div>`
         );
         lines.push(
-            `<div style="color: #aaa; font-size: 0.75em; margin-top: 4px; font-style: italic;">Rows highlighted in gold show where mirror is cheaper</div>`
+            `<div style="color: #aaa; font-size: 0.75em; margin-top: 4px; font-style: italic;">${i18n.tDefault('actProfit.enhMirrorRowsNote', 'Rows highlighted in gold show where mirror is cheaper')}</div>`
         );
         lines.push('</div>');
     }
@@ -365,22 +372,30 @@ function generateCostsByLevelTable(
     lines.push(
         '<tr style="color: #888; border-bottom: 1px solid #444; position: sticky; top: 0; background: rgba(0,0,0,0.9);">'
     );
-    lines.push('<th style="text-align: left; padding: 4px;">Level</th>');
-    lines.push('<th style="text-align: right; padding: 4px;">Attempts</th>');
-    lines.push('<th style="text-align: right; padding: 4px;">Protection</th>');
+    lines.push(`<th style="text-align: left; padding: 4px;">${i18n.tDefault('actProfit.enhColLevel', 'Level')}</th>`);
+    lines.push(
+        `<th style="text-align: right; padding: 4px;">${i18n.tDefault('actProfit.enhColAttempts', 'Attempts')}</th>`
+    );
+    lines.push(
+        `<th style="text-align: right; padding: 4px;">${i18n.tDefault('actProfit.enhColProtection', 'Protection')}</th>`
+    );
 
     // Add material columns
     materialNames.forEach((matName) => {
         lines.push(`<th style="text-align: right; padding: 4px;">${matName}</th>`);
     });
 
-    lines.push('<th style="text-align: right; padding: 4px;">Time</th>');
-    lines.push('<th style="text-align: right; padding: 4px;">XP/hr</th>');
-    lines.push('<th style="text-align: right; padding: 4px;">Total Cost</th>');
+    lines.push(`<th style="text-align: right; padding: 4px;">${i18n.tDefault('actProfit.enhColTime', 'Time')}</th>`);
+    lines.push(`<th style="text-align: right; padding: 4px;">${i18n.tDefault('actProfit.enhColXpHr', 'XP/hr')}</th>`);
+    lines.push(
+        `<th style="text-align: right; padding: 4px;">${i18n.tDefault('actProfit.enhColTotalCost', 'Total Cost')}</th>`
+    );
 
     // Add Mirror Cost column if Philosopher's Mirror is equipped
     if (isPhilosopherMirror) {
-        lines.push('<th style="text-align: right; padding: 4px; color: #FFD700;">Mirror Cost</th>');
+        lines.push(
+            `<th style="text-align: right; padding: 4px; color: #FFD700;">${i18n.tDefault('actProfit.enhColMirrorCost', 'Mirror Cost')}</th>`
+        );
     }
 
     lines.push('</tr>');
@@ -446,7 +461,9 @@ function generateCostsByLevelTable(
                 );
             } else {
                 // Levels 1-2 cannot use mirrors
-                lines.push(`<td style="padding: 6px 4px; text-align: right; color: #666;">N/A</td>`);
+                lines.push(
+                    `<td style="padding: 6px 4px; text-align: right; color: #666;">${i18n.tDefault('actProfit.enhNotApplicable', 'N/A')}</td>`
+                );
             }
         }
 
@@ -515,20 +532,20 @@ function formatEnhancementDisplay(
     const isAutoDetect = config.getSettingValue('enhanceSim_autoDetect', false);
     lines.push(
         '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">' +
-            `<button id="mwi-enhance-mode-toggle" style="font-size: 0.7em; padding: 2px 7px; border-radius: 3px; border: 1px solid #888; background: rgba(0,0,0,0.3); color: #ccc; cursor: pointer;" title="Toggle between Auto-Detect and Manual modes">${isAutoDetect ? '🔍 Auto' : '✏️ Manual'}</button>` +
-            '<span style="color: #ffa500; font-weight: bold; font-size: 1.1em;">⚙️ ENHANCEMENT CALCULATOR</span>' +
+            `<button id="mwi-enhance-mode-toggle" style="font-size: 0.7em; padding: 2px 7px; border-radius: 3px; border: 1px solid #888; background: rgba(0,0,0,0.3); color: #ccc; cursor: pointer;" title="${i18n.tDefault('actProfit.enhToggleMode', 'Toggle between Auto-Detect and Manual modes')}">${isAutoDetect ? i18n.tDefault('actProfit.enhAutoBtn', '🔍 Auto') : i18n.tDefault('actProfit.enhManualBtn', '✏️ Manual')}</button>` +
+            `<span style="color: #ffa500; font-weight: bold; font-size: 1.1em;">⚙️ ${i18n.tDefault('actProfit.enhCalculatorTitle', 'ENHANCEMENT CALCULATOR')}</span>` +
             '</div>'
     );
 
     // Item info
     lines.push(
-        `<div style="color: #ddd; margin-bottom: 12px; font-weight: bold;">${itemDetails.name} <span style="color: #888;">(Item Level ${itemDetails.itemLevel})</span></div>`
+        `<div style="color: #ddd; margin-bottom: 12px; font-weight: bold;">${getLocalizedItemName(itemDetails.hrid, itemDetails.name)} <span style="color: #888;">(${i18n.tDefault('actProfit.enhItemLevel', 'Item Level {level}', { level: itemDetails.itemLevel })})</span></div>`
     );
 
     // Current stats section
     lines.push('<div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; margin-bottom: 12px;">');
     lines.push(
-        '<div style="color: #ffa500; font-weight: bold; margin-bottom: 6px; font-size: 0.95em;">Your Enhancing Stats:</div>'
+        `<div style="color: #ffa500; font-weight: bold; margin-bottom: 6px; font-size: 0.95em;">${i18n.tDefault('actProfit.enhYourStats', 'Your Enhancing Stats:')}</div>`
     );
 
     // Two column layout for stats
@@ -537,31 +554,31 @@ function formatEnhancementDisplay(
     // Left column
     lines.push('<div>');
     lines.push(
-        `<div style="color: #ccc;"><span style="color: #888;">Level:</span> ${Math.round(params.enhancingLevel - params.detectedTeaBonus)}${params.detectedTeaBonus > 0 ? ` <span style="color: #88ff88;">(+${params.detectedTeaBonus.toFixed(1)} tea)</span>` : ''}</div>`
+        `<div style="color: #ccc;"><span style="color: #888;">${i18n.tDefault('actProfit.enhLevelLabel', 'Level:')}</span> ${Math.round(params.enhancingLevel - params.detectedTeaBonus)}${params.detectedTeaBonus > 0 ? ` <span style="color: #88ff88;">${i18n.tDefault('actProfit.enhTeaSuffix', '(+{value} tea)', { value: params.detectedTeaBonus.toFixed(1) })}</span>` : ''}</div>`
     );
     lines.push(
-        `<div style="color: #ccc;"><span style="color: #888;">House:</span> Observatory Lvl ${params.houseLevel}</div>`
+        `<div style="color: #ccc;"><span style="color: #888;">${i18n.tDefault('actProfit.enhHouseLabel', 'House:')}</span> ${i18n.tDefault('actProfit.enhObservatoryLvl', 'Observatory Lvl {level}', { level: params.houseLevel })}</div>`
     );
 
     // Display each equipment slot
     if (params.toolSlot) {
         lines.push(
-            `<div style="color: #ccc;"><span style="color: #888;">Tool:</span> ${params.toolSlot.name}${params.toolSlot.enhancementLevel > 0 ? ` +${params.toolSlot.enhancementLevel}` : ''}</div>`
+            `<div style="color: #ccc;"><span style="color: #888;">${i18n.tDefault('actProfit.enhToolLabel', 'Tool:')}</span> ${params.toolSlot.name}${params.toolSlot.enhancementLevel > 0 ? ` +${params.toolSlot.enhancementLevel}` : ''}</div>`
         );
     }
     if (params.bodySlot) {
         lines.push(
-            `<div style="color: #ccc;"><span style="color: #888;">Body:</span> ${params.bodySlot.name}${params.bodySlot.enhancementLevel > 0 ? ` +${params.bodySlot.enhancementLevel}` : ''}</div>`
+            `<div style="color: #ccc;"><span style="color: #888;">${i18n.tDefault('actProfit.enhBodyLabel', 'Body:')}</span> ${params.bodySlot.name}${params.bodySlot.enhancementLevel > 0 ? ` +${params.bodySlot.enhancementLevel}` : ''}</div>`
         );
     }
     if (params.legsSlot) {
         lines.push(
-            `<div style="color: #ccc;"><span style="color: #888;">Legs:</span> ${params.legsSlot.name}${params.legsSlot.enhancementLevel > 0 ? ` +${params.legsSlot.enhancementLevel}` : ''}</div>`
+            `<div style="color: #ccc;"><span style="color: #888;">${i18n.tDefault('actProfit.enhLegsLabel', 'Legs:')}</span> ${params.legsSlot.name}${params.legsSlot.enhancementLevel > 0 ? ` +${params.legsSlot.enhancementLevel}` : ''}</div>`
         );
     }
     if (params.handsSlot) {
         lines.push(
-            `<div style="color: #ccc;"><span style="color: #888;">Hands:</span> ${params.handsSlot.name}${params.handsSlot.enhancementLevel > 0 ? ` +${params.handsSlot.enhancementLevel}` : ''}</div>`
+            `<div style="color: #ccc;"><span style="color: #888;">${i18n.tDefault('actProfit.enhHandsLabel', 'Hands:')}</span> ${params.handsSlot.name}${params.handsSlot.enhancementLevel > 0 ? ` +${params.handsSlot.enhancementLevel}` : ''}</div>`
         );
     }
     lines.push('</div>');
@@ -581,7 +598,7 @@ function formatEnhancementDisplay(
 
     if (totalSuccess > 0) {
         lines.push(
-            `<div class="mwi-enh-toggle" data-target="mwi-enh-success" style="color: #88ff88; cursor: pointer;"><span style="color: #888;">Success:</span> +${totalSuccess.toFixed(2)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
+            `<div class="mwi-enh-toggle" data-target="mwi-enh-success" style="color: #88ff88; cursor: pointer;"><span style="color: #888;">${i18n.tDefault('actProfit.enhSuccessLabel', 'Success:')}</span> +${totalSuccess.toFixed(2)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
         );
         lines.push('<div id="mwi-enh-success" style="display: none;">');
 
@@ -625,7 +642,7 @@ function formatEnhancementDisplay(
 
         if (equipmentSuccess > 0) {
             lines.push(
-                `<div style="color: #88ff88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Equipment:</span> +${equipmentSuccess.toFixed(2)}%</div>`
+                `<div style="color: #88ff88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhEquipmentLabel', 'Equipment:')}</span> +${equipmentSuccess.toFixed(2)}%</div>`
             );
             const successSlots = (params.slotBreakdown || []).filter((s) => s.success > 0);
             for (const slot of successSlots) {
@@ -637,18 +654,18 @@ function formatEnhancementDisplay(
         }
         if (houseSuccess > 0) {
             lines.push(
-                `<div style="color: #88ff88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">House (Observatory):</span> +${houseSuccess.toFixed(2)}%</div>`
+                `<div style="color: #88ff88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhHouseObservatory', 'House (Observatory):')}</span> +${houseSuccess.toFixed(2)}%</div>`
             );
         }
         const achievementSuccess = params.achievementSuccessBonus || 0;
         if (achievementSuccess > 0) {
             lines.push(
-                `<div style="color: #88ff88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Achievement:</span> +${achievementSuccess.toFixed(2)}%</div>`
+                `<div style="color: #88ff88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhAchievementLabel', 'Achievement:')}</span> +${achievementSuccess.toFixed(2)}%</div>`
             );
         }
         if (successLevelAdvantage > 0) {
             lines.push(
-                `<div style="color: #88ff88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Level advantage:</span> +${successLevelAdvantage.toFixed(2)}%</div>`
+                `<div style="color: #88ff88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhLevelAdvantageLabel', 'Level advantage:')}</span> +${successLevelAdvantage.toFixed(2)}%</div>`
             );
         }
         lines.push('</div>');
@@ -659,14 +676,14 @@ function formatEnhancementDisplay(
 
     if (totalSpeed > 0) {
         lines.push(
-            `<div class="mwi-enh-toggle" data-target="mwi-enh-speed" style="color: #88ccff; cursor: pointer;"><span style="color: #888;">Speed:</span> +${totalSpeed.toFixed(1)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
+            `<div class="mwi-enh-toggle" data-target="mwi-enh-speed" style="color: #88ccff; cursor: pointer;"><span style="color: #888;">${i18n.tDefault('actProfit.enhSpeedLabel', 'Speed:')}</span> +${totalSpeed.toFixed(1)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
         );
         lines.push('<div id="mwi-enh-speed" style="display: none;">');
 
         // Show breakdown from buff maps (each value is decimal, convert to %)
         if (speedBreakdown.equipment > 0) {
             lines.push(
-                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Equipment:</span> +${(speedBreakdown.equipment * 100).toFixed(1)}%</div>`
+                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhEquipmentLabel', 'Equipment:')}</span> +${(speedBreakdown.equipment * 100).toFixed(1)}%</div>`
             );
             const speedSlots = (params.slotBreakdown || []).filter((s) => s.speed > 0);
             for (const slot of speedSlots) {
@@ -678,53 +695,55 @@ function formatEnhancementDisplay(
         }
         if (speedBreakdown.house > 0) {
             lines.push(
-                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">House (Observatory):</span> +${(speedBreakdown.house * 100).toFixed(1)}%</div>`
+                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhHouseObservatory', 'House (Observatory):')}</span> +${(speedBreakdown.house * 100).toFixed(1)}%</div>`
             );
         }
         if (speedBreakdown.community > 0) {
             lines.push(
-                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Community:</span> +${(speedBreakdown.community * 100).toFixed(1)}%</div>`
+                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhCommunityLabel', 'Community:')}</span> +${(speedBreakdown.community * 100).toFixed(1)}%</div>`
             );
         }
         if (speedBreakdown.consumable > 0) {
             lines.push(
-                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Tea:</span> +${(speedBreakdown.consumable * 100).toFixed(1)}%</div>`
+                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhTeaLabel', 'Tea:')}</span> +${(speedBreakdown.consumable * 100).toFixed(1)}%</div>`
             );
         }
         if (speedBreakdown.personal > 0) {
             lines.push(
-                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Labyrinth:</span> +${(speedBreakdown.personal * 100).toFixed(1)}%</div>`
+                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhLabyrinthLabel', 'Labyrinth:')}</span> +${(speedBreakdown.personal * 100).toFixed(1)}%</div>`
             );
         }
         if (speedBreakdown.levelAdvantage > 0) {
             lines.push(
-                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Level advantage:</span> +${(speedBreakdown.levelAdvantage * 100).toFixed(1)}%</div>`
+                `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhLevelAdvantageLabel', 'Level advantage:')}</span> +${(speedBreakdown.levelAdvantage * 100).toFixed(1)}%</div>`
             );
         }
         lines.push('</div>');
     } else {
-        lines.push(`<div style="color: #88ccff;"><span style="color: #888;">Speed:</span> +0.0%</div>`);
+        lines.push(
+            `<div style="color: #88ccff;"><span style="color: #888;">${i18n.tDefault('actProfit.enhSpeedLabel', 'Speed:')}</span> +0.0%</div>`
+        );
     }
 
     // Base → effective action time
     lines.push(
-        `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Base:</span> ${baseTime.toFixed(2)}s → ${perActionTime.toFixed(2)}s</div>`
+        `<div style="color: #aaddff; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhBaseLabel', 'Base:')}</span> ${baseTime.toFixed(2)}s → ${perActionTime.toFixed(2)}s</div>`
     );
 
     if (params.teas.blessed) {
         const blessedBonus = 1.1;
         lines.push(
-            `<div class="mwi-enh-toggle" data-target="mwi-enh-blessed" style="color: #ffdd88; cursor: pointer;"><span style="color: #888;">Blessed:</span> +${blessedBonus.toFixed(1)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
+            `<div class="mwi-enh-toggle" data-target="mwi-enh-blessed" style="color: #ffdd88; cursor: pointer;"><span style="color: #888;">${i18n.tDefault('actProfit.enhBlessedLabel', 'Blessed:')}</span> +${blessedBonus.toFixed(1)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
         );
         lines.push('<div id="mwi-enh-blessed" style="display: none;">');
         lines.push(
-            `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Blessed Tea:</span> ${blessedBonus}% chance to skip a level</div>`
+            `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhBlessedTea', 'Blessed Tea:')}</span> ${i18n.tDefault('actProfit.enhSkipLevel', '{value}% chance to skip a level', { value: blessedBonus })}</div>`
         );
         lines.push('</div>');
     }
     if (params.rareFindBonus > 0) {
         lines.push(
-            `<div class="mwi-enh-toggle" data-target="mwi-enh-rarefind" style="color: #ffaa55; cursor: pointer;"><span style="color: #888;">Rare Find:</span> +${params.rareFindBonus.toFixed(1)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
+            `<div class="mwi-enh-toggle" data-target="mwi-enh-rarefind" style="color: #ffaa55; cursor: pointer;"><span style="color: #888;">${i18n.tDefault('actProfit.enhRareFindLabel', 'Rare Find:')}</span> +${params.rareFindBonus.toFixed(1)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
         );
         lines.push('<div id="mwi-enh-rarefind" style="display: none;">');
 
@@ -736,7 +755,7 @@ function formatEnhancementDisplay(
         );
         if (equipmentRareFind > 0) {
             lines.push(
-                `<div style="color: #ffaa55; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Equipment:</span> +${equipmentRareFind.toFixed(1)}%</div>`
+                `<div style="color: #ffaa55; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhEquipmentLabel', 'Equipment:')}</span> +${equipmentRareFind.toFixed(1)}%</div>`
             );
             const rfSlots = (params.slotBreakdown || []).filter((s) => s.rareFind > 0);
             for (const slot of rfSlots) {
@@ -748,19 +767,19 @@ function formatEnhancementDisplay(
         }
         if (params.houseRareFindBonus > 0) {
             lines.push(
-                `<div style="color: #ffaa55; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">House Rooms:</span> +${params.houseRareFindBonus.toFixed(1)}%</div>`
+                `<div style="color: #ffaa55; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhHouseRoomsLabel', 'House Rooms:')}</span> +${params.houseRareFindBonus.toFixed(1)}%</div>`
             );
         }
         if (achievementRareFind > 0) {
             lines.push(
-                `<div style="color: #ffaa55; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Achievement:</span> +${achievementRareFind.toFixed(1)}%</div>`
+                `<div style="color: #ffaa55; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhAchievementLabel', 'Achievement:')}</span> +${achievementRareFind.toFixed(1)}%</div>`
             );
         }
         lines.push('</div>');
     }
     if (params.experienceBonus > 0) {
         lines.push(
-            `<div class="mwi-enh-toggle" data-target="mwi-enh-experience" style="color: #ffdd88; cursor: pointer;"><span style="color: #888;">Experience:</span> +${params.experienceBonus.toFixed(1)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
+            `<div class="mwi-enh-toggle" data-target="mwi-enh-experience" style="color: #ffdd88; cursor: pointer;"><span style="color: #888;">${i18n.tDefault('actProfit.enhExperienceLabel', 'Experience:')}</span> +${params.experienceBonus.toFixed(1)}% <span class="mwi-enh-arrow" style="color: #666; font-size: 0.8em;">▸</span></div>`
         );
         lines.push('<div id="mwi-enh-experience" style="display: none;">');
 
@@ -776,7 +795,7 @@ function formatEnhancementDisplay(
 
         if (equipmentExperience > 0) {
             lines.push(
-                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Equipment:</span> +${equipmentExperience.toFixed(1)}%</div>`
+                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhEquipmentLabel', 'Equipment:')}</span> +${equipmentExperience.toFixed(1)}%</div>`
             );
             const expSlots = (params.slotBreakdown || []).filter((s) => s.experience > 0);
             for (const slot of expSlots) {
@@ -788,23 +807,23 @@ function formatEnhancementDisplay(
         }
         if (houseWisdom > 0) {
             lines.push(
-                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">House Rooms (Wisdom):</span> +${houseWisdom.toFixed(1)}%</div>`
+                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhHouseRoomsWisdom', 'House Rooms (Wisdom):')}</span> +${houseWisdom.toFixed(1)}%</div>`
             );
         }
         if (communityWisdom > 0) {
             const wisdomLevel = params.communityWisdomLevel || 0;
             lines.push(
-                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Community (Wisdom T${wisdomLevel}):</span> +${communityWisdom.toFixed(1)}%</div>`
+                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhCommunityWisdom', 'Community (Wisdom T{level}):', { level: wisdomLevel })}</span> +${communityWisdom.toFixed(1)}%</div>`
             );
         }
         if (teaWisdom > 0) {
             lines.push(
-                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Wisdom Tea:</span> +${teaWisdom.toFixed(1)}%</div>`
+                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhWisdomTea', 'Wisdom Tea:')}</span> +${teaWisdom.toFixed(1)}%</div>`
             );
         }
         if (achievementWisdom > 0) {
             lines.push(
-                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">Achievement:</span> +${achievementWisdom.toFixed(1)}%</div>`
+                `<div style="color: #ffdd88; font-size: 0.8em; padding-left: 10px;"><span style="color: #666;">${i18n.tDefault('actProfit.enhAchievementLabel', 'Achievement:')}</span> +${achievementWisdom.toFixed(1)}%</div>`
             );
         }
         lines.push('</div>');
@@ -830,7 +849,7 @@ function formatEnhancementDisplay(
     if (enhancementCosts && enhancementCosts.length > 0) {
         lines.push('<div style="margin-top: 12px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">');
         lines.push(
-            '<div style="color: #ffa500; font-weight: bold; margin-bottom: 6px; font-size: 0.95em;">Materials Per Attempt:</div>'
+            `<div style="color: #ffa500; font-weight: bold; margin-bottom: 6px; font-size: 0.95em;">${i18n.tDefault('actProfit.enhMaterialsPerAttempt', 'Materials Per Attempt:')}</div>`
         );
 
         // Get game data for item names
@@ -859,7 +878,7 @@ function formatEnhancementDisplay(
                 ? cost.count.toLocaleString()
                 : cost.count.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             lines.push(
-                `<div style="font-size: 0.85em; color: #ccc;">${formattedCount}× ${itemName} <span style="color: #888;">(@${itemPrice.toLocaleString()} → ${totalCost.toLocaleString()})</span></div>`
+                `<div style="font-size: 0.85em; color: #ccc;">${formattedCount}× ${getLocalizedItemName(cost.itemHrid, itemName)} <span style="color: #888;">(@${itemPrice.toLocaleString()} → ${totalCost.toLocaleString()})</span></div>`
             );
         });
 
@@ -879,7 +898,7 @@ function formatEnhancementDisplay(
                 }
 
                 lines.push(
-                    `<div style="font-size: 0.85em; color: #ffa500; margin-top: 4px;">1× ${protectionItemName} <span style="color: #888;">(if used) (@${protectionPrice.toLocaleString()})</span></div>`
+                    `<div style="font-size: 0.85em; color: #ffa500; margin-top: 4px;">1× ${getLocalizedItemName(protectionItemHrid, protectionItemName)} <span style="color: #888;">${i18n.tDefault('actProfit.enhIfUsed', '(if used)')} (@${protectionPrice.toLocaleString()})</span></div>`
                 );
             }
         }
@@ -892,15 +911,24 @@ function formatEnhancementDisplay(
 
     // Only show protection note if actually using protection
     if (protectFromLevel >= 2) {
-        lines.push(`• Protection active from +${protectFromLevel} onwards (enhancement level -1 on failure)<br>`);
+        lines.push(
+            `${i18n.tDefault('actProfit.enhProtectionActive', '• Protection active from +{level} onwards (enhancement level -1 on failure)', { level: protectFromLevel })}<br>`
+        );
     } else {
-        lines.push('• No protection used (all failures return to +0)<br>');
+        lines.push(
+            `${i18n.tDefault('actProfit.enhNoProtection', '• No protection used (all failures return to +0)')}<br>`
+        );
     }
 
-    lines.push('• Attempts and time are statistical averages<br>');
+    lines.push(
+        `${i18n.tDefault('actProfit.enhStatisticalAverages', '• Attempts and time are statistical averages')}<br>`
+    );
 
     lines.push(
-        `• Action time: ${perActionTime.toFixed(2)}s (includes ${(speedBreakdown.total * 100).toFixed(1)}% speed bonus)`
+        i18n.tDefault('actProfit.enhActionTime', '• Action time: {time}s (includes {speed}% speed bonus)', {
+            time: perActionTime.toFixed(2),
+            speed: (speedBreakdown.total * 100).toFixed(1),
+        })
     );
     lines.push('</div>');
 
@@ -1109,7 +1137,7 @@ function showCostsTableModal(container) {
 
     modal.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(0, 255, 234, 0.4); padding-bottom: 10px;">
-            <h2 style="margin: 0; color: #00ffe7; font-size: 20px;">📊 Costs by Enhancement Level</h2>
+            <h2 style="margin: 0; color: #00ffe7; font-size: 20px;">📊 ${i18n.tDefault('actProfit.enhCostsModalTitle', 'Costs by Enhancement Level')}</h2>
             <button id="mwi-close-costs-modal" style="
                 background: none;
                 border: none;
@@ -1119,10 +1147,10 @@ function showCostsTableModal(container) {
                 padding: 0 8px;
                 line-height: 1;
                 transition: all 0.15s ease;
-            " title="Close">×</button>
+            " title="${i18n.tDefault('actProfit.enhClose', 'Close')}">×</button>
         </div>
         <div style="color: #9b9bff; font-size: 0.9em; margin-bottom: 15px;">
-            Full breakdown of enhancement costs for all levels
+            ${i18n.tDefault('actProfit.enhFullBreakdown', 'Full breakdown of enhancement costs for all levels')}
         </div>
     `;
 

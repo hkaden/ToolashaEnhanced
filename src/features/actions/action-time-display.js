@@ -13,6 +13,7 @@
 
 import dataManager from '../../core/data-manager.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import domObserver from '../../core/dom-observer.js';
 import tooltipObserver from '../../core/tooltip-observer.js';
 import marketAPI from '../../api/marketplace.js';
@@ -299,7 +300,7 @@ class ActionTimeDisplay {
                 const actionObj = this.matchActionFromDiv(actionDiv, currentActions, usedActionIds);
 
                 if (!actionObj) {
-                    this.appendTimeToActionDiv(actionDiv, '[Unknown action]');
+                    this.appendTimeToActionDiv(actionDiv, i18n.tDefault('actProfit.unknownAction', '[Unknown action]'));
                     continue;
                 }
 
@@ -333,7 +334,9 @@ class ActionTimeDisplay {
                     const completionDate = new Date();
                     completionDate.setSeconds(completionDate.getSeconds() + accumulatedTime);
                     const isToday = completionDate.toDateString() === new Date().toDateString();
-                    timeText += ` Complete at ${formatCompletionTime(completionDate, !isToday)}`;
+                    timeText += i18n.tDefault('actProfit.completeAt', ' Complete at {time}', {
+                        time: formatCompletionTime(completionDate, !isToday),
+                    });
                 }
 
                 this.appendTimeToActionDiv(actionDiv, timeText);
@@ -356,9 +359,16 @@ class ActionTimeDisplay {
 
                 let totalText;
                 if (hasInfinite) {
-                    totalText = accumulatedTime > 0 ? `Total: ${timeReadable(accumulatedTime)} + [∞]` : 'Total: [∞]';
+                    totalText =
+                        accumulatedTime > 0
+                            ? i18n.tDefault('actProfit.tooltipTotalInf', 'Total: {time} + [∞]', {
+                                  time: timeReadable(accumulatedTime),
+                              })
+                            : i18n.tDefault('actProfit.tooltipTotalInfOnly', 'Total: [∞]');
                 } else {
-                    totalText = `Total: ${timeReadable(accumulatedTime)}`;
+                    totalText = i18n.tDefault('actProfit.tooltipTotal', 'Total: {time}', {
+                        time: timeReadable(accumulatedTime),
+                    });
                 }
                 totalDiv.textContent = totalText;
                 actionsContainer.appendChild(totalDiv);
@@ -507,13 +517,13 @@ class ActionTimeDisplay {
 
         // Derive limit label
         if (limitType === 'gold') {
-            limitLabel = 'gold';
+            limitLabel = i18n.tDefault('actProfit.limitGold', 'gold');
         } else if (limitType && limitType.startsWith('material:')) {
-            limitLabel = 'mat';
+            limitLabel = i18n.tDefault('actProfit.limitMat', 'mat');
         } else if (limitType && limitType.startsWith('upgrade:')) {
-            limitLabel = 'upgrade';
+            limitLabel = i18n.tDefault('actProfit.limitUpgrade', 'upgrade');
         } else {
-            limitLabel = 'max';
+            limitLabel = i18n.tDefault('actProfit.limitMax', 'max');
         }
 
         return {
@@ -1162,21 +1172,25 @@ class ActionTimeDisplay {
         // Queue count
         if (config.getSetting('actionBar_showQueueCount')) {
             if (queueSizeDisplay !== Infinity) {
-                statsToAppend.push(`(${queueSizeDisplay.toLocaleString()} queued)`);
+                statsToAppend.push(
+                    i18n.tDefault('actProfit.queuedCount', '({count} queued)', {
+                        count: queueSizeDisplay.toLocaleString(),
+                    })
+                );
             } else if (materialLimit !== null) {
                 let limitLabel = '';
                 if (limitType === 'gold') {
-                    limitLabel = 'gold limit';
+                    limitLabel = i18n.tDefault('actProfit.limitGoldLimit', 'gold limit');
                 } else if (limitType && limitType.startsWith('material:')) {
-                    limitLabel = 'mat limit';
+                    limitLabel = i18n.tDefault('actProfit.limitMatLimit', 'mat limit');
                 } else if (limitType && limitType.startsWith('upgrade:')) {
-                    limitLabel = 'upgrade limit';
+                    limitLabel = i18n.tDefault('actProfit.limitUpgradeLimit', 'upgrade limit');
                 } else {
-                    limitLabel = 'max';
+                    limitLabel = i18n.tDefault('actProfit.limitMax', 'max');
                 }
                 statsToAppend.push(`(∞ · ${limitLabel}: ${this.formatLargeNumber(materialLimit)})`);
             } else {
-                statsToAppend.push(`(∞)`);
+                statsToAppend.push('(∞)');
             }
         }
 
@@ -1188,7 +1202,10 @@ class ActionTimeDisplay {
         // Actions/hr and items/hr
         if (config.getSetting('actionBar_showActionsPerHour')) {
             statsToAppend.push(
-                `${actionsPerHourWithEfficiency.toFixed(0)} actions/hr (${itemsPerHour.toFixed(0)} items/hr)`
+                i18n.tDefault('actProfit.barActionsItems', '{actions} actions/hr ({items} items/hr)', {
+                    actions: actionsPerHourWithEfficiency.toFixed(0),
+                    items: itemsPerHour.toFixed(0),
+                })
             );
         }
 
@@ -1211,7 +1228,7 @@ class ActionTimeDisplay {
                 const recycleTimeStr = timeReadable(recycleTimeSeconds);
                 const recycleIsToday = recycleCompletion.toDateString() === new Date().toDateString();
                 const recycleClockTime = formatCompletionTime(recycleCompletion, !recycleIsToday);
-                recycleHtml = `<span style="color:#4dd0a0; margin-left:12px; font-size:11px;">Est. w/ recycle: ${recycleTimeStr} → ${recycleClockTime}</span>`;
+                recycleHtml = `<span style="color:#4dd0a0; margin-left:12px; font-size:11px;">${i18n.tDefault('actProfit.estRecycle', 'Est. w/ recycle: {time} → {clock}', { time: recycleTimeStr, clock: recycleClockTime })}</span>`;
             }
             this.displayElement.innerHTML = `<span style="display: inline-flex; flex-wrap: nowrap; align-items: baseline; gap: 0.25em;"><span>⏱</span>${matsLabel} ${timeStr} → ${clockTime}</span>${recycleHtml}`;
         } else {
@@ -1406,11 +1423,21 @@ class ActionTimeDisplay {
         if (config.getSetting('actionBar_showActionDuration')) {
             statsToAppend.push(`${perActionTime.toFixed(2)}s/action`);
         }
-        statsToAppend.push(`${actualSuccessRate.toFixed(1)}% success`);
-        statsToAppend.push(`~${formatWithSeparator(effectiveAttempts)} to target`);
+        statsToAppend.push(
+            i18n.tDefault('actProfit.statSuccess', '{value}% success', { value: actualSuccessRate.toFixed(1) })
+        );
+        statsToAppend.push(
+            i18n.tDefault('actProfit.statToTarget', '~{value} to target', {
+                value: formatWithSeparator(effectiveAttempts),
+            })
+        );
 
         if (protectFrom > 0 && effectiveProtections > 0) {
-            statsToAppend.push(`~${formatWithSeparator(effectiveProtections)} protections`);
+            statsToAppend.push(
+                i18n.tDefault('actProfit.statProtections', '~{value} protections', {
+                    value: formatWithSeparator(effectiveProtections),
+                })
+            );
         }
 
         this.appendStatsToActionName(actionNameElement, statsToAppend.join(' · '));
@@ -1432,8 +1459,8 @@ class ActionTimeDisplay {
             const clockTime = formatCompletionTime(completionTime, !isToday);
 
             const itemIconHtml = this.getItemIconHtml(limitingItemHrid);
-            const matsLabel = itemIconHtml ? `${itemIconHtml}:` : 'Mats:';
-            this.displayElement.innerHTML = `<span style="display: inline-flex; flex-wrap: nowrap; align-items: baseline; gap: 0.25em;"><span>⏱</span>${matsLabel} ${timeStr} → ${clockTime} (${formatWithSeparator(materialLimit)} actions)</span>`;
+            const matsLabel = itemIconHtml ? `${itemIconHtml}:` : i18n.tDefault('actProfit.matsLabel', 'Mats:');
+            this.displayElement.innerHTML = `<span style="display: inline-flex; flex-wrap: nowrap; align-items: baseline; gap: 0.25em;"><span>⏱</span>${matsLabel} ${timeStr} → ${clockTime} (${i18n.tDefault('actProfit.actionsCount', '{count} actions', { count: formatWithSeparator(materialLimit) })})</span>`;
         } else {
             this.displayElement.innerHTML = '';
         }
@@ -2199,7 +2226,7 @@ class ActionTimeDisplay {
                         font-size: 0.85em;
                         margin-top: 2px;
                     `;
-                    timeDiv.textContent = '[Unknown action]';
+                    timeDiv.textContent = i18n.tDefault('actProfit.unknownAction', '[Unknown action]');
 
                     const actionTextContainer = actionDiv.querySelector('[class*="QueuedActions_actionText"]');
                     if (actionTextContainer) {
@@ -2324,7 +2351,9 @@ class ActionTimeDisplay {
                     completionDate.setSeconds(completionDate.getSeconds() + accumulatedTime);
                     const isToday = completionDate.toDateString() === new Date().toDateString();
 
-                    completionText = ` Complete at ${formatCompletionTime(completionDate, !isToday)}`;
+                    completionText = i18n.tDefault('actProfit.completeAt', ' Complete at {time}', {
+                        time: formatCompletionTime(completionDate, !isToday),
+                    });
                 }
 
                 // Create time display element
@@ -2342,13 +2371,13 @@ class ActionTimeDisplay {
                     // Material-limited infinite action
                     let limitLabel = '';
                     if (limitType === 'gold') {
-                        limitLabel = 'gold';
+                        limitLabel = i18n.tDefault('actProfit.limitGold', 'gold');
                     } else if (limitType && limitType.startsWith('material:')) {
-                        limitLabel = 'mat';
+                        limitLabel = i18n.tDefault('actProfit.limitMat', 'mat');
                     } else if (limitType && limitType.startsWith('upgrade:')) {
-                        limitLabel = 'upgrade';
+                        limitLabel = i18n.tDefault('actProfit.limitUpgrade', 'upgrade');
                     } else {
-                        limitLabel = 'max';
+                        limitLabel = i18n.tDefault('actProfit.limitMax', 'max');
                     }
                     const timeStr = timeReadable(totalTime);
                     timeDiv.textContent = `[${timeStr} · ${limitLabel}: ${this.formatLargeNumber(materialLimit)}]${completionText}`;
@@ -2410,12 +2439,16 @@ class ActionTimeDisplay {
             if (hasInfinite) {
                 // Show finite time first, then add infinity indicator
                 if (accumulatedTime > 0) {
-                    totalText = `Total time: ${timeReadable(accumulatedTime)} + [∞]`;
+                    totalText = i18n.tDefault('actProfit.totalTimeInf', 'Total time: {time} + [∞]', {
+                        time: timeReadable(accumulatedTime),
+                    });
                 } else {
-                    totalText = 'Total time: [∞]';
+                    totalText = i18n.tDefault('actProfit.totalTimeInfOnly', 'Total time: [∞]');
                 }
             } else {
-                totalText = `Total time: ${timeReadable(accumulatedTime)}`;
+                totalText = i18n.tDefault('actProfit.totalTime', 'Total time: {time}', {
+                    time: timeReadable(accumulatedTime),
+                });
             }
 
             totalDiv.innerHTML = totalText;
@@ -2496,7 +2529,7 @@ class ActionTimeDisplay {
                                     ? config.getSettingValue('color_profit', '#4ade80')
                                     : config.getSettingValue('color_loss', '#f87171');
                             const profitSign = actionProfit >= 0 ? '+' : '';
-                            profitDiv.innerHTML = `Profit: <span style="color: ${profitColor};">${profitSign}${this.formatLargeNumber(Math.abs(Math.round(actionProfit)))}</span>`;
+                            profitDiv.innerHTML = `${i18n.tDefault('actProfit.profitLabel', 'Profit:')} <span style="color: ${profitColor};">${profitSign}${this.formatLargeNumber(Math.abs(Math.round(actionProfit)))}</span>`;
                         }
                     }
                 }
@@ -2515,7 +2548,9 @@ class ActionTimeDisplay {
                         ? config.getSettingValue('color_profit', '#4ade80')
                         : config.getSettingValue('color_loss', '#f87171');
                 const valueSign = totalProfit >= 0 ? '+' : '';
-                const valueLabel = isEstimatedValue ? 'Estimated value' : 'Total profit';
+                const valueLabel = isEstimatedValue
+                    ? i18n.tDefault('actProfit.estimatedValue', 'Estimated value')
+                    : i18n.tDefault('actProfit.totalProfitLabel', 'Total profit');
                 const valueText = `<br>${valueLabel}: <span style="color: ${valueColor};">${valueSign}${this.formatLargeNumber(Math.abs(Math.round(totalProfit)))}</span>`;
                 totalDiv.innerHTML = baseText + valueText;
             }
@@ -2685,7 +2720,7 @@ class ActionTimeDisplay {
                     : config.getSettingValue('color_loss', '#f87171');
             const sign = profitPerHour >= 0 ? '+' : '';
 
-            let html = `<span style="color:#888;">Profit:</span> <span style="color:${profitColor}; font-weight:600;">${sign}${this.formatLargeNumber(Math.abs(Math.round(profitPerHour)))}/hr</span>`;
+            let html = `<span style="color:#888;">${i18n.tDefault('actProfit.profitLabel', 'Profit:')}</span> <span style="color:${profitColor}; font-weight:600;">${sign}${this.formatLargeNumber(Math.abs(Math.round(profitPerHour)))}/hr</span>`;
 
             if (isFinite(remainingActions) && remainingActions > 0 && profitData.actionsPerHour > 0) {
                 const profitPerAction =
@@ -2696,7 +2731,7 @@ class ActionTimeDisplay {
                         ? config.getSettingValue('color_profit', '#4ade80')
                         : config.getSettingValue('color_loss', '#f87171');
                 const remSign = remainingProfit >= 0 ? '+' : '';
-                html += ` <span style="color:#888;">·</span> <span style="color:#888;">remaining</span> <span style="color:${remColor}; font-weight:600;">${remSign}${this.formatLargeNumber(Math.abs(Math.round(remainingProfit)))}</span>`;
+                html += ` <span style="color:#888;">·</span> <span style="color:#888;">${i18n.tDefault('actProfit.remaining', 'remaining')}</span> <span style="color:${remColor}; font-weight:600;">${remSign}${this.formatLargeNumber(Math.abs(Math.round(remainingProfit)))}</span>`;
             }
 
             if (this.activeBarProfitId !== calcId) return;

@@ -8,6 +8,7 @@
 // Core modules
 import storage from '../core/storage.js';
 import config from '../core/config.js';
+import i18n from '../core/i18n/index.js';
 import webSocketHook from '../core/websocket.js';
 import domObserver from '../core/dom-observer.js';
 import dataManager from '../core/data-manager.js';
@@ -32,6 +33,7 @@ if (typeof unsafeWindow !== 'undefined') {
 toolashaRoot.Core = {
     storage,
     config,
+    i18n,
     webSocketHook,
     domObserver,
     dataManager,

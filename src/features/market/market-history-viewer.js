@@ -12,6 +12,8 @@
 import storage from '../../core/storage.js';
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import i18n from '../../core/i18n/index.js';
+import { resolveItemHridFromLocalizedName, getLocalizedItemName } from '../../utils/localized-game-names.js';
 import { formatWithSeparator, formatKMB, formatDateTime } from '../../utils/formatters.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
@@ -166,7 +168,7 @@ class MarketHistoryViewer {
             if (badgeSpan) {
                 badgeSpan.innerHTML = `
                     <div style="text-align: center;">
-                        <div>Market History</div>
+                        <div>${i18n.tDefault('market.history.tabBadge', 'Market History')}</div>
                     </div>
                 `;
             }
@@ -716,7 +718,7 @@ class MarketHistoryViewer {
         `;
 
         const title = document.createElement('h2');
-        title.textContent = 'Market History';
+        i18n.bindDefault(title, 'market.history.title', 'Market History');
         title.style.cssText = `
             margin: 0;
             color: #fff;
@@ -805,7 +807,7 @@ class MarketHistoryViewer {
         // Search box
         const searchBox = document.createElement('input');
         searchBox.type = 'text';
-        searchBox.placeholder = 'Search items...';
+        i18n.bindDefault(searchBox, 'market.history.searchPlaceholder', 'Search items...', undefined, 'placeholder');
         searchBox.value = this.searchTerm;
         searchBox.className = 'mwi-search-box';
         searchBox.style.cssText = `
@@ -832,9 +834,9 @@ class MarketHistoryViewer {
             color: #fff;
         `;
         const typeOptions = [
-            { value: 'all', label: 'All Types' },
-            { value: 'buy', label: 'Buy Orders' },
-            { value: 'sell', label: 'Sell Orders' },
+            { value: 'all', label: i18n.tDefault('market.history.typeAll', 'All Types') },
+            { value: 'buy', label: i18n.tDefault('market.history.typeBuy', 'Buy Orders') },
+            { value: 'sell', label: i18n.tDefault('market.history.typeSell', 'Sell Orders') },
         ];
         typeOptions.forEach((opt) => {
             const option = document.createElement('option');
@@ -861,13 +863,13 @@ class MarketHistoryViewer {
             color: #fff;
         `;
         const statusOptions = [
-            { value: 'all', label: 'All Statuses' },
-            { value: 'active', label: 'Active Only' },
-            { value: 'filled', label: 'Filled Only' },
-            { value: 'filled_active', label: 'Filled or Active' },
-            { value: 'canceled', label: 'Canceled Only' },
-            { value: 'expired', label: 'Expired Only' },
-            { value: 'unknown', label: 'Unknown Only' },
+            { value: 'all', label: i18n.tDefault('market.history.statusAll', 'All Statuses') },
+            { value: 'active', label: i18n.tDefault('market.history.statusActiveOnly', 'Active Only') },
+            { value: 'filled', label: i18n.tDefault('market.history.statusFilledOnly', 'Filled Only') },
+            { value: 'filled_active', label: i18n.tDefault('market.history.statusFilledActive', 'Filled or Active') },
+            { value: 'canceled', label: i18n.tDefault('market.history.statusCanceledOnly', 'Canceled Only') },
+            { value: 'expired', label: i18n.tDefault('market.history.statusExpiredOnly', 'Expired Only') },
+            { value: 'unknown', label: i18n.tDefault('market.history.statusUnknownOnly', 'Unknown Only') },
         ];
         statusOptions.forEach((opt) => {
             const option = document.createElement('option');
@@ -910,7 +912,7 @@ class MarketHistoryViewer {
 
         // Export button
         const exportBtn = document.createElement('button');
-        exportBtn.textContent = 'Export CSV';
+        i18n.bindDefault(exportBtn, 'market.history.exportCsv', 'Export CSV');
         exportBtn.style.cssText = `
             padding: 6px 12px;
             background: #4a90e2;
@@ -923,7 +925,7 @@ class MarketHistoryViewer {
 
         // Import button
         const importBtn = document.createElement('button');
-        importBtn.textContent = 'Import Market Data';
+        i18n.bindDefault(importBtn, 'market.history.importData', 'Import Market Data');
         importBtn.style.cssText = `
             padding: 6px 12px;
             background: #9b59b6;
@@ -936,7 +938,7 @@ class MarketHistoryViewer {
 
         // Clear History button (destructive action - red)
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = 'Clear History';
+        i18n.bindDefault(clearBtn, 'market.history.clearHistory', 'Clear History');
         clearBtn.style.cssText = `
             padding: 6px 12px;
             background: #dc2626;
@@ -983,7 +985,7 @@ class MarketHistoryViewer {
 
         const kmbLabel = document.createElement('label');
         kmbLabel.htmlFor = 'mwi-kmb-format';
-        kmbLabel.textContent = 'K/M/B Format';
+        kmbLabel.textContent = i18n.tDefault('market.history.kmbFormat', 'K/M/B Format');
         kmbLabel.style.cssText = `
             cursor: pointer;
             color: #aaa;
@@ -1002,7 +1004,9 @@ class MarketHistoryViewer {
             font-size: 14px;
             white-space: nowrap;
         `;
-        stats.textContent = `Total: ${this.filteredListings.length} listings`;
+        stats.textContent = i18n.tDefault('market.history.totalListings', 'Total: {count} listings', {
+            count: this.filteredListings.length,
+        });
 
         rightGroup.appendChild(kmbLabel);
         rightGroup.appendChild(stats);
@@ -1025,7 +1029,9 @@ class MarketHistoryViewer {
     updateStats() {
         const stats = this.modal.querySelector('.mwi-market-history-stats');
         if (stats) {
-            stats.textContent = `Total: ${this.filteredListings.length} listings`;
+            stats.textContent = i18n.tDefault('market.history.totalListings', 'Total: {count} listings', {
+                count: this.filteredListings.length,
+            });
         }
 
         // Update Clear All Filters button visibility
@@ -1059,7 +1065,7 @@ class MarketHistoryViewer {
                 dateText.push(formatDateTime(this.filters.dateTo, { includeTime: false }));
             }
             badges.push({
-                label: `Date: ${dateText.join(' - ')}`,
+                label: i18n.tDefault('market.history.badgeDate', 'Date: {range}', { range: dateText.join(' - ') }),
                 onRemove: () => {
                     this.filters.dateFrom = null;
                     this.filters.dateTo = null;
@@ -1074,7 +1080,10 @@ class MarketHistoryViewer {
         if (this.filters.selectedItems.length > 0) {
             if (this.filters.selectedItems.length === 1) {
                 badges.push({
-                    label: this.getItemName(this.filters.selectedItems[0]),
+                    label: getLocalizedItemName(
+                        this.filters.selectedItems[0],
+                        this.getItemName(this.filters.selectedItems[0])
+                    ),
                     icon: this.filters.selectedItems[0],
                     onRemove: () => {
                         this.filters.selectedItems = [];
@@ -1085,7 +1094,9 @@ class MarketHistoryViewer {
                 });
             } else {
                 badges.push({
-                    label: `${this.filters.selectedItems.length} items selected`,
+                    label: i18n.tDefault('market.history.badgeItemsSelected', '{count} items selected', {
+                        count: this.filters.selectedItems.length,
+                    }),
                     icon: this.filters.selectedItems[0], // Show first item's icon
                     onRemove: () => {
                         this.filters.selectedItems = [];
@@ -1101,9 +1112,10 @@ class MarketHistoryViewer {
         if (this.filters.selectedEnhLevels.length > 0) {
             const levels = this.filters.selectedEnhLevels.sort((a, b) => a - b);
             if (levels.length === 1) {
-                const levelText = levels[0] > 0 ? `+${levels[0]}` : 'No Enhancement';
+                const levelText =
+                    levels[0] > 0 ? `+${levels[0]}` : i18n.tDefault('market.history.noEnhancement', 'No Enhancement');
                 badges.push({
-                    label: `Enh Lvl: ${levelText}`,
+                    label: i18n.tDefault('market.history.badgeEnhLvl', 'Enh Lvl: {level}', { level: levelText }),
                     onRemove: () => {
                         this.filters.selectedEnhLevels = [];
                         this.saveFilters();
@@ -1113,7 +1125,9 @@ class MarketHistoryViewer {
                 });
             } else {
                 badges.push({
-                    label: `Enh Lvl: ${levels.length} selected`,
+                    label: i18n.tDefault('market.history.badgeEnhLvlSelected', 'Enh Lvl: {count} selected', {
+                        count: levels.length,
+                    }),
                     onRemove: () => {
                         this.filters.selectedEnhLevels = [];
                         this.saveFilters();
@@ -1127,7 +1141,11 @@ class MarketHistoryViewer {
         // Type filters
         if (this.filters.selectedTypes.length > 0 && this.filters.selectedTypes.length < 2) {
             badges.push({
-                label: `Type: ${this.filters.selectedTypes.includes('buy') ? 'Buy' : 'Sell'}`,
+                label: i18n.tDefault('market.history.badgeType', 'Type: {type}', {
+                    type: this.filters.selectedTypes.includes('buy')
+                        ? i18n.tDefault('market.history.buy', 'Buy')
+                        : i18n.tDefault('market.history.sell', 'Sell'),
+                }),
                 onRemove: () => {
                     this.filters.selectedTypes = [];
                     this.saveFilters();
@@ -1218,7 +1236,7 @@ class MarketHistoryViewer {
             // Create button
             const clearFiltersBtn = document.createElement('button');
             clearFiltersBtn.className = 'mwi-clear-filters-button';
-            clearFiltersBtn.textContent = 'Clear All Filters';
+            i18n.bindDefault(clearFiltersBtn, 'market.history.clearAllFilters', 'Clear All Filters');
             clearFiltersBtn.style.cssText = `
                 padding: 6px 12px;
                 background: #e67e22;
@@ -1275,15 +1293,15 @@ class MarketHistoryViewer {
         `;
 
         const columns = [
-            { key: 'createdTimestamp', label: 'Date' },
-            { key: 'itemHrid', label: 'Item' },
-            { key: 'enhancementLevel', label: 'Enh Lvl' },
-            { key: 'isSell', label: 'Type' },
-            { key: 'status', label: 'Status' },
-            { key: 'price', label: 'Price' },
-            { key: 'orderQuantity', label: 'Quantity' },
-            { key: 'filledQuantity', label: 'Filled' },
-            { key: 'total', label: 'Total' },
+            { key: 'createdTimestamp', label: i18n.tDefault('market.history.colDate', 'Date') },
+            { key: 'itemHrid', label: i18n.tDefault('market.history.colItem', 'Item') },
+            { key: 'enhancementLevel', label: i18n.tDefault('market.history.colEnhLvl', 'Enh Lvl') },
+            { key: 'isSell', label: i18n.tDefault('market.history.colType', 'Type') },
+            { key: 'status', label: i18n.tDefault('market.history.colStatus', 'Status') },
+            { key: 'price', label: i18n.tDefault('market.history.colPrice', 'Price') },
+            { key: 'orderQuantity', label: i18n.tDefault('market.history.colQuantity', 'Quantity') },
+            { key: 'filledQuantity', label: i18n.tDefault('market.history.colFilled', 'Filled') },
+            { key: 'total', label: i18n.tDefault('market.history.colTotal', 'Total') },
             { key: '_delete', label: '' },
         ];
 
@@ -1379,7 +1397,7 @@ class MarketHistoryViewer {
             const row = document.createElement('tr');
             const cell = document.createElement('td');
             cell.colSpan = columns.length;
-            cell.textContent = 'No listings found';
+            cell.textContent = i18n.tDefault('market.history.noListings', 'No listings found');
             cell.style.cssText = `
                 padding: 20px;
                 text-align: center;
@@ -1431,7 +1449,7 @@ class MarketHistoryViewer {
 
                 // Add text
                 const textSpan = document.createElement('span');
-                textSpan.textContent = this.getItemName(listing.itemHrid);
+                textSpan.textContent = getLocalizedItemName(listing.itemHrid, this.getItemName(listing.itemHrid));
                 itemCell.appendChild(textSpan);
 
                 row.appendChild(itemCell);
@@ -1444,7 +1462,9 @@ class MarketHistoryViewer {
 
                 // Type
                 const typeCell = document.createElement('td');
-                typeCell.textContent = listing.isSell ? 'Sell' : 'Buy';
+                typeCell.textContent = listing.isSell
+                    ? i18n.tDefault('market.history.sell', 'Sell')
+                    : i18n.tDefault('market.history.buy', 'Buy');
                 typeCell.style.cssText = `
                     padding: 4px 10px;
                     color: ${listing.isSell ? '#4ade80' : '#60a5fa'};
@@ -1454,7 +1474,8 @@ class MarketHistoryViewer {
                 // Status
                 const statusCell = document.createElement('td');
                 const status = listing.status || 'unknown';
-                statusCell.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                const statusFallback = status.charAt(0).toUpperCase() + status.slice(1);
+                statusCell.textContent = i18n.tDefault(`market.history.status_${status}`, statusFallback);
                 const statusColors = {
                     active: '#60a5fa',
                     filled: '#4ade80',
@@ -1499,7 +1520,7 @@ class MarketHistoryViewer {
                 deleteCell.style.cssText = 'padding: 4px 6px; text-align: center;';
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = '✕';
-                deleteBtn.title = 'Delete this listing';
+                i18n.bindDefault(deleteBtn, 'market.history.deleteListing', 'Delete this listing', undefined, 'title');
                 deleteBtn.style.cssText = `
                     background: none;
                     border: none;
@@ -1557,7 +1578,7 @@ class MarketHistoryViewer {
         `;
 
         const label = document.createElement('span');
-        label.textContent = 'Rows per page:';
+        i18n.bindDefault(label, 'market.history.rowsPerPage', 'Rows per page:');
 
         const rowsInput = document.createElement('input');
         rowsInput.type = 'number';
@@ -1594,7 +1615,7 @@ class MarketHistoryViewer {
         });
 
         const showAllLabel = document.createElement('label');
-        showAllLabel.textContent = 'Show All';
+        showAllLabel.textContent = i18n.tDefault('market.history.showAll', 'Show All');
         showAllLabel.style.cssText = `
             cursor: pointer;
             color: #aaa;
@@ -1636,7 +1657,10 @@ class MarketHistoryViewer {
             });
 
             const pageInfo = document.createElement('span');
-            pageInfo.textContent = `Page ${this.currentPage} of ${totalPages}`;
+            pageInfo.textContent = i18n.tDefault('market.history.pageInfo', 'Page {current} of {total}', {
+                current: this.currentPage,
+                total: totalPages,
+            });
 
             const nextBtn = document.createElement('button');
             nextBtn.textContent = '▶';
@@ -1661,7 +1685,9 @@ class MarketHistoryViewer {
             rightSide.appendChild(nextBtn);
         } else {
             const showingInfo = document.createElement('span');
-            showingInfo.textContent = `Showing all ${this.filteredListings.length} listings`;
+            showingInfo.textContent = i18n.tDefault('market.history.showingAll', 'Showing all {count} listings', {
+                count: this.filteredListings.length,
+            });
             rightSide.appendChild(showingInfo);
         }
 
@@ -1737,7 +1763,11 @@ class MarketHistoryViewer {
                 z-index: 10001;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             `;
-            progressMsg.textContent = `Importing ${lines.length - 1} listings from CSV...`;
+            progressMsg.textContent = i18n.tDefault(
+                'market.history.importingCsv',
+                'Importing {count} listings from CSV...',
+                { count: lines.length - 1 }
+            );
             document.body.appendChild(progressMsg);
 
             // Load existing listings
@@ -1801,8 +1831,8 @@ class MarketHistoryViewer {
                     continue;
                 }
 
-                // Find item HRID from name
-                const itemHrid = itemNameToHrid[itemName];
+                // Find item HRID from name (fall back to the game's localized name table)
+                const itemHrid = itemNameToHrid[itemName] || resolveItemHridFromLocalizedName(itemName);
                 if (!itemHrid) {
                     console.warn(`[MarketHistoryViewer] Could not find HRID for item: ${itemName}`);
                     skipped++;
@@ -1834,7 +1864,11 @@ class MarketHistoryViewer {
 
             // Show success message
             alert(
-                `Import complete!\n\nImported: ${imported} new listings\nSkipped: ${skipped} duplicates or invalid rows\nTotal: ${existingListings.length} listings`
+                i18n.tDefault(
+                    'market.history.importCompleteCsv',
+                    'Import complete!\n\nImported: {imported} new listings\nSkipped: {skipped} duplicates or invalid rows\nTotal: {total} listings',
+                    { imported, skipped, total: existingListings.length }
+                )
             );
 
             // Reload and render table
@@ -1871,7 +1905,9 @@ class MarketHistoryViewer {
                 }
             } catch (error) {
                 console.error('[MarketHistoryViewer] Import failed:', error);
-                alert(`Import failed: ${error.message}`);
+                alert(
+                    i18n.tDefault('market.history.importFailed', 'Import failed: {message}', { message: error.message })
+                );
             }
         });
 
@@ -1893,8 +1929,10 @@ class MarketHistoryViewer {
             const trimmed = jsonText.trim();
             if (trimmed.startsWith('{') && !trimmed.endsWith('}')) {
                 throw new Error(
-                    'File appears to be truncated or incomplete. The JSON does not end properly. ' +
-                        'Try exporting from Edible Tools again, or export to CSV from the Market History Viewer and import that instead.'
+                    i18n.tDefault(
+                        'market.history.errorTruncated',
+                        'File appears to be truncated or incomplete. The JSON does not end properly. Try exporting from Edible Tools again, or export to CSV from the Market History Viewer and import that instead.'
+                    )
                 );
             }
 
@@ -1917,21 +1955,28 @@ class MarketHistoryViewer {
                 else if (Array.isArray(data.market_list)) {
                     marketList = data.market_list;
                 } else {
-                    throw new Error('market_list must be an array or JSON string containing an array');
+                    throw new Error(
+                        i18n.tDefault(
+                            'market.history.errorMarketListType',
+                            'market_list must be an array or JSON string containing an array'
+                        )
+                    );
                 }
             }
             // Unrecognized format
             else {
                 throw new Error(
-                    'Unrecognized format. Expected:\n' +
-                        '- Direct array: [{listing1}, {listing2}, ...]\n' +
-                        '- Object format: {"market_list": [...]}\n' +
-                        '- Edible Tools format: {"market_list": "[...]"}'
+                    i18n.tDefault(
+                        'market.history.errorUnrecognizedFormat',
+                        'Unrecognized format. Expected:\n- Direct array: [{listing1}, {listing2}, ...]\n- Object format: {"market_list": [...]}\n- Edible Tools format: {"market_list": "[...]"}'
+                    )
                 );
             }
 
             if (!Array.isArray(marketList) || marketList.length === 0) {
-                throw new Error('No listings found in file or array is empty');
+                throw new Error(
+                    i18n.tDefault('market.history.errorNoListingsInFile', 'No listings found in file or array is empty')
+                );
             }
 
             // Show progress message
@@ -1948,7 +1993,13 @@ class MarketHistoryViewer {
                 z-index: 10001;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             `;
-            progressMsg.textContent = `Importing ${marketList.length} listings...`;
+            progressMsg.textContent = i18n.tDefault(
+                'market.history.importingListings',
+                'Importing {count} listings...',
+                {
+                    count: marketList.length,
+                }
+            );
             document.body.appendChild(progressMsg);
 
             // Convert imported format to Toolasha format
@@ -1990,7 +2041,11 @@ class MarketHistoryViewer {
 
             // Show success message
             alert(
-                `Import complete!\n\nImported: ${imported} new listings\nSkipped: ${skipped} duplicates\nTotal: ${existingListings.length} listings`
+                i18n.tDefault(
+                    'market.history.importComplete',
+                    'Import complete!\n\nImported: {imported} new listings\nSkipped: {skipped} duplicates\nTotal: {total} listings',
+                    { imported, skipped, total: existingListings.length }
+                )
             );
 
             // Reload and render table
@@ -2019,11 +2074,11 @@ class MarketHistoryViewer {
     async clearHistory() {
         // Strong confirmation dialog
         const confirmed = confirm(
-            `⚠️ WARNING: This will permanently delete ALL market history data!\n` +
-                `You are about to delete ${this.listings.length} listings.\n` +
-                `RECOMMENDATION: Export to CSV first using the "Export CSV" button.\n` +
-                `This action CANNOT be undone!\n` +
-                `Are you absolutely sure you want to continue?`
+            i18n.tDefault(
+                'market.history.clearConfirm',
+                '⚠️ WARNING: This will permanently delete ALL market history data!\nYou are about to delete {count} listings.\nRECOMMENDATION: Export to CSV first using the "Export CSV" button.\nThis action CANNOT be undone!\nAre you absolutely sure you want to continue?',
+                { count: this.listings.length }
+            )
         );
 
         if (!confirmed) {
@@ -2042,14 +2097,18 @@ class MarketHistoryViewer {
             await estimatedListingAge.loadHistoricalData();
 
             // Show success message
-            alert('Market history cleared successfully.');
+            alert(i18n.tDefault('market.history.clearSuccess', 'Market history cleared successfully.'));
 
             // Reload and render table (will show empty state)
             await this.loadListings();
             this.renderTable();
         } catch (error) {
             console.error('[MarketHistoryViewer] Failed to clear history:', error);
-            alert(`Failed to clear history: ${error.message}`);
+            alert(
+                i18n.tDefault('market.history.clearFailed', 'Failed to clear history: {message}', {
+                    message: error.message,
+                })
+            );
         }
     }
 
@@ -2242,7 +2301,7 @@ class MarketHistoryViewer {
 
         // Title
         const title = document.createElement('div');
-        title.textContent = 'Filter by Date';
+        title.textContent = i18n.tDefault('market.history.filterByDate', 'Filter by Date');
         title.style.cssText = `
             color: #fff;
             font-weight: bold;
@@ -2280,13 +2339,16 @@ class MarketHistoryViewer {
                 background: #1a1a1a;
                 border-radius: 3px;
             `;
-            rangeInfo.textContent = `Available: ${formatDateTime(minDate, { includeTime: false })} - ${formatDateTime(maxDate, { includeTime: false })}`;
+            rangeInfo.textContent = i18n.tDefault('market.history.dateAvailable', 'Available: {from} - {to}', {
+                from: formatDateTime(minDate, { includeTime: false }),
+                to: formatDateTime(maxDate, { includeTime: false }),
+            });
             popup.appendChild(rangeInfo);
         }
 
         // From date
         const fromLabel = document.createElement('label');
-        fromLabel.textContent = 'From:';
+        fromLabel.textContent = i18n.tDefault('market.history.from', 'From:');
         fromLabel.style.cssText = `
             display: block;
             color: #aaa;
@@ -2311,7 +2373,7 @@ class MarketHistoryViewer {
 
         // To date
         const toLabel = document.createElement('label');
-        toLabel.textContent = 'To:';
+        toLabel.textContent = i18n.tDefault('market.history.to', 'To:');
         toLabel.style.cssText = `
             display: block;
             color: #aaa;
@@ -2343,7 +2405,7 @@ class MarketHistoryViewer {
         `;
 
         const applyBtn = document.createElement('button');
-        applyBtn.textContent = 'Apply';
+        applyBtn.textContent = i18n.tDefault('market.history.apply', 'Apply');
         applyBtn.style.cssText = `
             flex: 1;
             padding: 6px;
@@ -2365,7 +2427,7 @@ class MarketHistoryViewer {
         });
 
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = 'Clear';
+        clearBtn.textContent = i18n.tDefault('market.history.clear', 'Clear');
         clearBtn.style.cssText = `
             flex: 1;
             padding: 6px;
@@ -2418,7 +2480,7 @@ class MarketHistoryViewer {
 
         // Title
         const title = document.createElement('div');
-        title.textContent = 'Filter by Item';
+        title.textContent = i18n.tDefault('market.history.filterByItem', 'Filter by Item');
         title.style.cssText = `
             color: #fff;
             font-weight: bold;
@@ -2429,7 +2491,7 @@ class MarketHistoryViewer {
         // Search box
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.placeholder = 'Search items...';
+        searchInput.placeholder = i18n.tDefault('market.history.searchPlaceholder', 'Search items...');
         searchInput.style.cssText = `
             width: 100%;
             padding: 6px;
@@ -2447,7 +2509,7 @@ class MarketHistoryViewer {
         const itemHrids = [...new Set(filteredListings.map((l) => l.itemHrid))];
         const itemsWithNames = itemHrids.map((hrid) => ({
             hrid,
-            name: this.getItemName(hrid),
+            name: getLocalizedItemName(hrid, this.getItemName(hrid)),
         }));
         itemsWithNames.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -2516,7 +2578,7 @@ class MarketHistoryViewer {
         `;
 
         const applyBtn = document.createElement('button');
-        applyBtn.textContent = 'Apply';
+        applyBtn.textContent = i18n.tDefault('market.history.apply', 'Apply');
         applyBtn.style.cssText = `
             flex: 1;
             padding: 6px;
@@ -2536,7 +2598,7 @@ class MarketHistoryViewer {
         });
 
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = 'Clear';
+        clearBtn.textContent = i18n.tDefault('market.history.clear', 'Clear');
         clearBtn.style.cssText = `
             flex: 1;
             padding: 6px;
@@ -2580,7 +2642,7 @@ class MarketHistoryViewer {
 
         // Title
         const title = document.createElement('div');
-        title.textContent = 'Filter by Enhancement Level';
+        title.textContent = i18n.tDefault('market.history.filterByEnh', 'Filter by Enhancement Level');
         title.style.cssText = `
             color: #fff;
             font-weight: bold;
@@ -2615,7 +2677,7 @@ class MarketHistoryViewer {
             checkbox.checked = this.filters.selectedEnhLevels.includes(level);
             checkbox.style.marginRight = '6px';
 
-            const levelText = level > 0 ? `+${level}` : 'No Enhancement';
+            const levelText = level > 0 ? `+${level}` : i18n.tDefault('market.history.noEnhancement', 'No Enhancement');
 
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(levelText));
@@ -2645,7 +2707,7 @@ class MarketHistoryViewer {
         `;
 
         const applyBtn = document.createElement('button');
-        applyBtn.textContent = 'Apply';
+        applyBtn.textContent = i18n.tDefault('market.history.apply', 'Apply');
         applyBtn.style.cssText = `
             flex: 1;
             padding: 6px;
@@ -2665,7 +2727,7 @@ class MarketHistoryViewer {
         });
 
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = 'Clear';
+        clearBtn.textContent = i18n.tDefault('market.history.clear', 'Clear');
         clearBtn.style.cssText = `
             flex: 1;
             padding: 6px;
@@ -2709,7 +2771,7 @@ class MarketHistoryViewer {
 
         // Title
         const title = document.createElement('div');
-        title.textContent = 'Filter by Type';
+        title.textContent = i18n.tDefault('market.history.filterByType', 'Filter by Type');
         title.style.cssText = `
             color: #fff;
             font-weight: bold;
@@ -2739,7 +2801,7 @@ class MarketHistoryViewer {
             buyCheckbox.style.marginRight = '6px';
 
             buyLabel.appendChild(buyCheckbox);
-            buyLabel.appendChild(document.createTextNode('Buy Orders'));
+            buyLabel.appendChild(document.createTextNode(i18n.tDefault('market.history.typeBuy', 'Buy Orders')));
             popup.appendChild(buyLabel);
 
             buyCheckbox.addEventListener('change', (e) => {
@@ -2772,7 +2834,7 @@ class MarketHistoryViewer {
             sellCheckbox.style.marginRight = '6px';
 
             sellLabel.appendChild(sellCheckbox);
-            sellLabel.appendChild(document.createTextNode('Sell Orders'));
+            sellLabel.appendChild(document.createTextNode(i18n.tDefault('market.history.typeSell', 'Sell Orders')));
             popup.appendChild(sellLabel);
 
             sellCheckbox.addEventListener('change', (e) => {
@@ -2798,7 +2860,7 @@ class MarketHistoryViewer {
         `;
 
         const applyBtn = document.createElement('button');
-        applyBtn.textContent = 'Apply';
+        applyBtn.textContent = i18n.tDefault('market.history.apply', 'Apply');
         applyBtn.style.cssText = `
             flex: 1;
             padding: 6px;
@@ -2818,7 +2880,7 @@ class MarketHistoryViewer {
         });
 
         const clearBtn = document.createElement('button');
-        clearBtn.textContent = 'Clear';
+        clearBtn.textContent = i18n.tDefault('market.history.clear', 'Clear');
         clearBtn.style.cssText = `
             flex: 1;
             padding: 6px;

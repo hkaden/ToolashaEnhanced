@@ -5,6 +5,7 @@
 
 import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import dataManager from '../../core/data-manager.js';
 import labyrinthTracker from './labyrinth-tracker.js';
 
@@ -186,7 +187,7 @@ class LabyrinthBestLevel {
      * @param {string|null} roomHrid - Room HRID (e.g. "/skills/milking" or "/monsters/...")
      */
     injectBadge(cell, bestLevel, roomHrid) {
-        let text = `Best: ${bestLevel}`;
+        let text = i18n.tDefault('combat.labyrinth.best', 'Best: {level}', { level: bestLevel });
         let tooltip = null;
 
         if (roomHrid && roomHrid.startsWith('/skills/')) {
@@ -197,13 +198,17 @@ class LabyrinthBestLevel {
                 const offset = bestLevel - effectiveLevel;
                 if (offset > 0) {
                     text += ` (+${offset})`;
-                    tooltip =
-                        `Your level: ${charLevel}\n` +
-                        `Expert Tea Crate: +${EXPERT_TEA_CRATE_BONUS}\n` +
-                        `Effective: ${effectiveLevel}\n` +
-                        `\n` +
-                        `Best: ${bestLevel}\n` +
-                        `Gap: +${offset}`;
+                    tooltip = i18n.tDefault(
+                        'combat.labyrinth.bestTooltip',
+                        'Your level: {charLevel}\nExpert Tea Crate: +{bonus}\nEffective: {effective}\n\nBest: {best}\nGap: +{offset}',
+                        {
+                            charLevel,
+                            bonus: EXPERT_TEA_CRATE_BONUS,
+                            effective: effectiveLevel,
+                            best: bestLevel,
+                            offset,
+                        }
+                    );
                 }
             }
         }

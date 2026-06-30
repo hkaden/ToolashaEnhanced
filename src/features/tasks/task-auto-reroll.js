@@ -12,6 +12,7 @@ import dataManager from '../../core/data-manager.js';
 import domObserver from '../../core/dom-observer.js';
 import storage from '../../core/storage.js';
 import webSocketHook from '../../core/websocket.js';
+import i18n from '../../core/i18n/index.js';
 
 const STORAGE_KEY_PREFIX = 'taskAutoRerollHrids';
 
@@ -67,7 +68,7 @@ class TaskAutoReroll {
         const btn = document.createElement('span');
         btn.className = 'mwi-task-autoreroll-btn';
         btn.textContent = '\u{1F3AF}';
-        btn.title = 'Configure task auto-reroll reminders';
+        i18n.bindDefault(btn, 'tasks.autoReroll.configBtn', 'Configure task auto-reroll reminders', undefined, 'title');
         btn.style.cssText = 'cursor:pointer; font-size:16px; margin-left:6px; opacity:0.7; transition:opacity 0.1s;';
         btn.addEventListener('mouseover', () => {
             btn.style.opacity = '1';
@@ -107,7 +108,7 @@ class TaskAutoReroll {
 
         const badge = document.createElement('div');
         badge.className = 'mwi-autoreroll-badge';
-        badge.textContent = 'Reroll!';
+        badge.textContent = i18n.tDefault('tasks.rerollBadge', 'Reroll!');
         badge.style.cssText = `
             position: absolute;
             top: 4px;
@@ -275,7 +276,7 @@ class TaskAutoReroll {
             flex-shrink: 0;
         `;
         header.innerHTML = `
-            <span style="font-weight:700; font-size:14px; color:#ef4444;">Auto-Reroll List</span>
+            <span style="font-weight:700; font-size:14px; color:#ef4444;">${i18n.tDefault('tasks.autoReroll.listTitle', 'Auto-Reroll List')}</span>
             <button id="mwi-task-autoreroll-close" style="
                 background:none; border:none; color:#aaa; font-size:22px;
                 cursor:pointer; padding:0; line-height:1;">\u00d7</button>
@@ -285,7 +286,13 @@ class TaskAutoReroll {
         searchDiv.style.cssText = 'padding: 8px 14px; flex-shrink: 0;';
         const searchInput = document.createElement('input');
         searchInput.type = 'search';
-        searchInput.placeholder = 'Search actions, monsters, zones...';
+        i18n.bindDefault(
+            searchInput,
+            'tasks.searchActionsMonstersZones',
+            'Search actions, monsters, zones...',
+            undefined,
+            'placeholder'
+        );
         searchInput.style.cssText = `
             width: 100%;
             padding: 6px 10px;
@@ -315,8 +322,10 @@ class TaskAutoReroll {
 
             let html = '';
             if (!query && filtered.length === 0) {
-                html =
-                    '<div style="color:#666; text-align:center; padding:20px 0;">No auto-reroll tasks yet. Search to add.</div>';
+                html = `<div style="color:#666; text-align:center; padding:20px 0;">${i18n.tDefault(
+                    'tasks.autoReroll.empty',
+                    'No auto-reroll tasks yet. Search to add.'
+                )}</div>`;
             }
 
             for (const item of filtered.slice(0, 50)) {
@@ -329,7 +338,7 @@ class TaskAutoReroll {
                     checkmark = allMarked ? '\u2713' : markedCount > 0 ? '~' : '';
                     checkColor = markedCount > 0 ? '#ef4444' : '#444';
                     nameColor = markedCount > 0 ? '#e0e0e0' : '#aaa';
-                    typeLabel = 'Zone (' + monsters.length + ')';
+                    typeLabel = i18n.tDefault('tasks.zoneCount', 'Zone ({count})', { count: monsters.length });
                 } else {
                     const isMarked = this.autoRerollHrids.has(item.hrid);
                     checkmark = isMarked ? '\u2713' : '';
@@ -352,7 +361,11 @@ class TaskAutoReroll {
             }
 
             if (filtered.length > 50) {
-                html += `<div style="color:#666; text-align:center; padding:8px;">...${filtered.length - 50} more (refine search)</div>`;
+                html += `<div style="color:#666; text-align:center; padding:8px;">${i18n.tDefault(
+                    'tasks.moreRefineSearch',
+                    '...{count} more (refine search)',
+                    { count: filtered.length - 50 }
+                )}</div>`;
             }
 
             listContainer.innerHTML = html;

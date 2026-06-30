@@ -5,6 +5,7 @@
 
 import config from '../../core/config.js';
 import dataManager from '../../core/data-manager.js';
+import i18n from '../../core/i18n/index.js';
 import tradeHistory from './trade-history.js';
 import { formatKMB3Digits } from '../../utils/formatters.js';
 
@@ -169,12 +170,19 @@ class TradeHistoryDisplay {
 
         // Build content
         const parts = [];
-        parts.push(`<span style="color: #aaa; font-weight: 500;">Last:</span>`);
+        parts.push(
+            `<span style="color: #aaa; font-weight: 500;">${i18n.tDefault('market.tradeHistory.last', 'Last:')}</span>`
+        );
 
         if (history.buy) {
             const buyColor = this.getBuyColor(history.buy, currentPrices, comparisonMode);
             parts.push(
-                `<span style="color: ${buyColor}; font-weight: 600;" title="Your last buy price">Buy ${formatKMB3Digits(history.buy)}</span>`
+                `<span style="color: ${buyColor}; font-weight: 600;" title="${i18n.tDefault(
+                    'market.tradeHistory.lastBuyTitle',
+                    'Your last buy price'
+                )}">${i18n.tDefault('market.tradeHistory.buy', 'Buy {price}', {
+                    price: formatKMB3Digits(history.buy),
+                })}</span>`
             );
         }
 
@@ -185,7 +193,12 @@ class TradeHistoryDisplay {
         if (history.sell) {
             const sellColor = this.getSellColor(history.sell, currentPrices, comparisonMode);
             parts.push(
-                `<span style="color: ${sellColor}; font-weight: 600;" title="Your last sell price">Sell ${formatKMB3Digits(history.sell)}</span>`
+                `<span style="color: ${sellColor}; font-weight: 600;" title="${i18n.tDefault(
+                    'market.tradeHistory.lastSellTitle',
+                    'Your last sell price'
+                )}">${i18n.tDefault('market.tradeHistory.sell', 'Sell {price}', {
+                    price: formatKMB3Digits(history.sell),
+                })}</span>`
             );
         }
 

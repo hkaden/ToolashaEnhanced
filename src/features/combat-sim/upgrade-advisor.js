@@ -6,6 +6,7 @@
  */
 
 import dataManager from '../../core/data-manager.js';
+import i18n from '../../core/i18n/index.js';
 import { buildGameDataPayload, calculateSimRevenue } from './combat-sim-adapter.js';
 import { runSimulation, runLabyrinthSimulation } from './combat-sim-runner.js';
 import labyrinthClearRate from '../combat/labyrinth-clear-rate.js';
@@ -15,6 +16,11 @@ import { calculateEnhancement } from '../../utils/enhancement-calculator.js';
 import { getEnhancingParams, getAutoDetectedParams } from '../../utils/enhancement-config.js';
 import { getCheapestProtectionPrice, getProductionCost } from '../enhancement/tooltip-enhancement.js';
 import { calculateAbilityLevelUpCost } from '../../utils/ability-cost-calculator.js';
+import {
+    getLocalizedItemName,
+    getLocalizedAbilityName,
+    getLocalizedSkillName,
+} from '../../utils/localized-game-names.js';
 import { buildOverridesForSkill } from './skilling-sim-helpers.js';
 
 /** Enhancement breakpoints by slot type */
@@ -609,7 +615,10 @@ export function generateCandidates(
             // Enhancement upgrade: next breakpoint
             const nextBP = getNextBreakpoint(currentLevel, slot, currentHrid);
             if (nextBP) {
-                const itemName = gameData.itemDetailMap[currentHrid]?.name || currentHrid.split('/').pop();
+                const itemName = getLocalizedItemName(
+                    currentHrid,
+                    gameData.itemDetailMap[currentHrid]?.name || currentHrid.split('/').pop()
+                );
                 candidates.push({
                     slot,
                     currentHrid,
@@ -635,8 +644,14 @@ export function generateCandidates(
                         const upgradeRole = getItemRole(upgradeItem.equipmentDetail?.combatStats);
                         if (upgradeRole !== 'defensive') continue;
 
-                        const upgradeName = upgradeItem.name || upgradeHrid.split('/').pop();
-                        const currentName = itemDetails?.name || currentHrid.split('/').pop();
+                        const upgradeName = getLocalizedItemName(
+                            upgradeHrid,
+                            upgradeItem.name || upgradeHrid.split('/').pop()
+                        );
+                        const currentName = getLocalizedItemName(
+                            currentHrid,
+                            itemDetails?.name || currentHrid.split('/').pop()
+                        );
                         candidates.push({
                             slot,
                             currentHrid,
@@ -652,13 +667,19 @@ export function generateCandidates(
                 // Offensive items: keep existing role-based tier progression
                 const slotKey = `${slot}|${role}`;
                 const slotItems = tierProgression[slotKey];
-                const offensiveCurrentName = itemDetails?.name || currentHrid.split('/').pop();
+                const offensiveCurrentName = getLocalizedItemName(
+                    currentHrid,
+                    itemDetails?.name || currentHrid.split('/').pop()
+                );
                 const offensiveCandidateHrids = new Set();
                 if (slotItems) {
                     const currentIdx = slotItems.findIndex((item) => item.hrid === currentHrid);
                     if (currentIdx >= 0 && currentIdx < slotItems.length - 1) {
                         const nextTier = slotItems[currentIdx + 1];
-                        const nextName = nextTier.name || nextTier.hrid.split('/').pop();
+                        const nextName = getLocalizedItemName(
+                            nextTier.hrid,
+                            nextTier.name || nextTier.hrid.split('/').pop()
+                        );
                         candidates.push({
                             slot,
                             currentHrid,
@@ -690,7 +711,10 @@ export function generateCandidates(
                                 highestNonRefined.hrid !== nextTier.hrid &&
                                 highestNonRefined.itemLevel > currentItemLevel
                             ) {
-                                const highestName = highestNonRefined.name || highestNonRefined.hrid.split('/').pop();
+                                const highestName = getLocalizedItemName(
+                                    highestNonRefined.hrid,
+                                    highestNonRefined.name || highestNonRefined.hrid.split('/').pop()
+                                );
                                 candidates.push({
                                     slot,
                                     currentHrid,
@@ -722,7 +746,10 @@ export function generateCandidates(
                         const upgradeRole = getItemRole(upgradeItem.equipmentDetail?.combatStats);
                         if (upgradeRole !== role) continue;
 
-                        const upgradeName = upgradeItem.name || upgradeHrid.split('/').pop();
+                        const upgradeName = getLocalizedItemName(
+                            upgradeHrid,
+                            upgradeItem.name || upgradeHrid.split('/').pop()
+                        );
                         candidates.push({
                             slot,
                             currentHrid,
@@ -768,12 +795,15 @@ export function generateCandidates(
                     const offHandCandidates = findBestOffHand(gameData, damageStyle, item.itemLevel || 999);
                     if (!offHandCandidates.length) continue;
 
-                    const mainName = item.name || itemHrid.split('/').pop();
-                    const currentName = twoHandItem?.name || twoHandEquip.hrid.split('/').pop();
+                    const mainName = getLocalizedItemName(itemHrid, item.name || itemHrid.split('/').pop());
+                    const currentName = getLocalizedItemName(
+                        twoHandEquip.hrid,
+                        twoHandItem?.name || twoHandEquip.hrid.split('/').pop()
+                    );
 
                     for (const bestOH of offHandCandidates) {
                         const ohItem = gameData.itemDetailMap[bestOH.hrid];
-                        const ohName = ohItem?.name || bestOH.hrid.split('/').pop();
+                        const ohName = getLocalizedItemName(bestOH.hrid, ohItem?.name || bestOH.hrid.split('/').pop());
 
                         candidates.push({
                             slot: '/equipment_types/two_hand',
@@ -813,8 +843,11 @@ export function generateCandidates(
                     if (style !== damageStyle) continue;
                     if (getItemRole(eq.combatStats) === 'defensive') continue;
 
-                    const twoHandName = item.name || itemHrid.split('/').pop();
-                    const currentName = mainHandItem?.name || mainHandEquip.hrid.split('/').pop();
+                    const twoHandName = getLocalizedItemName(itemHrid, item.name || itemHrid.split('/').pop());
+                    const currentName = getLocalizedItemName(
+                        mainHandEquip.hrid,
+                        mainHandItem?.name || mainHandEquip.hrid.split('/').pop()
+                    );
 
                     const clearedSlots = ['/equipment_types/main_hand'];
                     if (offHandEquip) clearedSlots.push('/equipment_types/off_hand');
@@ -845,7 +878,10 @@ export function generateCandidates(
 
             const abilityDetail = gameData.abilityDetailMap[ability.hrid];
             if (!abilityDetail) continue;
-            const abilityName = abilityDetail.name || ability.hrid.split('/').pop();
+            const abilityName = getLocalizedAbilityName(
+                ability.hrid,
+                abilityDetail.name || ability.hrid.split('/').pop()
+            );
 
             if (mode === 'ability_level') {
                 // Level upgrade candidate
@@ -882,7 +918,7 @@ export function generateCandidates(
                     const abStyle = getAbilityCombatStyle(abDetail);
                     if (!isAbilityCompatible(abStyle, playerStyle)) continue;
 
-                    const swapName = abDetail.name || abHrid.split('/').pop();
+                    const swapName = getLocalizedAbilityName(abHrid, abDetail.name || abHrid.split('/').pop());
                     candidates.push({
                         slot: `ability_${slotIdx}`,
                         currentHrid: ability.hrid,
@@ -1018,7 +1054,11 @@ export async function runUpgradeAnalysis(params, onProgress, options = {}) {
     let current = 0;
 
     // Run baseline sim
-    onProgress?.({ current: 0, total, description: 'Running baseline...' });
+    onProgress?.({
+        current: 0,
+        total,
+        description: i18n.tDefault('combatSim.progress.runningBaseline', 'Running baseline...'),
+    });
     const baselineResult = await runSimulation(
         { gameData, playerDTOs, zoneHrid, difficultyTier, hours, communityBuffs },
         null
@@ -1027,7 +1067,11 @@ export async function runUpgradeAnalysis(params, onProgress, options = {}) {
 
     if (abortSignal?.()) return { baseline: null, results: [] };
 
-    onProgress?.({ current, total, description: 'Baseline complete' });
+    onProgress?.({
+        current,
+        total,
+        description: i18n.tDefault('combatSim.progress.baselineComplete', 'Baseline complete'),
+    });
 
     // Calculate baseline metrics
     const baselineMetrics = computeMetrics(baselineResult, gameData, playerHrid, hours);
@@ -1037,7 +1081,13 @@ export async function runUpgradeAnalysis(params, onProgress, options = {}) {
     for (const candidate of candidatesWithCost) {
         if (abortSignal?.()) break;
 
-        onProgress?.({ current, total, description: `Simulating: ${candidate.description}` });
+        onProgress?.({
+            current,
+            total,
+            description: i18n.tDefault('combatSim.progress.simulating', 'Simulating: {desc}', {
+                desc: candidate.description,
+            }),
+        });
 
         // Clone playerDTOs and apply candidate upgrade
         const modifiedDTOs = JSON.parse(JSON.stringify(playerDTOs));
@@ -1157,6 +1207,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthCombatDamageLevel',
         name: 'Combat Damage',
+        nameKey: 'combatSim.labBuff.combatDamage',
         step: 0.01,
         maxLevel: 12,
         tokenCost: 40,
@@ -1168,6 +1219,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthAttackSpeedLevel',
         name: 'Attack Speed',
+        nameKey: 'combatSim.labBuff.attackSpeed',
         step: 0.01,
         maxLevel: 12,
         tokenCost: 40,
@@ -1179,6 +1231,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthCastSpeedLevel',
         name: 'Cast Speed',
+        nameKey: 'combatSim.labBuff.castSpeed',
         step: 0.01,
         maxLevel: 12,
         tokenCost: 40,
@@ -1190,6 +1243,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthCriticalRateLevel',
         name: 'Critical Rate',
+        nameKey: 'combatSim.labBuff.criticalRate',
         step: 0.01,
         maxLevel: 12,
         tokenCost: 40,
@@ -1201,6 +1255,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthSkillActionSpeedLevel',
         name: 'Skilling Speed',
+        nameKey: 'combatSim.labBuff.skillingSpeed',
         step: 0.01,
         maxLevel: 12,
         tokenCost: 40,
@@ -1210,6 +1265,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthSkillingEfficiencyLevel',
         name: 'Skilling Efficiency',
+        nameKey: 'combatSim.labBuff.skillingEfficiency',
         step: 0.01,
         maxLevel: 12,
         tokenCost: 40,
@@ -1219,6 +1275,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthSkillingSuccessLevel',
         name: 'Success Rate',
+        nameKey: 'combatSim.labBuff.successRate',
         step: 0.005,
         maxLevel: 12,
         tokenCost: 40,
@@ -1228,6 +1285,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthSkillingDoubleProgressLevel',
         name: 'Double Progress',
+        nameKey: 'combatSim.labBuff.doubleProgress',
         step: 0.01,
         maxLevel: 12,
         tokenCost: 40,
@@ -1237,6 +1295,7 @@ const LABYRINTH_BUFF_DEFS = [
     {
         key: 'labyrinthExperienceLevel',
         name: 'Experience',
+        nameKey: 'combatSim.labBuff.experience',
         step: 0.01,
         maxLevel: 12,
         tokenCost: 80,
@@ -1277,7 +1336,7 @@ export function generateLabyrinthBuffCandidates() {
             currentLevel,
             step: def.step,
             tokenCost: def.tokenCost * (currentLevel + 1),
-            description: `${def.name} Lv${currentLevel}\u2192${currentLevel + 1}`,
+            description: `${i18n.tDefault(def.nameKey, def.name)} Lv${currentLevel}\u2192${currentLevel + 1}`,
             uniqueKey: def.uniqueKey,
             typeHrid: def.typeHrid,
             valueKey: def.valueKey,
@@ -1382,7 +1441,11 @@ export async function runLabyrinthUpgradeAnalysis(params, onProgress, options = 
     let current = 0;
 
     // Run baseline labyrinth sim
-    onProgress?.({ current: 0, total, description: 'Running baseline...' });
+    onProgress?.({
+        current: 0,
+        total,
+        description: i18n.tDefault('combatSim.progress.runningBaseline', 'Running baseline...'),
+    });
     const baselineResult = await runLabyrinthSimulation({
         gameData,
         playerDTOs: [playerDTOs[playerIndex]],
@@ -1402,7 +1465,13 @@ export async function runLabyrinthUpgradeAnalysis(params, onProgress, options = 
     const baselineEncounters = baselineResult.encounters || 0;
     const baselineWinRate = baselineEncounters / baselineAttempts;
 
-    onProgress?.({ current, total, description: `Baseline: ${(baselineWinRate * 100).toFixed(1)}%` });
+    onProgress?.({
+        current,
+        total,
+        description: i18n.tDefault('combatSim.progress.baselinePct', 'Baseline: {pct}%', {
+            pct: (baselineWinRate * 100).toFixed(1),
+        }),
+    });
 
     const results = [];
 
@@ -1410,7 +1479,13 @@ export async function runLabyrinthUpgradeAnalysis(params, onProgress, options = 
     for (const candidate of candidatesWithCost) {
         if (abortSignal?.()) break;
 
-        onProgress?.({ current, total, description: `Simulating: ${candidate.description}` });
+        onProgress?.({
+            current,
+            total,
+            description: i18n.tDefault('combatSim.progress.simulating', 'Simulating: {desc}', {
+                desc: candidate.description,
+            }),
+        });
 
         const modifiedDTO = JSON.parse(JSON.stringify(playerDTOs[playerIndex]));
 
@@ -1471,7 +1546,13 @@ export async function runLabyrinthUpgradeAnalysis(params, onProgress, options = 
     for (const buffCandidate of combatBuffCandidates) {
         if (abortSignal?.()) break;
 
-        onProgress?.({ current, total, description: `Simulating: ${buffCandidate.description}` });
+        onProgress?.({
+            current,
+            total,
+            description: i18n.tDefault('combatSim.progress.simulating', 'Simulating: {desc}', {
+                desc: buffCandidate.description,
+            }),
+        });
 
         const modifiedBuffs = buildModifiedCombatBuffs(labyrinthCombatBuffs, buffCandidate);
         const simResult = await runLabyrinthSimulation({
@@ -1597,7 +1678,7 @@ export function computeSkillingClearRatesFromEditor(
         }
         result.skillHrid = skillHrid;
         result.skillId = skillId;
-        result.skillName = skillId.charAt(0).toUpperCase() + skillId.slice(1);
+        result.skillName = getLocalizedSkillName(skillHrid, skillId.charAt(0).toUpperCase() + skillId.slice(1));
         results.push(result);
     }
 
@@ -1685,7 +1766,7 @@ function generateLabyrinthBuffCandidatesFromEditor(tokenUpgrades) {
             currentLevel,
             step: def.step,
             tokenCost: def.tokenCost * (currentLevel + 1),
-            description: `${def.name} Lv${currentLevel}\u2192${currentLevel + 1}`,
+            description: `${i18n.tDefault(def.nameKey, def.name)} Lv${currentLevel}\u2192${currentLevel + 1}`,
             metric: def.metric,
         });
     }
@@ -1728,7 +1809,7 @@ export function generateSkillingEquipmentCandidates(editorDTO, gameData, skillEq
             const nextBP = getNextBreakpoint(currentLevel, slot, equip.hrid);
             if (!nextBP) continue;
 
-            const itemName = itemDetails.name || equip.hrid.split('/').pop();
+            const itemName = getLocalizedItemName(equip.hrid, itemDetails.name || equip.hrid.split('/').pop());
             const candidate = {
                 slot,
                 currentHrid: equip.hrid,
@@ -1771,7 +1852,11 @@ export function runSkillingUpgradeAnalysis(params, onProgress, options = {}) {
     const total = buffCandidates.length + equipCandidates.length + 1;
     let current = 0;
 
-    onProgress?.({ current: 0, total, description: 'Computing baseline...' });
+    onProgress?.({
+        current: 0,
+        total,
+        description: i18n.tDefault('combatSim.progress.computingBaseline', 'Computing baseline...'),
+    });
     const baselineClearRate = computeAverageSkillingClearRateFromEditor(
         roomLevel,
         editorDTO,
@@ -1783,14 +1868,26 @@ export function runSkillingUpgradeAnalysis(params, onProgress, options = {}) {
 
     if (abortSignal?.()) return { baseline: null, results: [] };
 
-    onProgress?.({ current, total, description: `Baseline: ${(baselineClearRate * 100).toFixed(1)}%` });
+    onProgress?.({
+        current,
+        total,
+        description: i18n.tDefault('combatSim.progress.baselinePct', 'Baseline: {pct}%', {
+            pct: (baselineClearRate * 100).toFixed(1),
+        }),
+    });
 
     const results = [];
 
     for (const buffCandidate of buffCandidates) {
         if (abortSignal?.()) break;
 
-        onProgress?.({ current, total, description: `Evaluating: ${buffCandidate.description}` });
+        onProgress?.({
+            current,
+            total,
+            description: i18n.tDefault('combatSim.progress.evaluating', 'Evaluating: {desc}', {
+                desc: buffCandidate.description,
+            }),
+        });
 
         const modifiedDTO = JSON.parse(JSON.stringify(editorDTO));
         modifiedDTO.tokenUpgrades[buffCandidate.editorKey] = buffCandidate.currentLevel + 1;
@@ -1819,7 +1916,13 @@ export function runSkillingUpgradeAnalysis(params, onProgress, options = {}) {
     for (const candidate of equipCandidates) {
         if (abortSignal?.()) break;
 
-        onProgress?.({ current, total, description: `Evaluating: ${candidate.description}` });
+        onProgress?.({
+            current,
+            total,
+            description: i18n.tDefault('combatSim.progress.evaluating', 'Evaluating: {desc}', {
+                desc: candidate.description,
+            }),
+        });
 
         const modifiedDTO = JSON.parse(JSON.stringify(editorDTO));
         const modifiedSkillEquipMap = JSON.parse(JSON.stringify(skillEquipmentMap));

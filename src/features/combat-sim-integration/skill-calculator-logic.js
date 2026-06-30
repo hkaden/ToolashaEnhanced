@@ -3,6 +3,8 @@
  * Calculation functions for skill progression and combat level
  */
 
+import i18n from '../../core/i18n/index.js';
+
 /**
  * Calculate time required to reach target level
  * @param {number} currentExp - Current experience
@@ -23,7 +25,12 @@ export function calculateTimeToLevel(currentExp, targetLevel, expPerHour, levelE
 
     const expNeeded = targetExp - currentExp;
     if (expNeeded <= 0) {
-        return { hours: 0, days: 0, remainingHours: 0, readable: 'Already achieved' };
+        return {
+            hours: 0,
+            days: 0,
+            remainingHours: 0,
+            readable: i18n.tDefault('combatSim.time.alreadyAchieved', 'Already achieved'),
+        };
     }
 
     const hoursNeeded = expNeeded / expPerHour;
@@ -132,13 +139,15 @@ function formatTime(days, hours, minutes) {
     const parts = [];
 
     if (days > 0) {
-        parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+        parts.push(i18n.tDefault('combatSim.time.days', `${days} day${days !== 1 ? 's' : ''}`, { count: days }));
     }
     if (hours > 0) {
-        parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
+        parts.push(i18n.tDefault('combatSim.time.hours', `${hours} hour${hours !== 1 ? 's' : ''}`, { count: hours }));
     }
     if (minutes > 0 || parts.length === 0) {
-        parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`);
+        parts.push(
+            i18n.tDefault('combatSim.time.minutes', `${minutes} minute${minutes !== 1 ? 's' : ''}`, { count: minutes })
+        );
     }
 
     return parts.join(' ');

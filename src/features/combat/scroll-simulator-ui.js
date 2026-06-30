@@ -8,6 +8,7 @@
 
 import domObserver from '../../core/dom-observer.js';
 import config from '../../core/config.js';
+import i18n from '../../core/i18n/index.js';
 import { registerFloatingPanel, unregisterFloatingPanel, bringPanelToFront } from '../../utils/panel-z-index.js';
 import scrollSimulator from './scroll-simulator.js';
 import loadoutSnapshot from './loadout-snapshot.js';
@@ -152,8 +153,12 @@ class ScrollSimPopup {
 
         const title = document.createElement('span');
         title.style.cssText = `font-size: 0.9rem; font-weight: 600; color: ${config.COLOR_ACCENT};`;
-        const contextLabel = this.loadoutName ? this.loadoutName : 'Defaults';
-        title.textContent = `Scroll Simulation — ${contextLabel}`;
+        const contextLabel = this.loadoutName
+            ? this.loadoutName
+            : i18n.tDefault('combat.scrollSim.defaults', 'Defaults');
+        title.textContent = i18n.tDefault('combat.scrollSim.title', 'Scroll Simulation — {context}', {
+            context: contextLabel,
+        });
 
         const closeBtn = document.createElement('button');
         closeBtn.textContent = '×';
@@ -203,8 +208,14 @@ class ScrollSimPopup {
             line-height: 1.4;
         `;
         note.textContent = this.loadoutName
-            ? 'These scrolls override the defaults when this loadout is active for a skill.'
-            : 'Applied when no loadout matches the current skill (or loadout snapshots are disabled).';
+            ? i18n.tDefault(
+                  'combat.scrollSim.noteLoadout',
+                  'These scrolls override the defaults when this loadout is active for a skill.'
+              )
+            : i18n.tDefault(
+                  'combat.scrollSim.noteDefaults',
+                  'Applied when no loadout matches the current skill (or loadout snapshots are disabled).'
+              );
         body.appendChild(note);
 
         // Scroll rows
@@ -333,7 +344,7 @@ function injectButton(navButtons) {
 
     const button = document.createElement('button');
     button.id = BUTTON_ID;
-    button.textContent = 'Scroll Simulation';
+    i18n.bindDefault(button, 'combat.scrollSim.button', 'Scroll Simulation');
     button.className = 'Button_button__1Fe9z';
     button.style.cssText = `white-space: nowrap;`;
     button.addEventListener('click', () => popup.open(loadoutName));
