@@ -14,6 +14,7 @@ import settingsCSS from './settings-styles.css?raw';
 import marketAPI from '../../api/marketplace.js';
 import { createMutationWatcher } from '../../utils/dom-observer-helpers.js';
 import { createTimerRegistry } from '../../utils/timer-registry.js';
+import { createGameTabButton } from '../../utils/game-tabs.js';
 import scrollSimulatorUI from '../combat/scroll-simulator-ui.js';
 import ironCowMode, { IRON_COW_SETTINGS } from './iron-cow-mode.js';
 import { getDetectedGearSettings, getEnhancingParams } from '../../utils/enhancement-config.js';
@@ -262,7 +263,7 @@ class SettingsUI {
             const existingTabs = Array.from(tabsContainer.querySelectorAll('button[role="tab"]'));
 
             // Create new tab button
-            const tabButton = this.createTabButton();
+            const tabButton = this.createTabButton(tabsContainer);
 
             // Create tab panel
             const tabPanel = this.createTabPanel();
@@ -293,10 +294,18 @@ class SettingsUI {
     }
 
     /**
-     * Create tab button
+     * Create tab button that matches the game's native tabs (by cloning one).
+     * @param {Element} tabsContainer - The MuiTabs-flexContainer holding native tabs.
      * @returns {HTMLElement} Tab button element
      */
-    createTabButton() {
+    createTabButton(tabsContainer) {
+        const created = createGameTabButton(tabsContainer, 'toolasha-settings-tab');
+        if (created) {
+            created.labelTarget.textContent = 'Toolasha';
+            return created.button;
+        }
+
+        // Fallback if there is no container/tab to clone.
         const button = document.createElement('button');
         button.id = 'toolasha-settings-tab';
         button.setAttribute('role', 'tab');

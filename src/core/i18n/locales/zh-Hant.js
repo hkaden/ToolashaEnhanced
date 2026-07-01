@@ -223,6 +223,10 @@ export default {
                 label: '開箱：顯示實際價值與期望值的差距',
                 help: '開啟寶箱／板條箱／儲藏箱時，顯示這次開箱高於或低於其期望價值多少，並提供每種箱子的累計偏差。',
             },
+            profitOverviewTab: {
+                label: '利潤總覽分頁',
+                help: '在角色面板加一個「收益」分頁，列出每個採集／生產動作的每小時利潤與每小時經驗，依技能分組排序；點一列即可跳到該動作。',
+            },
             inventoryCountDisplay: {
                 label: '動作面板：顯示產出物品的目前背包數量',
                 help: '在動作方塊與動作詳情面板中，顯示你目前擁有多少產出物品。',
@@ -1201,6 +1205,16 @@ export default {
         failedImportFormat: '匯入設定失敗，請檢查檔案格式。',
         failedImport: '匯入設定失敗。',
         manageOverrides: '管理覆寫',
+    },
+    profitTab: {
+        tab: '收益',
+        title: '利潤總覽',
+        refresh: '重新整理',
+        perHour: '每小時',
+        perDay: '每日',
+        pricingNote: '定價模式：{mode}',
+        computing: '計算中…',
+        empty: '沒有資料。',
     },
     actMisc: {
         costSummary: {

@@ -43,6 +43,7 @@ import xpTracker from '../features/skills/xp-tracker.js';
 // Action features
 import lootLogStats from '../features/actions/loot-log-stats.js';
 import chestOpenTracker from '../features/actions/chest-open-tracker.js';
+import profitOverviewTab from '../features/actions/profit-overview-tab.js';
 
 // House
 import housePanelObserver from '../features/house/house-panel-observer.js';
@@ -116,6 +117,7 @@ toolashaRoot.UI = {
     xpTracker,
     lootLogStats,
     chestOpenTracker,
+    profitOverviewTab,
     housePanelObserver,
     settingsUI,
     transmuteRates,

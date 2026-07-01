@@ -304,6 +304,13 @@ function registerFeatures() {
             async: false,
         },
         {
+            key: 'profitOverviewTab',
+            name: 'Profit Overview Tab',
+            category: 'Actions',
+            module: UI.profitOverviewTab,
+            async: false,
+        },
+        {
             key: 'inventoryCountDisplay',
             name: 'Inventory Count Display',
             category: 'Actions',

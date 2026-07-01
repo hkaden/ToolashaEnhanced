@@ -441,6 +441,13 @@ export const settingsGroups = {
                 default: true,
                 help: 'When opening chests/crates/caches, shows whether this open came out above or below its expected value, plus a per-container cumulative deviation',
             },
+            profitOverviewTab: {
+                id: 'profitOverviewTab',
+                label: 'Profit overview tab',
+                type: 'checkbox',
+                default: true,
+                help: 'Adds a "Profit" tab to the character panel listing every gathering/production action\'s profit/hr and exp/hr, sorted and grouped by skill; click a row to jump to that action',
+            },
             inventoryCountDisplay: {
                 id: 'inventoryCountDisplay',
                 label: 'Action panels: Show current inventory count of output item',

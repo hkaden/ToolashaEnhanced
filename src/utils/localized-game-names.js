@@ -20,6 +20,16 @@ let cachedLang = null;
 let s2tMap = null;
 
 /**
+ * Phrase-level Simplified→Traditional overrides applied BEFORE the per-character
+ * mapping, for characters whose correct Traditional form is context-dependent and
+ * the single-char OpenCC table gets wrong. E.g. 冲→衝 is right for 衝突 but the
+ * brewing skill 冲泡 must become 沖泡, not 衝泡.
+ */
+const PHRASE_OVERRIDES = {
+    冲泡: '沖泡',
+};
+
+/**
  * Convert a Simplified-Chinese game name to Traditional when the Toolasha UI
  * locale is zh-Hant. The game ships only Simplified, so game-entity names arrive
  * Simplified; this char-level mapping (embedded OpenCC STCharacters table) lets
@@ -49,8 +59,15 @@ function maybeTraditional(name) {
             }
         }
     }
+    // Apply phrase-level overrides first, then per-character conversion on the rest.
+    let text = name;
+    for (const [simplified, traditional] of Object.entries(PHRASE_OVERRIDES)) {
+        if (text.includes(simplified)) {
+            text = text.split(simplified).join(traditional);
+        }
+    }
     let out = '';
-    for (const ch of name) {
+    for (const ch of text) {
         out += s2tMap.get(ch) || ch;
     }
     return out;

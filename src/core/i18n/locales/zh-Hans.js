@@ -223,6 +223,10 @@ export default {
                 label: '开箱：显示实际价值与期望值的差距',
                 help: '开启宝箱／板条箱／储藏箱时，显示这次开箱高于或低于其期望价值多少，并提供每种箱子的累计偏差。',
             },
+            profitOverviewTab: {
+                label: '利润总览分页',
+                help: '在角色面板加一个「收益」分页，列出每个采集／生产动作的每小时利润与每小时经验，按技能分组排序；点一行即可跳到该动作。',
+            },
             inventoryCountDisplay: {
                 label: '动作面板：显示产出物品的当前背包数量',
                 help: '在动作方块与动作详情面板中，显示你当前拥有多少产出物品。',
@@ -1201,6 +1205,16 @@ export default {
         failedImportFormat: '导入设置失败，请检查文件格式。',
         failedImport: '导入设置失败。',
         manageOverrides: '管理覆盖',
+    },
+    profitTab: {
+        tab: '收益',
+        title: '利润总览',
+        refresh: '刷新',
+        perHour: '每小时',
+        perDay: '每日',
+        pricingNote: '定价模式：{mode}',
+        computing: '计算中…',
+        empty: '没有数据。',
     },
     actMisc: {
         costSummary: {
