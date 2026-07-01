@@ -219,6 +219,10 @@ export default {
                 label: '掉落紀錄：保留並顯示歷史紀錄項目',
                 help: '儲存掉落紀錄項目，並在掉落紀錄面板中將較舊的項目顯示於目前項目下方。',
             },
+            chestOpenDeviation: {
+                label: '開箱：顯示實際價值與期望值的差距',
+                help: '開啟寶箱／板條箱／儲藏箱時，顯示這次開箱高於或低於其期望價值多少，並提供每種箱子的累計偏差。',
+            },
             inventoryCountDisplay: {
                 label: '動作面板：顯示產出物品的目前背包數量',
                 help: '在動作方塊與動作詳情面板中，顯示你目前擁有多少產出物品。',
@@ -1285,6 +1289,13 @@ export default {
             startTime: '開始時間：{time}',
             duration: '持續時間：{duration}',
             unknownAction: '未知',
+        },
+        chestOpen: {
+            title: '開箱價值',
+            thisVsExpected: '本次 {actual} ／ 期望 {expected}',
+            above: '高於期望 {sign}{value}（{sign}{pct}%）',
+            below: '低於期望 {sign}{value}（{sign}{pct}%）',
+            cumulative: '累計（已開 {opens}）：{sign}{value}',
         },
         pinned: {
             navButton: '釘選',

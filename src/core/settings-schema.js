@@ -434,6 +434,13 @@ export const settingsGroups = {
                 default: true,
                 help: 'Saves loot log entries and displays older entries below current ones in the loot log panel',
             },
+            chestOpenDeviation: {
+                id: 'chestOpenDeviation',
+                label: 'Chest opening: show value vs expected',
+                type: 'checkbox',
+                default: true,
+                help: 'When opening chests/crates/caches, shows whether this open came out above or below its expected value, plus a per-container cumulative deviation',
+            },
             inventoryCountDisplay: {
                 id: 'inventoryCountDisplay',
                 label: 'Action panels: Show current inventory count of output item',

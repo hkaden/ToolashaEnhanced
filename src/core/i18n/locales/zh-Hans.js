@@ -219,6 +219,10 @@ export default {
                 label: '掉落记录：保留并显示历史记录项目',
                 help: '保存掉落记录项目，并在掉落记录面板中将较旧的项目显示于当前项目下方。',
             },
+            chestOpenDeviation: {
+                label: '开箱：显示实际价值与期望值的差距',
+                help: '开启宝箱／板条箱／储藏箱时，显示这次开箱高于或低于其期望价值多少，并提供每种箱子的累计偏差。',
+            },
             inventoryCountDisplay: {
                 label: '动作面板：显示产出物品的当前背包数量',
                 help: '在动作方块与动作详情面板中，显示你当前拥有多少产出物品。',
@@ -1285,6 +1289,13 @@ export default {
             startTime: '开始时间：{time}',
             duration: '持续时间：{duration}',
             unknownAction: '未知',
+        },
+        chestOpen: {
+            title: '开箱价值',
+            thisVsExpected: '本次 {actual} ／ 期望 {expected}',
+            above: '高于期望 {sign}{value}（{sign}{pct}%）',
+            below: '低于期望 {sign}{value}（{sign}{pct}%）',
+            cumulative: '累计（已开 {opens}）：{sign}{value}',
         },
         pinned: {
             navButton: '固定',

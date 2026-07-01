@@ -297,6 +297,13 @@ function registerFeatures() {
             async: false,
         },
         {
+            key: 'chestOpenDeviation',
+            name: 'Chest Open Deviation',
+            category: 'Actions',
+            module: UI.chestOpenTracker,
+            async: false,
+        },
+        {
             key: 'inventoryCountDisplay',
             name: 'Inventory Count Display',
             category: 'Actions',

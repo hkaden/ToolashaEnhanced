@@ -329,6 +329,45 @@ class ExpectedValueCalculator {
     }
 
     /**
+     * Value a concrete set of dropped items using the SAME pricing and tax rules
+     * as expected-value calculation (coins untaxed, tradeables taxed, nested
+     * containers valued at their EV). This lets an actual open be compared against
+     * its expected value on the same ruler (see chest-open-tracker).
+     * @param {Array<{hrid: string, count: number}>} items
+     * @returns {number} Total taxed value
+     */
+    valueItems(items) {
+        if (!Array.isArray(items)) {
+            return 0;
+        }
+
+        let total = 0;
+        for (const { hrid, count } of items) {
+            if (!hrid || !count) {
+                continue;
+            }
+
+            const price = this.getDropPrice(hrid);
+            if (price === null || price <= 0) {
+                continue;
+            }
+
+            const rawValue = price * count;
+            const isCoin = hrid === this.COIN_HRID;
+            const itemDetails = dataManager.getItemDetails(hrid);
+            const canBeSold = itemDetails?.isTradable !== false;
+
+            total += isCoin
+                ? rawValue // No tax for coins
+                : canBeSold
+                  ? calculatePriceAfterTax(rawValue, this.MARKET_TAX)
+                  : rawValue;
+        }
+
+        return total;
+    }
+
+    /**
      * Get detailed drop breakdown for display
      * @param {string} containerHrid - Container HRID
      * @returns {Array} Array of drop objects
